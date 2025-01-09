@@ -46,13 +46,8 @@ const RegisterPage = () => {
       await register(formData.username, formData.email, formData.password);
       navigate('/'); // Redirect to homepage after registration
     } catch (err) {
-      if (err.message === 'Email already in use') {
-        setFormError('This email is already registered. Please use a different email or login.');
-      } else if (err.message === 'Username already taken') {
-        setFormError('This username is already taken. Please choose a different username.');
-      } else {
-        setFormError(err.message || 'Registration failed');
-      }
+      const message = err.message || 'Registration failed';
+      setFormError(message);
     }
   };
 

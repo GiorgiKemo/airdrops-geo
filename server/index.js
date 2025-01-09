@@ -15,6 +15,9 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log('Connected to MongoDB');
 
+    // Create initial admin user if none exists
+    await createInitialAdminUser();
+
     // Run the index fix on startup
     try {
       console.log('Running index fix on startup...');
@@ -60,6 +63,11 @@ mongoose.connect(process.env.MONGODB_URI)
 const Airdrop = require('./models/airdropModel');
 const Tracking = require('./models/trackingModel');
 const View = require('./models/viewModel');
+const User = require('./models/userModel');
+
+// Import controllers and middleware
+const { createInitialAdminUser } = require('./controllers/authController');
+const { protect, admin } = require('./middleware/authMiddleware');
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
@@ -124,10 +132,17 @@ app.use((req, res, next) => {
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// API Routes
+// Import routes
+const userRoutes = require('./routes/userRoutes');
+const airdropRoutes = require('./routes/airdropRoutes');
 
+// API Routes
+app.use('/api/users', userRoutes);
+app.use('/api/airdrops', airdropRoutes);
+
+// Legacy API routes that will be removed after migration
 // Get all airdrops
-app.get('/api/airdrops', async (req, res) => {
+app.get('/api/airdrops-legacy', async (req, res) => {
   try {
     const airdrops = await Airdrop.find({});
     res.json(airdrops);

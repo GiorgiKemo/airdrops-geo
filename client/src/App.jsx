@@ -18,12 +18,27 @@ import { TrackingProvider } from './context/TrackingContext';
 import { DisplayProvider } from './context/DisplayContext';
 import './index.css';
 
-// Protected route component
+// Protected route component for any authenticated user
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+// Protected route component for admin users only
+const AdminRoute = ({ children }) => {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== 'admin') {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -54,9 +69,9 @@ function App() {
                   <Route
                     path="/admin"
                     element={
-                      <ProtectedRoute>
+                      <AdminRoute>
                         <AdminPage />
-                      </ProtectedRoute>
+                      </AdminRoute>
                     }
                   />
                   {/* Catch-all route to handle 404s */}

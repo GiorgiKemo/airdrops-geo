@@ -18,8 +18,16 @@ const api = axios.create({
   timeout: 10000, // 10 seconds timeout
 });
 
-// Add request interceptor for debugging
+// Add request interceptor for authentication and debugging
 api.interceptors.request.use(config => {
+  // Get token from localStorage
+  const user = JSON.parse(localStorage.getItem('currentUser'));
+
+  // If token exists, add to headers
+  if (user && user.token) {
+    config.headers.Authorization = `Bearer ${user.token}`;
+  }
+
   console.log('Making request to:', config.url);
   console.log('Request config:', config);
   return config;

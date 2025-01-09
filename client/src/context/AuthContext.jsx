@@ -1,6 +1,11 @@
 import { createContext, useState, useEffect, useContext } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext();
+
+// API URL from environment variable
+const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
+const API_URL = `${apiUrl}/api/users`;
 
 export const AuthProvider = ({ children }) => {
   // Check if user is already logged in from localStorage
@@ -12,28 +17,16 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Initialize users in localStorage if they don't exist
-  useEffect(() => {
-    if (!localStorage.getItem('users')) {
-      // Add a default admin user for testing
-      const defaultUsers = [
-        {
-          id: 1,
-          username: 'admin',
-          email: 'admin@example.com',
-          password: 'admin123'
-        }
-      ];
-      localStorage.setItem('users', JSON.stringify(defaultUsers));
-    }
-  }, []);
-
-  // Update localStorage when user changes
+  // Update localStorage and set auth header when user changes
   useEffect(() => {
     if (user) {
       localStorage.setItem('currentUser', JSON.stringify(user));
+      // Set auth header for all future requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
     } else {
       localStorage.removeItem('currentUser');
+      // Remove auth header
+      delete axios.defaults.headers.common['Authorization'];
     }
   }, [user]);
 
@@ -43,79 +36,48 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      // Get existing users
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-
-      // Check if email already exists
-      if (users.some(user => user.email === email)) {
-        throw new Error('Email already in use');
-      }
-
-      // Check if username already exists
-      if (users.some(user => user.username === username)) {
-        throw new Error('Username already taken');
-      }
-
-      // Create new user
-      const newUser = {
-        id: Date.now(),
+      const { data } = await axios.post(API_URL, {
         username,
         email,
-        password // In a real app, this would be hashed
-      };
+        password
+      });
 
-      // Add user to the list
-      users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
-
-      // Create user session (without password)
-      const userSession = { id: newUser.id, username, email };
-
-      // Log user in
-      setUser(userSession);
+      // Set user with token
+      setUser(data);
       setLoading(false);
-      return userSession;
+      return data;
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      const message = err.response && err.response.data.message
+        ? err.response.data.message
+        : 'Registration failed';
+      setError(message);
       setLoading(false);
-      throw err;
+      throw new Error(message);
     }
   };
 
-  // Login user with either email or username
-  const login = async (emailOrUsername, password) => {
+  // Login user
+  const login = async (email, password) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Get users from localStorage
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const { data } = await axios.post(`${API_URL}/login`, {
+        email,
+        password
+      });
 
-      // Find user with matching email or username
-      const user = users.find(user =>
-        user.email === emailOrUsername || user.username === emailOrUsername
-      );
-
-      // Check if user exists and password matches
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      if (user.password !== password) {
-        throw new Error('Invalid password');
-      }
-
-      // Create user session (without password)
-      const userSession = { id: user.id, username: user.username, email: user.email };
-
-      // Log user in
-      setUser(userSession);
+      // Set user with token
+      setUser(data);
       setLoading(false);
-      return userSession;
+      return data;
     } catch (err) {
-      setError(err.message || 'Login failed');
+      const message = err.response && err.response.data.message
+        ? err.response.data.message
+        : 'Login failed';
+      setError(message);
       setLoading(false);
-      throw err;
+      throw new Error(message);
     }
   };
 
