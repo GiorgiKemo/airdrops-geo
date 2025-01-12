@@ -17,6 +17,33 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Verify token on app load
+  useEffect(() => {
+    const verifyToken = async () => {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        const parsedUser = JSON.parse(savedUser);
+
+        // Set the token in axios headers
+        axios.defaults.headers.common['Authorization'] = `Bearer ${parsedUser.token}`;
+
+        try {
+          // Verify the token with the server
+          const { data } = await axios.get(`${API_URL}/verify`);
+          setUser(data);
+        } catch (error) {
+          // If token verification fails, log the user out
+          console.error('Token verification failed:', error);
+          setUser(null);
+          localStorage.removeItem('currentUser');
+          delete axios.defaults.headers.common['Authorization'];
+        }
+      }
+    };
+
+    verifyToken();
+  }, []);
+
   // Update localStorage and set auth header when user changes
   useEffect(() => {
     if (user) {
