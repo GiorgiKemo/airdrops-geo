@@ -6,6 +6,10 @@ import { useDisplay } from '../context/DisplayContext';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+
+  // Debug user role
+  console.log('Navbar - Current user:', user);
+  console.log('Navbar - Is admin?', user?.role === 'admin');
   const { resetDisplayCount } = useDisplay();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
