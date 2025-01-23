@@ -23,21 +23,28 @@ const registerUser = async (req, res) => {
     }
 
     // Create user
+    console.log('registerUser - Creating new user with data:', { username, email });
+
     const user = await User.create({
       username,
       email,
       password,
-      // By default, role is 'user'
+      role: 'user', // Explicitly set role to 'user'
     });
 
+    console.log('registerUser - Created user:', user);
+
     if (user) {
-      res.status(201).json({
+      const responseData = {
         _id: user._id,
         username: user.username,
         email: user.email,
         role: user.role,
         token: generateToken(user._id),
-      });
+      };
+
+      console.log('registerUser - Response data:', responseData);
+      res.status(201).json(responseData);
     } else {
       res.status(400).json({ message: 'Invalid user data' });
     }
