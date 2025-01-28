@@ -35,14 +35,24 @@ const AdminRoute = ({ children }) => {
 
   console.log('AdminRoute - Current user:', user);
   console.log('AdminRoute - User role:', user?.role);
+  console.log('AdminRoute - User role type:', user?.role ? typeof user.role : 'undefined');
   console.log('AdminRoute - Is admin?', user?.role === 'admin');
+
+  // Function to check if user is admin
+  const isAdmin = () => {
+    if (!user) return false;
+    if (typeof user.role !== 'string') return false;
+    return user.role === 'admin';
+  };
+
+  console.log('AdminRoute - isAdmin() result:', isAdmin());
 
   if (!user) {
     console.log('AdminRoute - No user, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role !== 'admin') {
+  if (!isAdmin()) {
     console.log('AdminRoute - Not admin, redirecting to home');
     return <Navigate to="/" replace />;
   }

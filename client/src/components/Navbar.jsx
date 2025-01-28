@@ -9,7 +9,18 @@ const Navbar = () => {
 
   // Debug user role
   console.log('Navbar - Current user:', user);
+  console.log('Navbar - User role:', user?.role);
+  console.log('Navbar - User role type:', user?.role ? typeof user.role : 'undefined');
   console.log('Navbar - Is admin?', user?.role === 'admin');
+
+  // Function to check if user is admin
+  const isAdmin = () => {
+    if (!user) return false;
+    if (typeof user.role !== 'string') return false;
+    return user.role === 'admin';
+  };
+
+  console.log('Navbar - isAdmin() result:', isAdmin());
   const { resetDisplayCount } = useDisplay();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -68,7 +79,8 @@ const Navbar = () => {
                 <Link to="/dashboard" className="text-[var(--macos-text)] hover:text-[var(--macos-primary)] px-2 py-1 rounded-md hover:bg-[var(--macos-hover)] transition-colors text-sm">
                   My Airdrops
                 </Link>
-                {user.role === 'admin' && (
+                {/* Use the isAdmin function for more reliable checking */}
+                {isAdmin() && (
                   <Link to="/admin" className="text-[var(--macos-text)] hover:text-[var(--macos-primary)] px-2 py-1 rounded-md hover:bg-[var(--macos-hover)] transition-colors text-sm">
                     Admin
                   </Link>
@@ -130,7 +142,8 @@ const Navbar = () => {
                   >
                     My Airdrops
                   </Link>
-                  {user.role === 'admin' && (
+                  {/* Use the isAdmin function for more reliable checking */}
+                  {isAdmin() && (
                     <Link
                       to="/admin"
                       className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 py-2"
