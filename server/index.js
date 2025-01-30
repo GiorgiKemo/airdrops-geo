@@ -524,8 +524,8 @@ app.post('/api/airdrops/:id/updates', async (req, res) => {
   }
 });
 
-// Reset view data
-app.post('/api/reset-views', async (req, res) => {
+// Reset view data - Admin only
+app.post('/api/reset-views', protect, admin, async (req, res) => {
   try {
     await View.deleteMany({});
     await Airdrop.updateMany({}, { $set: { views: 0 } });
@@ -536,8 +536,8 @@ app.post('/api/reset-views', async (req, res) => {
   }
 });
 
-// Add a diagnostic endpoint
-app.get('/api/diagnose', (req, res) => {
+// Add a diagnostic endpoint - Admin only
+app.get('/api/diagnose', protect, admin, (req, res) => {
   try {
     // Run the diagnostics script
     const diagnostics = {
@@ -639,8 +639,8 @@ app.get('/api/check-airdrop/:id', async (req, res) => {
   }
 });
 
-// Add an endpoint to fix the MongoDB index issue
-app.get('/api/fix-index', async (req, res) => {
+// Add an endpoint to fix the MongoDB index issue - Admin only
+app.get('/api/fix-index', protect, admin, async (req, res) => {
   try {
     console.log('Running index fix from API endpoint...');
 
