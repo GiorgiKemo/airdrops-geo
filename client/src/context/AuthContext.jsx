@@ -127,6 +127,8 @@ export const AuthProvider = ({ children }) => {
   // Logout user
   const logout = () => {
     setUser(null);
+    // Navigate to home page after logout
+    window.location.href = '/';
   };
 
   return (
