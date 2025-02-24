@@ -3,6 +3,7 @@ import { useDisplay } from '../context/DisplayContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { airdropService } from '../services/api';
 import AirdropCard from '../components/AirdropCard';
+import SEO from '../components/SEO';
 import { FaSearch, FaFilter } from 'react-icons/fa';
 
 const HomePage = () => {
@@ -166,7 +167,13 @@ const HomePage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 min-h-screen flex flex-col">
+    <>
+      <SEO
+        title="Airdrops.geo - Discover and Claim Free Cryptocurrency Airdrops"
+        description="Find the latest cryptocurrency airdrops, track your favorite projects, and claim free tokens. Stay updated with upcoming, active, and popular crypto airdrops."
+        canonicalUrl="/"
+      />
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 min-h-screen flex flex-col">
       <div className="mb-4">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--macos-text)] mb-2 sm:mb-4 text-center sm:text-left tracking-tight">
           Cryptocurrency Airdrops
@@ -415,6 +422,7 @@ const HomePage = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

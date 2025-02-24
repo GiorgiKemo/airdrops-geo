@@ -4,6 +4,7 @@ import { airdropService } from '../services/api';
 import AirdropLogo from '../components/AirdropLogo';
 import LogoUpdater from '../components/LogoUpdater';
 import AirdropUpdates from '../components/AirdropUpdates';
+import SEO from '../components/SEO';
 import { useAuth } from '../context/AuthContext';
 import { FaGlobe, FaDiscord, FaTwitter, FaTelegram, FaGithub, FaInstagram } from 'react-icons/fa';
 
@@ -78,7 +79,16 @@ const AirdropDetailPage = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-4 sm:py-8">
+    <>
+      {airdrop && (
+        <SEO
+          title={`${airdrop.title} (${airdrop.token}) Airdrop - Airdrops.geo`}
+          description={`Learn about the ${airdrop.title} airdrop. ${airdrop.description.substring(0, 150)}...`}
+          canonicalUrl={`/airdrops/${id}`}
+          type="article"
+        />
+      )}
+      <div className="container mx-auto px-4 py-4 sm:py-8">
       <Link to="/" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mb-4 inline-block text-sm sm:text-base">
         &larr; Back to Airdrops
       </Link>
@@ -321,6 +331,7 @@ const AirdropDetailPage = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

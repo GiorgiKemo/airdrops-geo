@@ -83,6 +83,7 @@ const AirdropLogo = ({ airdrop, size = 'medium' }) => {
               e.target.style.display = 'none';
               e.target.nextElementSibling.style.display = 'block';
             }}
+            loading="lazy"
           />
         ) : null}
         {/* Default logo or fallback - first letter of token */}

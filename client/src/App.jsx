@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
@@ -63,15 +64,22 @@ const AdminRoute = ({ children }) => {
 
 function App() {
   return (
-    <DarkModeProvider>
-      <AuthProvider>
-        <TrackingProvider>
-          <DisplayProvider>
-          <BrowserRouter>
+    <HelmetProvider>
+      <DarkModeProvider>
+        <AuthProvider>
+          <TrackingProvider>
+            <DisplayProvider>
+            <BrowserRouter>
             <ScrollToTop />
             <div className="min-h-screen transition-colors duration-200 flex flex-col">
+              <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-white dark:bg-gray-800 p-2 rounded shadow"
+              >
+                Skip to main content
+              </a>
               <Navbar />
-              <main className="flex-1 overflow-hidden">
+              <main id="main-content" className="flex-1 overflow-hidden">
 
                 <Routes>
                   <Route path="/" element={<HomePage />} />
@@ -98,10 +106,11 @@ function App() {
               <Footer />
             </div>
           </BrowserRouter>
-          </DisplayProvider>
-        </TrackingProvider>
-      </AuthProvider>
-    </DarkModeProvider>
+            </DisplayProvider>
+          </TrackingProvider>
+        </AuthProvider>
+      </DarkModeProvider>
+    </HelmetProvider>
   );
 }
 
