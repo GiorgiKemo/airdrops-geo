@@ -1,5 +1,20 @@
+# Airdrops.geo Robots.txt
 # Allow all web crawlers
 User-agent: *
+Allow: /
+
+# Disallow admin and authentication pages from being indexed
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard
+
+# Allow Google to index everything
+User-agent: Googlebot
+Allow: /
+
+# Allow Google Images to index all images
+User-agent: Googlebot-Image
 Allow: /
 
 # Sitemap location
