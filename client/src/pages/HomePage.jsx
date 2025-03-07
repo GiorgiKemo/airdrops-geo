@@ -169,10 +169,10 @@ const HomePage = () => {
   return (
     <>
       <SEO
-        title="Crypto Airdrops 2023 | Find & Claim Free Tokens | Airdrops.geo"
-        description="Discover the latest crypto airdrops in 2023. Find, track and claim free tokens from top blockchain projects. Daily updated list of active, upcoming, and popular cryptocurrency airdrops."
+        title="Crypto Airdrops 2025 | Find & Claim Free Tokens | Airdrops.geo"
+        description="Discover the latest crypto airdrops in 2025. Find, track and claim free tokens from top blockchain projects. Daily updated list of active, upcoming, and popular cryptocurrency airdrops."
         canonicalUrl="/"
-        keywords="crypto airdrops, free crypto, cryptocurrency airdrops, claim airdrops, best airdrops 2023, upcoming airdrops, active airdrops, free tokens, blockchain airdrops, airdrop tracker"
+        keywords="crypto airdrops, free crypto, cryptocurrency airdrops, claim airdrops, best airdrops 2025, upcoming airdrops, active airdrops, free tokens, blockchain airdrops, airdrop tracker"
       >
         <script type="application/ld+json">
           {JSON.stringify({
@@ -213,10 +213,10 @@ const HomePage = () => {
               },
               {
                 "@type": "Question",
-                "name": "How can I find the best crypto airdrops?",
+                "name": "How can I find the best crypto airdrops in 2025?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Airdrops.geo is your best resource for finding legitimate and valuable crypto airdrops. We regularly update our platform with new opportunities, verify their authenticity, and provide all the information you need to participate. Create an account to track your favorite airdrops and get notified about new opportunities."
+                  "text": "Airdrops.geo is your best resource for finding legitimate and valuable crypto airdrops in 2025. We regularly update our platform with new opportunities, verify their authenticity, and provide all the information you need to participate. Create an account to track your favorite airdrops and get notified about new opportunities."
                 }
               }
             ]
@@ -226,7 +226,7 @@ const HomePage = () => {
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 min-h-screen flex flex-col">
       <div className="mb-4">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--macos-text)] mb-2 sm:mb-4 text-center sm:text-left tracking-tight">
-          Latest Crypto Airdrops 2023 | Find & Claim Free Tokens
+          Latest Crypto Airdrops 2025 | Find & Claim Free Tokens
         </h1>
         <p className="text-[var(--macos-text-secondary)] mb-3 text-xs sm:text-sm md:text-base break-words text-center sm:text-left max-w-3xl">
           Welcome to Airdrops.geo, your ultimate resource for finding and claiming the best crypto airdrops. We track upcoming, active, and popular cryptocurrency airdrops daily, helping you earn free tokens from top blockchain projects. Start exploring now!
@@ -498,8 +498,8 @@ const HomePage = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">How can I find the best crypto airdrops?</h3>
-            <p className="text-[var(--macos-text-secondary)]">Airdrops.geo is your best resource for finding legitimate and valuable crypto airdrops. We regularly update our platform with new opportunities, verify their authenticity, and provide all the information you need to participate. Create an account to track your favorite airdrops and get notified about new opportunities.</p>
+            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">How can I find the best crypto airdrops in 2025?</h3>
+            <p className="text-[var(--macos-text-secondary)]">Airdrops.geo is your best resource for finding legitimate and valuable crypto airdrops in 2025. We regularly update our platform with new opportunities, verify their authenticity, and provide all the information you need to participate. Create an account to track your favorite airdrops and get notified about new opportunities.</p>
           </div>
         </div>
       </div>
