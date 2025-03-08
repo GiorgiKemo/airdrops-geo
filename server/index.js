@@ -1,9 +1,9 @@
 const express = require('express');
-const dotenv = require('dotenv');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
-const mongoose = require('mongoose');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 
@@ -14,9 +14,6 @@ dotenv.config();
 mongoose.connect(process.env.MONGODB_URI)
   .then(async () => {
     console.log('Connected to MongoDB');
-
-    // Create initial admin user if none exists
-    await createInitialAdminUser();
 
     // Run the index fix on startup
     try {
@@ -61,13 +58,8 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Import models
 const Airdrop = require('./models/airdropModel');
-const Tracking = require('./models/trackingModel');
 const View = require('./models/viewModel');
-const User = require('./models/userModel');
-
-// Import controllers and middleware
-const { createInitialAdminUser } = require('./controllers/authController');
-const { protect, admin } = require('./middleware/authMiddleware');
+const Tracking = require('./models/trackingModel');
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
@@ -132,17 +124,19 @@ app.use((req, res, next) => {
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Import routes
-const userRoutes = require('./routes/userRoutes');
-const airdropRoutes = require('./routes/airdropRoutes');
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error);
+  });
 
 // API Routes
-app.use('/api/users', userRoutes);
-app.use('/api/airdrops', airdropRoutes);
 
-// Legacy API routes that will be removed after migration
 // Get all airdrops
-app.get('/api/airdrops-legacy', async (req, res) => {
+app.get('/api/airdrops', async (req, res) => {
   try {
     const airdrops = await Airdrop.find({});
     res.json(airdrops);
@@ -524,8 +518,8 @@ app.post('/api/airdrops/:id/updates', async (req, res) => {
   }
 });
 
-// Reset view data - Admin only
-app.post('/api/reset-views', protect, admin, async (req, res) => {
+// Reset view data
+app.post('/api/reset-views', async (req, res) => {
   try {
     await View.deleteMany({});
     await Airdrop.updateMany({}, { $set: { views: 0 } });
@@ -536,8 +530,8 @@ app.post('/api/reset-views', protect, admin, async (req, res) => {
   }
 });
 
-// Add a diagnostic endpoint - Admin only
-app.get('/api/diagnose', protect, admin, (req, res) => {
+// Add a diagnostic endpoint
+app.get('/api/diagnose', (req, res) => {
   try {
     // Run the diagnostics script
     const diagnostics = {
@@ -553,8 +547,11 @@ app.get('/api/diagnose', protect, admin, (req, res) => {
     const possiblePaths = [
       path.resolve(__dirname, '../client/dist'),
       path.resolve(__dirname, '../client/build'),
+      path.resolve(__dirname, 'public'),
       '/opt/render/project/src/client/dist',
-      '/opt/render/project/src/client/build'
+      '/opt/render/project/src/client/build',
+      '/opt/render/project/client/dist',
+      '/opt/render/project/client/build'
     ];
 
     possiblePaths.forEach(p => {
@@ -590,6 +587,17 @@ app.get('/api/diagnose', protect, admin, (req, res) => {
     res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
+
+// Set up Telegram integration
+if (process.env.NODE_ENV === 'production') {
+  try {
+    const setupTelegramIntegration = require('./telegram-integration');
+    setupTelegramIntegration();
+    console.log('Telegram integration set up successfully');
+  } catch (error) {
+    console.error('Error setting up Telegram integration:', error);
+  }
+}
 
 // Add a diagnostic endpoint to check if an airdrop exists
 app.get('/api/check-airdrop/:id', async (req, res) => {
@@ -639,8 +647,8 @@ app.get('/api/check-airdrop/:id', async (req, res) => {
   }
 });
 
-// Add an endpoint to fix the MongoDB index issue - Admin only
-app.get('/api/fix-index', protect, admin, async (req, res) => {
+// Add an endpoint to fix the MongoDB index issue
+app.get('/api/fix-index', async (req, res) => {
   try {
     console.log('Running index fix from API endpoint...');
 
@@ -888,21 +896,51 @@ app.get('*', (req, res) => {
   }
 });
 
-// Set up Telegram integration
-if (process.env.NODE_ENV === 'production') {
-  try {
-    const setupTelegramIntegration = require('./telegram-integration');
-    setupTelegramIntegration();
-    console.log('Telegram integration set up successfully');
-  } catch (error) {
-    console.error('Error setting up Telegram integration:', error);
+// Serve static files
+// First, try to serve from the client build directory
+let staticPath = null;
+const possibleStaticPaths = [
+  path.resolve(__dirname, '../client/dist'),
+  path.resolve(__dirname, '../client/build'),
+  path.resolve(__dirname, 'public'),
+  '/opt/render/project/src/client/dist',
+  '/opt/render/project/src/client/build',
+  '/opt/render/project/client/dist',
+  '/opt/render/project/client/build'
+];
+
+for (const p of possibleStaticPaths) {
+  if (fs.existsSync(p)) {
+    console.log(`Serving static files from: ${p}`);
+    staticPath = p;
+    app.use(express.static(p));
+    break;
   }
 }
 
-// IMPORTANT: This must be the last middleware before starting the server
-// Set up client-side routing for Render
-const setupRenderServer = require('./render-setup');
-setupRenderServer(app);
+// Catch-all route for client-side routing
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    return res.status(404).json({ message: 'API endpoint not found' });
+  }
+
+  console.log(`Handling client-side route: ${req.path}`);
+
+  // Find the index.html file
+  let indexPath = null;
+  if (staticPath) {
+    indexPath = path.join(staticPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      console.log(`Serving index.html from: ${indexPath}`);
+      return res.sendFile(indexPath);
+    }
+  }
+
+  // If we couldn't find the index.html file, return a 404
+  console.log(`Could not find index.html, returning 404`);
+  return res.status(404).send('Not Found');
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;
