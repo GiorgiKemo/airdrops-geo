@@ -25,7 +25,7 @@ export const TrackingProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      const data = await trackingService.getTrackedAirdrops(user._id);
+      const data = await trackingService.getTrackedAirdrops();
       setTrackedAirdrops(data);
       setError(null);
     } catch (err) {
@@ -42,7 +42,7 @@ export const TrackingProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      await trackingService.trackAirdrop(user._id, airdropId);
+      await trackingService.trackAirdrop(null, airdropId);
       await fetchTrackedAirdrops(); // Refresh the list
       setError(null);
     } catch (err) {
@@ -59,7 +59,7 @@ export const TrackingProvider = ({ children }) => {
 
     setLoading(true);
     try {
-      await trackingService.untrackAirdrop(user._id, airdropId);
+      await trackingService.untrackAirdrop(null, airdropId);
       await fetchTrackedAirdrops(); // Refresh the list
       setError(null);
     } catch (err) {

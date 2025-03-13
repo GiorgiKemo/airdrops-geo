@@ -102,7 +102,18 @@ export const airdropService = {
   // Add an update to an airdrop
   addAirdropUpdate: async (id, updateContent) => {
     try {
-      const response = await api.post(`/airdrops/${id}/updates`, { content: updateContent });
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      // Set the Authorization header
+      const headers = {
+        Authorization: `Bearer ${token}`
+      };
+
+      const response = await api.post(`/airdrops/${id}/updates`, { content: updateContent }, { headers });
       return response.data;
     } catch (error) {
       console.error(`Error adding update to airdrop with ID ${id}:`, error);

@@ -34,4 +34,25 @@ router.route('/:id')
   .put(protect, admin, updateAirdropValidation, updateAirdrop)
   .delete(protect, admin, deleteAirdrop);
 
+// Airdrop updates route
+router.route('/:id/updates')
+  .post(protect, admin, (req, res) => {
+    const { content } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ message: 'Update content is required' });
+    }
+
+    // Call the airdrop service to add an update
+    const airdropService = require('../services/airdropService');
+
+    airdropService.addAirdropUpdate(req.params.id, content)
+      .then(updatedAirdrop => {
+        res.json(updatedAirdrop);
+      })
+      .catch(error => {
+        res.status(error.message.includes('not found') ? 404 : 500).json({ message: error.message });
+      });
+  });
+
 module.exports = router;
