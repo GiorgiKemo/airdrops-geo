@@ -26,19 +26,19 @@ const registerValidation = [
     .withMessage('Username must be between 3 and 30 characters')
     .matches(/^[a-zA-Z0-9_]+$/)
     .withMessage('Username can only contain letters, numbers, and underscores'),
-  
+
   body('email')
     .trim()
     .isEmail()
     .withMessage('Please provide a valid email')
     .normalizeEmail(),
-  
+
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
-  
+
   validateResults,
 ];
 
@@ -51,11 +51,11 @@ const loginValidation = [
     .isEmail()
     .withMessage('Please provide a valid email')
     .normalizeEmail(),
-  
+
   body('password')
     .notEmpty()
     .withMessage('Password is required'),
-  
+
   validateResults,
 ];
 
@@ -65,89 +65,90 @@ const loginValidation = [
 const createAirdropValidation = [
   body('title')
     .trim()
-    .isLength({ min: 3, max: 100 })
-    .withMessage('Title must be between 3 and 100 characters'),
-  
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Title must be between 1 and 100 characters'),
+
   body('description')
     .trim()
-    .isLength({ min: 10 })
-    .withMessage('Description must be at least 10 characters'),
-  
+    .isLength({ min: 3 })
+    .withMessage('Description must be at least 3 characters'),
+
   body('token')
     .trim()
     .isLength({ min: 1, max: 20 })
     .withMessage('Token must be between 1 and 20 characters'),
-  
+
   body('criteria')
     .trim()
-    .isLength({ min: 5 })
-    .withMessage('Criteria must be at least 5 characters'),
-  
+    .isLength({ min: 3 })
+    .withMessage('Criteria must be at least 3 characters'),
+
   body('deadline')
     .isISO8601()
     .withMessage('Deadline must be a valid date'),
-  
+
   body('startDate')
     .optional()
     .isISO8601()
     .withMessage('Start date must be a valid date'),
-  
+
   body('status')
     .isIn(['active', 'upcoming', 'ended', 'claim'])
     .withMessage('Status must be active, upcoming, ended, or claim'),
-  
+
   body('costType')
     .optional()
     .isIn(['free', 'paid'])
     .withMessage('Cost type must be free or paid'),
-  
+
   body('link')
     .trim()
+    .optional({ nullable: true, checkFalsy: true })
     .isURL()
     .withMessage('Link must be a valid URL'),
-  
+
   body('claimUrl')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .isURL()
     .withMessage('Claim URL must be a valid URL'),
-  
+
   body('socialLinks.website')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .isURL()
     .withMessage('Website must be a valid URL'),
-  
+
   body('socialLinks.discord')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .isURL()
     .withMessage('Discord link must be a valid URL'),
-  
+
   body('socialLinks.twitter')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .isURL()
     .withMessage('Twitter link must be a valid URL'),
-  
+
   body('socialLinks.telegram')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .isURL()
     .withMessage('Telegram link must be a valid URL'),
-  
+
   body('socialLinks.github')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .isURL()
     .withMessage('GitHub link must be a valid URL'),
-  
+
   body('socialLinks.instagram')
-    .optional()
+    .optional({ nullable: true, checkFalsy: true })
     .trim()
     .isURL()
     .withMessage('Instagram link must be a valid URL'),
-  
+
   validateResults,
 ];
 
@@ -158,46 +159,46 @@ const updateAirdropValidation = [
   param('id')
     .isMongoId()
     .withMessage('Invalid airdrop ID'),
-  
+
   body('title')
     .optional()
     .trim()
     .isLength({ min: 3, max: 100 })
     .withMessage('Title must be between 3 and 100 characters'),
-  
+
   body('description')
     .optional()
     .trim()
     .isLength({ min: 10 })
     .withMessage('Description must be at least 10 characters'),
-  
+
   body('token')
     .optional()
     .trim()
     .isLength({ min: 1, max: 20 })
     .withMessage('Token must be between 1 and 20 characters'),
-  
+
   body('criteria')
     .optional()
     .trim()
     .isLength({ min: 5 })
     .withMessage('Criteria must be at least 5 characters'),
-  
+
   body('deadline')
     .optional()
     .isISO8601()
     .withMessage('Deadline must be a valid date'),
-  
+
   body('startDate')
     .optional()
     .isISO8601()
     .withMessage('Start date must be a valid date'),
-  
+
   body('status')
     .optional()
     .isIn(['active', 'upcoming', 'ended', 'claim'])
     .withMessage('Status must be active, upcoming, ended, or claim'),
-  
+
   validateResults,
 ];
 
@@ -208,7 +209,7 @@ const trackAirdropValidation = [
   param('id')
     .isMongoId()
     .withMessage('Invalid airdrop ID'),
-  
+
   validateResults,
 ];
 
@@ -220,12 +221,12 @@ const paginationValidation = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Page must be a positive integer'),
-  
+
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100'),
-  
+
   validateResults,
 ];
 

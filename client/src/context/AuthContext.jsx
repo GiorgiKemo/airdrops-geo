@@ -29,7 +29,11 @@ export const AuthProvider = ({ children }) => {
 
         try {
           // Verify the token with the server
-          const { data } = await axios.get(`${API_URL}/verify`);
+          const { data } = await axios.get(`${API_URL}/verify-token`, {
+            headers: {
+              Authorization: `Bearer ${parsedUser.token}`
+            }
+          });
           console.log('Token verification response:', data);
           console.log('User role from server:', data.role);
 

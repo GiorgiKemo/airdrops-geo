@@ -150,6 +150,30 @@ class AirdropService {
       // Save the airdrop
       await airdrop.save();
 
+      // Send Telegram notification for the update
+      try {
+        const telegramService = require('./telegramService');
+        const telegramResult = await telegramService.sendAirdropUpdateToTelegram(
+          airdrop,
+          { updateContent: content, isExplicitUpdate: true }
+        );
+
+        // If successful, update the airdrop with the message ID
+        if (telegramResult.success && telegramResult.messageId) {
+          // Get the index of the last update
+          const updateIndex = airdrop.updates.length - 1;
+
+          // Add the Telegram message ID to the update
+          airdrop.updates[updateIndex].telegramMessageId = telegramResult.messageId;
+
+          // Save the airdrop again with the updated Telegram info
+          await airdrop.save();
+        }
+      } catch (telegramError) {
+        // Don't fail if Telegram notification fails
+        console.error(`Error sending Telegram update notification: ${telegramError.message}`);
+      }
+
       return airdrop;
     } catch (error) {
       throw new Error(`Error adding update to airdrop: ${error.message}`);
