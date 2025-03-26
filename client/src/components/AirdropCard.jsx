@@ -105,11 +105,8 @@ const AirdropCard = ({ airdrop }) => {
         <p id={`airdrop-desc-${airdrop._id}`} className="mb-1 line-clamp-1 sm:line-clamp-2 text-xs sm:text-sm break-words overflow-hidden">{airdrop.description}</p>
         <div className="flex justify-center sm:justify-between items-center mt-auto flex-wrap gap-2">
           <div className="flex flex-col items-center sm:items-start">
-            <p className="text-xs sm:text-sm mb-1">
-              Start: {formatDate(airdrop.startDate)}
-            </p>
             <p className="text-xs sm:text-sm">
-              Deadline: {formatDate(airdrop.deadline)}
+              Start: {formatDate(airdrop.startDate)}
             </p>
           </div>
           <div className="flex items-center gap-2">

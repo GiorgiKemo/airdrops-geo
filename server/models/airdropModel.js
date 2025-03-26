@@ -22,10 +22,7 @@ const airdropSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    deadline: {
-      type: String,
-      required: true,
-    },
+
     startDate: {
       type: String,
       default: () => new Date().toISOString().split('T')[0],

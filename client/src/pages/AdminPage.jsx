@@ -108,7 +108,12 @@ const AdminPage = () => {
         return;
       }
 
-      await airdropService.updateAirdrop(id, { status: newStatus });
+      // Explicitly set skipTelegramNotification to true to prevent Telegram notifications for status changes
+      await airdropService.updateAirdrop(id, {
+        status: newStatus,
+        skipTelegramNotification: true,
+        sendTelegramNotification: false
+      });
       setSuccessMessage(`Airdrop status updated to ${newStatus}!`);
       fetchAirdrops();
 
@@ -124,11 +129,11 @@ const AdminPage = () => {
   };
 
   // Handle adding an update to an airdrop
-  const handleAddUpdate = async (updateContent) => {
+  const handleAddUpdate = async (updateContent, skipTelegramNotification = false) => {
     try {
       if (!updatingAirdrop) return;
 
-      await airdropService.addAirdropUpdate(updatingAirdrop._id, updateContent);
+      await airdropService.addAirdropUpdate(updatingAirdrop._id, updateContent, skipTelegramNotification);
       setSuccessMessage('Update added successfully!');
       setUpdatingAirdrop(null);
       fetchAirdrops();
@@ -262,7 +267,7 @@ const AdminPage = () => {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
-                    Deadline
+                    Start
                   </th>
                   <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/3">
                     Status & Actions
@@ -308,7 +313,7 @@ const AdminPage = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {formatDate(airdrop.deadline)}
+                            {formatDate(airdrop.startDate)}
                           </div>
                         </td>
                         <td className="px-2 sm:px-6 py-2 sm:py-4 text-sm font-medium">

@@ -78,8 +78,12 @@ export const airdropService = {
   },
 
   // Create new airdrop
-  createAirdrop: async (airdropData) => {
+  createAirdrop: async (airdropData, skipNotification = false) => {
     try {
+      // If skipNotification is true, add skipTelegramNotification flag
+      if (skipNotification) {
+        airdropData.skipTelegramNotification = true;
+      }
       const response = await api.post('/airdrops', airdropData);
       return response.data;
     } catch (error) {
@@ -100,7 +104,7 @@ export const airdropService = {
   },
 
   // Add an update to an airdrop
-  addAirdropUpdate: async (id, updateContent) => {
+  addAirdropUpdate: async (id, updateContent, skipTelegramNotification = false) => {
     try {
       // Get auth token from localStorage
       const currentUser = localStorage.getItem('currentUser');
@@ -120,7 +124,12 @@ export const airdropService = {
         Authorization: `Bearer ${token}`
       };
 
-      const response = await api.post(`/airdrops/${id}/updates`, { content: updateContent }, { headers });
+      // Set sendTelegramNotification based on skipTelegramNotification flag
+      const response = await api.post(`/airdrops/${id}/updates`, {
+        content: updateContent,
+        sendTelegramNotification: !skipTelegramNotification,
+        skipTelegramNotification: skipTelegramNotification
+      }, { headers });
       return response.data;
     } catch (error) {
       console.error(`Error adding update to airdrop with ID ${id}:`, error);
