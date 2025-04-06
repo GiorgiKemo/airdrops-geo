@@ -12,7 +12,7 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
     deadline: '',
     startDate: '',
     status: 'upcoming',
-    costType: 'free', // 'free', 'paid', or 'both'
+    costType: 'free', // 'free' or 'paid'
     link: '',
     claimUrl: '', // URL for claiming rewards
     logoUrl: '',
@@ -399,7 +399,6 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
         >
           <option value="free">Free</option>
           <option value="paid">Paid ($ Required)</option>
-          <option value="both">Both Options Available</option>
         </select>
       </div>
 
