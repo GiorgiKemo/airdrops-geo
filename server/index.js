@@ -78,10 +78,39 @@ app.get('/api/airdrops', async (req, res) => {
 
 app.get('/api/airdrops/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const airdrop = await Airdrop.findOne({ airdropId: id });
+    const id = req.params.id;
+    console.log(`Fetching airdrop with ID: ${id}`);
+
+    // Try to find by MongoDB ObjectID first
+    let airdrop = null;
+
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      // If ID is a valid MongoDB ObjectID format
+      console.log(`ID ${id} appears to be a MongoDB ObjectID, trying to find by _id`);
+      try {
+        airdrop = await Airdrop.findById(id);
+        if (airdrop) {
+          console.log(`Found airdrop by ObjectID: ${airdrop.title}`);
+        }
+      } catch (err) {
+        console.log('Error finding by ObjectID:', err);
+      }
+    }
+
+    // If not found by ObjectID, try by airdropId (numeric)
+    if (!airdrop) {
+      const numericId = parseInt(id);
+      if (!isNaN(numericId)) {
+        console.log(`Trying to find airdrop by numeric airdropId: ${numericId}`);
+        airdrop = await Airdrop.findOne({ airdropId: numericId });
+        if (airdrop) {
+          console.log(`Found airdrop by numeric ID: ${airdrop.title}`);
+        }
+      }
+    }
 
     if (!airdrop) {
+      console.log(`Airdrop not found with ID: ${id}`);
       return res.status(404).json({ message: 'Airdrop not found' });
     }
 
@@ -89,11 +118,12 @@ app.get('/api/airdrops/:id', async (req, res) => {
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     // Find or create view tracking for this airdrop
-    let viewTracking = await View.findOne({ airdropId: id });
+    const airdropId = airdrop.airdropId || id;
+    let viewTracking = await View.findOne({ airdropId });
 
     if (!viewTracking) {
       viewTracking = new View({
-        airdropId: id,
+        airdropId,
         ipAddresses: [],
       });
     }
@@ -108,9 +138,9 @@ app.get('/api/airdrops/:id', async (req, res) => {
       viewTracking.ipAddresses.push(clientIp);
       await viewTracking.save();
 
-      console.log(`New view from IP ${clientIp} for airdrop ${id}`);
+      console.log(`New view from IP ${clientIp} for airdrop ${airdropId}`);
     } else {
-      console.log(`Duplicate view from IP ${clientIp} for airdrop ${id} - not counting`);
+      console.log(`Duplicate view from IP ${clientIp} for airdrop ${airdropId} - not counting`);
     }
 
     res.json(airdrop);
@@ -181,10 +211,39 @@ app.post('/api/airdrops', async (req, res) => {
 
 app.put('/api/airdrops/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const airdrop = await Airdrop.findOne({ airdropId: id });
+    const id = req.params.id;
+    console.log(`Updating airdrop with ID: ${id}`);
+
+    // Try to find by MongoDB ObjectID first
+    let airdrop = null;
+
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      // If ID is a valid MongoDB ObjectID format
+      console.log(`ID ${id} appears to be a MongoDB ObjectID, trying to find by _id`);
+      try {
+        airdrop = await Airdrop.findById(id);
+        if (airdrop) {
+          console.log(`Found airdrop by ObjectID: ${airdrop.title}`);
+        }
+      } catch (err) {
+        console.log('Error finding by ObjectID:', err);
+      }
+    }
+
+    // If not found by ObjectID, try by airdropId (numeric)
+    if (!airdrop) {
+      const numericId = parseInt(id);
+      if (!isNaN(numericId)) {
+        console.log(`Trying to find airdrop by numeric airdropId: ${numericId}`);
+        airdrop = await Airdrop.findOne({ airdropId: numericId });
+        if (airdrop) {
+          console.log(`Found airdrop by numeric ID: ${airdrop.title}`);
+        }
+      }
+    }
 
     if (!airdrop) {
+      console.log(`Airdrop not found with ID: ${id}`);
       return res.status(404).json({ message: 'Airdrop not found' });
     }
 
@@ -241,17 +300,54 @@ app.put('/api/airdrops/:id', async (req, res) => {
 
 app.delete('/api/airdrops/:id', async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const airdrop = await Airdrop.findOne({ airdropId: id });
+    const id = req.params.id;
+    console.log(`Deleting airdrop with ID: ${id}`);
+
+    // Try to find by MongoDB ObjectID first
+    let airdrop = null;
+    let deleteQuery = {};
+    let viewDeleteQuery = {};
+
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      // If ID is a valid MongoDB ObjectID format
+      console.log(`ID ${id} appears to be a MongoDB ObjectID, trying to find by _id`);
+      try {
+        airdrop = await Airdrop.findById(id);
+        if (airdrop) {
+          console.log(`Found airdrop by ObjectID: ${airdrop.title}`);
+          deleteQuery = { _id: id };
+          viewDeleteQuery = { airdropId: airdrop.airdropId };
+        }
+      } catch (err) {
+        console.log('Error finding by ObjectID:', err);
+      }
+    }
+
+    // If not found by ObjectID, try by airdropId (numeric)
+    if (!airdrop) {
+      const numericId = parseInt(id);
+      if (!isNaN(numericId)) {
+        console.log(`Trying to find airdrop by numeric airdropId: ${numericId}`);
+        airdrop = await Airdrop.findOne({ airdropId: numericId });
+        if (airdrop) {
+          console.log(`Found airdrop by numeric ID: ${airdrop.title}`);
+          deleteQuery = { airdropId: numericId };
+          viewDeleteQuery = { airdropId: numericId };
+        }
+      }
+    }
 
     if (!airdrop) {
+      console.log(`Airdrop not found with ID: ${id}`);
       return res.status(404).json({ message: 'Airdrop not found' });
     }
 
-    await Airdrop.deleteOne({ airdropId: id });
+    await Airdrop.deleteOne(deleteQuery);
+    console.log(`Deleted airdrop with query:`, deleteQuery);
 
     // Also delete any view tracking for this airdrop
-    await View.deleteOne({ airdropId: id });
+    await View.deleteOne(viewDeleteQuery);
+    console.log(`Deleted view tracking with query:`, viewDeleteQuery);
 
     res.json({ message: 'Airdrop removed' });
   } catch (error) {
