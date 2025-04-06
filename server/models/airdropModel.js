@@ -33,7 +33,7 @@ const airdropSchema = mongoose.Schema(
     status: {
       type: String,
       required: true,
-      enum: ['active', 'upcoming', 'ended'],
+      enum: ['active', 'upcoming', 'ended', 'claim'],
       default: 'upcoming',
     },
     costType: {

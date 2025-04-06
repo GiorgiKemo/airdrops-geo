@@ -31,13 +31,20 @@ const AirdropDetailPage = () => {
   // Function to update airdrop status
   const updateAirdropStatus = async (newStatus) => {
     try {
+      // Special handling for 'claim' status
+      if (newStatus === 'claim' && !airdrop.claimUrl) {
+        setError('Cannot set status to "Claim" without a claim URL. Please edit the airdrop to add a claim URL first.');
+        return;
+      }
+
       setLoading(true);
       await airdropService.updateAirdrop(id, { status: newStatus });
       // Refresh the airdrop data
       await fetchAirdrop();
     } catch (err) {
-      setError('Failed to update airdrop status. Please try again later.');
-      console.error(err);
+      setError(err.response?.data?.message || 'Failed to update airdrop status. Please try again later.');
+      console.error('Status update error:', err);
+      console.error('Error response:', err.response?.data);
     } finally {
       setLoading(false);
     }
@@ -282,13 +289,17 @@ const AirdropDetailPage = () => {
                     </button>
                     <button
                       onClick={() => updateAirdropStatus('claim')}
+                      disabled={!airdrop.claimUrl}
+                      title={airdrop.claimUrl ? 'Set status to Claim' : 'Requires a Claim URL - Edit the airdrop first'}
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
                         airdrop.status === 'claim'
                           ? 'bg-red-600 text-white'
+                          : !airdrop.claimUrl
+                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                           : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-red-100'
                       }`}
                     >
-                      Claim
+                      Claim {!airdrop.claimUrl && '(Needs URL)'}
                     </button>
                   </div>
                 </div>
