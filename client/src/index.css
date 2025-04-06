@@ -1,0 +1,563 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* macOS-inspired color palette - Light Mode */
+  --macos-bg: #f5f5f7;
+  --macos-card-bg: rgba(255, 255, 255, 0.8);
+  --macos-card-border: rgba(0, 0, 0, 0.1);
+  --macos-primary: #0071e3;
+  --macos-primary-hover: #0077ed;
+  --macos-secondary: #86868b;
+  --macos-text: #1d1d1f;
+  --macos-text-secondary: #86868b;
+  --macos-success: #29cc41;
+  --macos-warning: #ff9f0a;
+  --macos-danger: #ff3b30;
+  --macos-input-bg: rgba(255, 255, 255, 0.8);
+  --macos-input-border: rgba(0, 0, 0, 0.1);
+  --macos-shadow: rgba(0, 0, 0, 0.1);
+
+  /* Additional macOS UI elements */
+  --macos-sidebar-bg: rgba(247, 247, 247, 0.8);
+  --macos-toolbar-bg: rgba(246, 246, 246, 0.8);
+  --macos-divider: rgba(0, 0, 0, 0.1);
+  --macos-selection: rgba(0, 112, 227, 0.2);
+  --macos-hover: rgba(0, 0, 0, 0.03);
+  --macos-active: rgba(0, 0, 0, 0.05);
+  --macos-focus-ring: rgba(0, 125, 250, 0.6);
+  --macos-window-radius: 10px;
+  --macos-control-radius: 6px;
+  --macos-glyph-blue: #0071e3;
+  --macos-glyph-gray: #86868b;
+}
+
+.dark {
+  /* macOS-inspired color palette - Dark Mode */
+  --macos-bg: #1e1e1e;
+  --macos-card-bg: rgba(44, 44, 46, 0.8);
+  --macos-card-border: rgba(255, 255, 255, 0.1);
+  --macos-primary: #0a84ff;
+  --macos-primary-hover: #409cff;
+  --macos-secondary: #98989d;
+  --macos-text: #f5f5f7;
+  --macos-text-secondary: #98989d;
+  --macos-success: #32d74b;
+  --macos-warning: #ff9f0a;
+  --macos-danger: #ff453a;
+  --macos-input-bg: rgba(44, 44, 46, 0.8);
+  --macos-input-border: rgba(255, 255, 255, 0.1);
+  --macos-shadow: rgba(0, 0, 0, 0.3);
+
+  /* Additional macOS UI elements - Dark Mode */
+  --macos-sidebar-bg: rgba(44, 44, 46, 0.8);
+  --macos-toolbar-bg: rgba(50, 50, 52, 0.8);
+  --macos-divider: rgba(255, 255, 255, 0.1);
+  --macos-selection: rgba(10, 132, 255, 0.3);
+  --macos-hover: rgba(255, 255, 255, 0.03);
+  --macos-active: rgba(255, 255, 255, 0.05);
+  --macos-focus-ring: rgba(10, 132, 255, 0.6);
+  --macos-glyph-blue: #0a84ff;
+  --macos-glyph-gray: #98989d;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--macos-bg);
+  color: var(--macos-text);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  overflow-y: overlay; /* macOS-style overlay scrollbars */
+}
+
+/* macOS Typography */
+h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.875rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.75rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.625rem;
+}
+
+h5 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5rem;
+}
+
+h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--macos-selection);
+}
+
+/* macOS-style card */
+.macos-card {
+  background-color: var(--macos-card-bg);
+  border: 1px solid var(--macos-card-border);
+  border-radius: var(--macos-window-radius);
+  box-shadow: 0 4px 20px var(--macos-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform, box-shadow;
+}
+
+.macos-card:hover {
+  box-shadow: 0 10px 30px var(--macos-shadow);
+  transform: translateY(-4px);
+}
+
+/* macOS-style button */
+.macos-button {
+  background-color: var(--macos-primary);
+  color: white;
+  border: none;
+  border-radius: var(--macos-control-radius);
+  padding: 8px 16px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 2px 4px var(--macos-shadow);
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  position: relative;
+  overflow: visible;
+  white-space: nowrap;
+  min-width: 100px;
+  will-change: transform, box-shadow, background-color;
+}
+
+.macos-button:hover {
+  background-color: var(--macos-primary-hover);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 4px 8px var(--macos-shadow);
+}
+
+.macos-button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 2px var(--macos-shadow);
+  transition: all 0.1s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.macos-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--macos-focus-ring), 0 2px 4px var(--macos-shadow);
+}
+
+/* Secondary button */
+.macos-button.secondary {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--macos-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.dark .macos-button.secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--macos-text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.macos-button.secondary:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+.dark .macos-button.secondary:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* macOS-style input */
+.macos-input {
+  background-color: var(--macos-input-bg);
+  border: 1px solid var(--macos-input-border);
+  border-radius: var(--macos-control-radius);
+  padding: 8px 12px;
+  color: var(--macos-text);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 0.875rem;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 1px 2px var(--macos-shadow);
+  will-change: border-color, box-shadow, transform;
+}
+
+.macos-input:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px var(--macos-shadow);
+}
+
+.dark .macos-input:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.macos-input:focus {
+  outline: none;
+  border-color: var(--macos-primary);
+  box-shadow: 0 0 0 3px var(--macos-focus-ring);
+  transform: translateY(-1px);
+}
+
+.macos-input::placeholder {
+  color: var(--macos-text-secondary);
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.macos-input:focus::placeholder {
+  opacity: 0.5;
+}
+
+/* macOS-style select */
+.macos-select {
+  appearance: none;
+  background-color: var(--macos-input-bg);
+  border: 1px solid var(--macos-input-border);
+  border-radius: var(--macos-control-radius);
+  padding: 8px 32px 8px 12px;
+  color: var(--macos-text);
+  font-size: 0.875rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 1px 2px var(--macos-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  will-change: border-color, box-shadow, transform;
+  cursor: pointer;
+}
+
+.macos-select:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px var(--macos-shadow);
+}
+
+.dark .macos-select:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.macos-select:focus {
+  outline: none;
+  border-color: var(--macos-primary);
+  box-shadow: 0 0 0 3px var(--macos-focus-ring);
+  transform: translateY(-1px);
+}
+
+/* Ensure text wraps properly throughout the application */
+p, h1, h2, h3, h4, h5, h6, span, div {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* macOS-style toolbar */
+.macos-toolbar {
+  background-color: var(--macos-toolbar-bg);
+  border-bottom: 1px solid var(--macos-divider);
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* macOS-style sidebar */
+.macos-sidebar {
+  background-color: var(--macos-sidebar-bg);
+  border-right: 1px solid var(--macos-divider);
+  padding: 1rem 0;
+  height: 100%;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.macos-sidebar-item {
+  padding: 0.5rem 1rem;
+  margin: 0.25rem 0.5rem;
+  border-radius: var(--macos-control-radius);
+  color: var(--macos-text);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.macos-sidebar-item:hover {
+  background-color: var(--macos-hover);
+}
+
+.macos-sidebar-item.active {
+  background-color: var(--macos-selection);
+  color: var(--macos-primary);
+}
+
+/* macOS-style badge */
+.macos-badge {
+  background-color: var(--macos-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.125rem 0.375rem;
+  border-radius: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+}
+
+/* macOS-style switch */
+.macos-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.macos-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.macos-switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  transition: .4s;
+  border-radius: 20px;
+}
+
+.dark .macos-switch-slider {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.macos-switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.macos-switch input:checked + .macos-switch-slider {
+  background-color: var(--macos-success);
+}
+
+.macos-switch input:focus + .macos-switch-slider {
+  box-shadow: 0 0 0 3px var(--macos-focus-ring);
+}
+
+.macos-switch input:checked + .macos-switch-slider:before {
+  transform: translateX(16px);
+}
+
+/* macOS-style divider */
+.macos-divider {
+  height: 1px;
+  background-color: var(--macos-divider);
+  margin: 1rem 0;
+}
+
+/* macOS-style scrollbar */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Emoji picker styles */
+.EmojiPickerReact {
+  --epr-emoji-size: 16px !important;
+  --epr-category-label-height: 24px !important;
+  box-shadow: 0 4px 20px var(--macos-shadow) !important;
+  border: 1px solid var(--macos-card-border) !important;
+  font-size: 12px !important;
+}
+
+/* Make search bar smaller */
+.EmojiPickerReact .epr-search-container input.epr-search {
+  height: 26px !important;
+  font-size: 12px !important;
+  padding: 0 8px !important;
+}
+
+/* Make category tabs smaller */
+.EmojiPickerReact .epr-category-nav {
+  padding: 0 2px !important;
+}
+
+.EmojiPickerReact .epr-category-nav .epr-cat-btn {
+  padding: 3px !important;
+}
+
+/* Make emoji grid more compact */
+.EmojiPickerReact .epr-body .epr-emoji-list {
+  padding: 4px !important;
+}
+
+.EmojiPickerReact .epr-emoji-category-label {
+  font-size: 12px !important;
+  padding: 0 4px !important;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Custom Scrollbar - macOS style */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--macos-secondary);
+  border-radius: 10px;
+  opacity: 0.7;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--macos-primary);
+}
+
+/* Hide scrollbar when not in use */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  visibility: hidden;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}
+
+/* Dark mode scrollbar */
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #2d3748;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #4a5568;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+  }
+}
+
+/* Hide scrollbar but keep scrollability */
+.scrollable-hidden {
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollable-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
