@@ -58,7 +58,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Airdrop routes
-app.get('/api/airdrops', async (req, res) => {
+app.get('/api/airdrops', async (_req, res) => {
   try {
     // Check if MongoDB is connected
     if (mongoose.connection.readyState !== 1) {
@@ -252,12 +252,21 @@ app.put('/api/airdrops/:id', async (req, res) => {
     console.log('Social Links in PUT:', socialLinks);
     console.log('Social Links type in PUT:', typeof socialLinks);
 
-    // Check if this is a logo update request
-    const isLogoUpdateOnly = Object.keys(req.body).length === 1 && logoUrl !== undefined;
+    // Check if this is a partial update request (logo only, status only, etc.)
+    const isPartialUpdate = Object.keys(req.body).length === 1;
+    const isLogoUpdateOnly = isPartialUpdate && logoUrl !== undefined;
+    const isStatusUpdateOnly = isPartialUpdate && status !== undefined;
 
-    // If it's not just a logo update, validate required fields
-    if (!isLogoUpdateOnly && (!title || !description || !token || !criteria || !deadline || !status || !link)) {
-      return res.status(400).json({ message: 'All fields are required' });
+    console.log('Update type:', {
+      isPartialUpdate,
+      isLogoUpdateOnly,
+      isStatusUpdateOnly,
+      fieldsToUpdate: Object.keys(req.body)
+    });
+
+    // If it's a full update (not just logo or status), validate all required fields
+    if (!isPartialUpdate && (!title || !description || !token || !criteria || !deadline || !status || !link)) {
+      return res.status(400).json({ message: 'All fields are required for a full update' });
     }
 
     // Ensure socialLinks is properly structured
@@ -272,22 +281,30 @@ app.put('/api/airdrops/:id', async (req, res) => {
 
     // Update airdrop fields
     if (isLogoUpdateOnly) {
+      // Only update the logo URL
       airdrop.logoUrl = logoUrl;
-    } else {
-      airdrop.title = title;
-      airdrop.description = description;
-      airdrop.token = token;
-      airdrop.criteria = criteria;
-      airdrop.deadline = deadline;
-      airdrop.startDate = startDate || airdrop.startDate;
+      console.log('Updating logo URL only to:', logoUrl);
+    } else if (isStatusUpdateOnly) {
+      // Only update the status
       airdrop.status = status;
-      airdrop.costType = costType || airdrop.costType;
-      airdrop.link = link;
-      airdrop.claimUrl = claimUrl || airdrop.claimUrl;
-      airdrop.logoUrl = logoUrl || airdrop.logoUrl;
-      airdrop.cardColor = cardColor || airdrop.cardColor;
-      airdrop.predefinedColor = predefinedColor || airdrop.predefinedColor;
-      airdrop.socialLinks = cleanedSocialLinks;
+      console.log('Updating status only to:', status);
+    } else {
+      // Full update or multiple fields
+      if (title) airdrop.title = title;
+      if (description) airdrop.description = description;
+      if (token) airdrop.token = token;
+      if (criteria) airdrop.criteria = criteria;
+      if (deadline) airdrop.deadline = deadline;
+      if (startDate) airdrop.startDate = startDate;
+      if (status) airdrop.status = status;
+      if (costType) airdrop.costType = costType;
+      if (link) airdrop.link = link;
+      if (claimUrl !== undefined) airdrop.claimUrl = claimUrl;
+      if (logoUrl) airdrop.logoUrl = logoUrl;
+      if (cardColor !== undefined) airdrop.cardColor = cardColor;
+      if (predefinedColor) airdrop.predefinedColor = predefinedColor;
+      if (socialLinks) airdrop.socialLinks = cleanedSocialLinks;
+      console.log('Performing multi-field update');
     }
 
     const updatedAirdrop = await airdrop.save();
@@ -465,12 +482,12 @@ app.get('/api/tracking/:userId', async (req, res) => {
 });
 
 // Home route
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.send('API is running...');
 });
 
 // Reset view data (for testing purposes only)
-app.post('/api/reset-views', async (req, res) => {
+app.post('/api/reset-views', async (_req, res) => {
   try {
     // Reset view counts for all airdrops
     await Airdrop.updateMany({}, { views: 0 });
@@ -494,7 +511,7 @@ if (process.env.NODE_ENV === 'production') {
       console.log('Serving static files from:', staticPath);
       app.use(express.static(staticPath));
 
-      app.get('*', (req, res) => {
+      app.get('*', (_req, res) => {
         const indexPath = path.resolve(staticPath, 'index.html');
         if (fs.existsSync(indexPath)) {
           res.sendFile(indexPath);
@@ -508,6 +525,9 @@ if (process.env.NODE_ENV === 'production') {
       app.get('*', (req, res) => {
         if (!req.path.startsWith('/api')) {
           res.send('API is running, but client files are not available.');
+        } else {
+          // Continue to next middleware for API routes
+          res.status(404).json({ message: 'API endpoint not found' });
         }
       });
     }
