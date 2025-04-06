@@ -1,108 +1,86 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
+const connectDB = require('./config/db');
 
 // Load environment variables
 dotenv.config();
 
-// File path for storing airdrops data
-const DATA_FILE = path.join(__dirname, 'airdrops.json');
+// Connect to MongoDB
+connectDB();
 
-// Load airdrops from file or initialize empty array
-let airdrops = [];
-let nextId = 1;
-
-// User tracking data structure: { userId: [airdropIds] }
-let userTracking = {};
-
-// IP address view tracking: { airdropId: [ipAddresses] }
-let viewTracking = {};
-
-// Try to load existing data
-try {
-  if (fs.existsSync(DATA_FILE)) {
-    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    airdrops = data.airdrops || [];
-
-    // Add costType field to existing airdrops if missing
-    airdrops = airdrops.map(airdrop => {
-      if (!airdrop.costType) {
-        return { ...airdrop, costType: 'free' }; // Default to free for backward compatibility
-      }
-      return airdrop;
-    });
-
-    nextId = data.nextId || 1;
-    userTracking = data.userTracking || {};
-    viewTracking = data.viewTracking || {};
-    console.log(`Loaded ${airdrops.length} airdrops, tracking data for ${Object.keys(userTracking).length} users, and view data for ${Object.keys(viewTracking).length} airdrops from file`);
-  }
-} catch (error) {
-  console.error('Error loading data from file:', error);
-  // Continue with empty array if file can't be read
-}
-
-// Function to save data to file
-const saveData = () => {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ airdrops, nextId, userTracking, viewTracking }, null, 2));
-    console.log(`Saved ${airdrops.length} airdrops, tracking data for ${Object.keys(userTracking).length} users, and view data for ${Object.keys(viewTracking).length} airdrops to file`);
-  } catch (error) {
-    console.error('Error saving data to file:', error);
-  }
-};
+// Import models
+const Airdrop = require('./models/airdropModel');
+const Tracking = require('./models/trackingModel');
+const View = require('./models/viewModel');
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://airdrops-geo.onrender.com', 'http://localhost:5173'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Airdrop routes
-app.get('/api/airdrops', (req, res) => {
-  // Return all airdrops without sorting
-  res.json(airdrops);
+app.get('/api/airdrops', async (req, res) => {
+  try {
+    const airdrops = await Airdrop.find({});
+    res.json(airdrops);
+  } catch (error) {
+    console.error('Error fetching airdrops:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
-app.get('/api/airdrops/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const index = airdrops.findIndex(a => a._id === id);
+app.get('/api/airdrops/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const airdrop = await Airdrop.findOne({ airdropId: id });
 
-  if (index !== -1) {
+    if (!airdrop) {
+      return res.status(404).json({ message: 'Airdrop not found' });
+    }
+
     // Get client IP address
     const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-    // Initialize view tracking for this airdrop if it doesn't exist
-    if (!viewTracking[id]) {
-      viewTracking[id] = [];
+    // Find or create view tracking for this airdrop
+    let viewTracking = await View.findOne({ airdropId: id });
+
+    if (!viewTracking) {
+      viewTracking = new View({
+        airdropId: id,
+        ipAddresses: [],
+      });
     }
 
     // Only increment views if this IP hasn't viewed this airdrop before
-    if (!viewTracking[id].includes(clientIp)) {
+    if (!viewTracking.ipAddresses.includes(clientIp)) {
       // Increment views counter
-      airdrops[index].views = (airdrops[index].views || 0) + 1;
+      airdrop.views = (airdrop.views || 0) + 1;
+      await airdrop.save();
 
       // Add IP to the tracking list
-      viewTracking[id].push(clientIp);
-
-      // Save data to file (to persist view count)
-      saveData();
+      viewTracking.ipAddresses.push(clientIp);
+      await viewTracking.save();
 
       console.log(`New view from IP ${clientIp} for airdrop ${id}`);
     } else {
       console.log(`Duplicate view from IP ${clientIp} for airdrop ${id} - not counting`);
     }
 
-    res.json(airdrops[index]);
-  } else {
-    res.status(404).json({ message: 'Airdrop not found' });
+    res.json(airdrop);
+  } catch (error) {
+    console.error('Error fetching airdrop:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-app.post('/api/airdrops', (req, res) => {
+app.post('/api/airdrops', async (req, res) => {
   try {
     const { title, description, token, criteria, deadline, startDate, status, costType, link, claimUrl, logoUrl, cardColor, predefinedColor, socialLinks } = req.body;
 
@@ -130,8 +108,12 @@ app.post('/api/airdrops', (req, res) => {
 
     console.log('Cleaned social links:', cleanedSocialLinks);
 
-    const newAirdrop = {
-      _id: nextId++,
+    // Get the next ID (find the highest airdropId and add 1)
+    const highestAirdrop = await Airdrop.findOne().sort({ airdropId: -1 });
+    const nextId = highestAirdrop ? highestAirdrop.airdropId + 1 : 1;
+
+    const newAirdrop = new Airdrop({
+      airdropId: nextId,
       title,
       description,
       token,
@@ -147,28 +129,22 @@ app.post('/api/airdrops', (req, res) => {
       predefinedColor: predefinedColor || 'default', // Predefined color (optional)
       socialLinks: cleanedSocialLinks, // Social media links
       views: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    });
 
-    airdrops.push(newAirdrop);
-
-    // Save data to file
-    saveData();
-
-    res.status(201).json(newAirdrop);
+    const savedAirdrop = await newAirdrop.save();
+    res.status(201).json(savedAirdrop);
   } catch (error) {
     console.error('Error creating airdrop:', error);
     res.status(400).json({ message: error.message });
   }
 });
 
-app.put('/api/airdrops/:id', (req, res) => {
+app.put('/api/airdrops/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const index = airdrops.findIndex(a => a._id === id);
+    const airdrop = await Airdrop.findOne({ airdropId: id });
 
-    if (index === -1) {
+    if (!airdrop) {
       return res.status(404).json({ message: 'Airdrop not found' });
     }
 
@@ -180,163 +156,143 @@ app.put('/api/airdrops/:id', (req, res) => {
     // Check if this is a logo update request
     const isLogoUpdateOnly = Object.keys(req.body).length === 1 && logoUrl !== undefined;
 
-    // If it's a logo update, check for admin authorization
-    if (isLogoUpdateOnly) {
-      // Get the authorization header
-      const authHeader = req.headers.authorization;
-
-      // Simple admin check - in a real app, you'd use proper authentication
-      // This is a basic example that checks for a specific username in the header
-      if (!authHeader || !authHeader.includes('admin')) {
-        return res.status(403).json({ message: 'Only admin can update logos' });
-      }
+    // If it's not just a logo update, validate required fields
+    if (!isLogoUpdateOnly && (!title || !description || !token || !criteria || !deadline || !status || !link)) {
+      return res.status(400).json({ message: 'All fields are required' });
     }
 
-    // Preserve the current view count
-    const currentViews = airdrops[index].views || 0;
-
     // Ensure socialLinks is properly structured
-    const cleanedSocialLinks = socialLinks !== undefined ? {
-      website: socialLinks?.website || '',
-      discord: socialLinks?.discord || '',
-      twitter: socialLinks?.twitter || '',
-      telegram: socialLinks?.telegram || '',
-      github: socialLinks?.github || '',
-      instagram: socialLinks?.instagram || ''
-    } : (airdrops[index].socialLinks || {
-      website: '',
-      discord: '',
-      twitter: '',
-      telegram: '',
-      github: '',
-      instagram: ''
-    });
+    const cleanedSocialLinks = socialLinks ? {
+      website: socialLinks.website || '',
+      discord: socialLinks.discord || '',
+      twitter: socialLinks.twitter || '',
+      telegram: socialLinks.telegram || '',
+      github: socialLinks.github || '',
+      instagram: socialLinks.instagram || ''
+    } : airdrop.socialLinks;
 
-    console.log('Cleaned social links for update:', cleanedSocialLinks);
+    // Update airdrop fields
+    if (isLogoUpdateOnly) {
+      airdrop.logoUrl = logoUrl;
+    } else {
+      airdrop.title = title;
+      airdrop.description = description;
+      airdrop.token = token;
+      airdrop.criteria = criteria;
+      airdrop.deadline = deadline;
+      airdrop.startDate = startDate || airdrop.startDate;
+      airdrop.status = status;
+      airdrop.costType = costType || airdrop.costType;
+      airdrop.link = link;
+      airdrop.claimUrl = claimUrl || airdrop.claimUrl;
+      airdrop.logoUrl = logoUrl || airdrop.logoUrl;
+      airdrop.cardColor = cardColor || airdrop.cardColor;
+      airdrop.predefinedColor = predefinedColor || airdrop.predefinedColor;
+      airdrop.socialLinks = cleanedSocialLinks;
+    }
 
-    // Update the airdrop
-    airdrops[index] = {
-      ...airdrops[index],
-      title: title || airdrops[index].title,
-      description: description || airdrops[index].description,
-      token: token || airdrops[index].token,
-      criteria: criteria || airdrops[index].criteria,
-      deadline: deadline || airdrops[index].deadline,
-      startDate: startDate || airdrops[index].startDate,
-      status: status || airdrops[index].status,
-      costType: costType || airdrops[index].costType || 'free', // Default to free if not provided
-      link: link || airdrops[index].link,
-      claimUrl: claimUrl !== undefined ? claimUrl : (airdrops[index].claimUrl || ''),
-      logoUrl: logoUrl !== undefined ? logoUrl : airdrops[index].logoUrl,
-      cardColor: cardColor !== undefined ? cardColor : airdrops[index].cardColor,
-      predefinedColor: predefinedColor || airdrops[index].predefinedColor || 'default',
-      socialLinks: cleanedSocialLinks, // Social media links
-      views: currentViews, // Ensure views are preserved
-      updatedAt: new Date()
-    };
-
-    // Save data to file
-    saveData();
-
-    res.json(airdrops[index]);
+    const updatedAirdrop = await airdrop.save();
+    res.json(updatedAirdrop);
   } catch (error) {
     console.error('Error updating airdrop:', error);
     res.status(400).json({ message: error.message });
   }
 });
 
-app.delete('/api/airdrops/:id', (req, res) => {
+app.delete('/api/airdrops/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const index = airdrops.findIndex(a => a._id === id);
+    const airdrop = await Airdrop.findOne({ airdropId: id });
 
-    if (index === -1) {
-      return res.status(404).json({ message: 'Airdrop not found' });
-    }
-
-    airdrops.splice(index, 1);
-
-    // Save data to file
-    saveData();
-
-    res.json({ message: 'Airdrop removed' });
-  } catch (error) {
-    console.error('Error deleting airdrop:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// User tracking routes
-app.post('/api/tracking/:userId/:airdropId', (req, res) => {
-  try {
-    const { userId, airdropId } = req.params;
-    const airdropIdNum = parseInt(airdropId);
-
-    // Check if airdrop exists
-    const airdrop = airdrops.find(a => a._id === airdropIdNum);
     if (!airdrop) {
       return res.status(404).json({ message: 'Airdrop not found' });
     }
 
-    // Initialize user tracking array if it doesn't exist
-    if (!userTracking[userId]) {
-      userTracking[userId] = [];
+    await Airdrop.deleteOne({ airdropId: id });
+
+    // Also delete any view tracking for this airdrop
+    await View.deleteOne({ airdropId: id });
+
+    res.json({ message: 'Airdrop removed' });
+  } catch (error) {
+    console.error('Error deleting airdrop:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/tracking', async (req, res) => {
+  try {
+    const { userId, airdropId } = req.body;
+
+    if (!userId || !airdropId) {
+      return res.status(400).json({ message: 'User ID and Airdrop ID are required' });
     }
 
-    // Add airdrop to user's tracking list if not already there
-    if (!userTracking[userId].includes(airdropIdNum)) {
-      userTracking[userId].push(airdropIdNum);
-      saveData();
+    // Find or create tracking for this user
+    let tracking = await Tracking.findOne({ userId });
+
+    if (!tracking) {
+      tracking = new Tracking({
+        userId,
+        airdropIds: [],
+      });
     }
 
-    res.status(200).json({
-      message: 'Airdrop added to tracking',
-      tracking: userTracking[userId]
-    });
+    // Check if airdrop is already tracked
+    if (tracking.airdropIds.includes(airdropId)) {
+      return res.status(400).json({ message: 'Airdrop already tracked by user' });
+    }
+
+    // Add airdrop to tracking
+    tracking.airdropIds.push(airdropId);
+    await tracking.save();
+
+    res.status(201).json({ message: 'Airdrop tracked successfully' });
   } catch (error) {
     console.error('Error tracking airdrop:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-app.delete('/api/tracking/:userId/:airdropId', (req, res) => {
+app.delete('/api/tracking', async (req, res) => {
   try {
-    const { userId, airdropId } = req.params;
-    const airdropIdNum = parseInt(airdropId);
+    const { userId, airdropId } = req.body;
 
-    // Check if user has tracking data
-    if (!userTracking[userId]) {
-      return res.status(404).json({ message: 'User tracking not found' });
+    if (!userId || !airdropId) {
+      return res.status(400).json({ message: 'User ID and Airdrop ID are required' });
     }
 
-    // Remove airdrop from user's tracking list
-    userTracking[userId] = userTracking[userId].filter(id => id !== airdropIdNum);
-    saveData();
+    // Find tracking for this user
+    const tracking = await Tracking.findOne({ userId });
 
-    res.status(200).json({
-      message: 'Airdrop removed from tracking',
-      tracking: userTracking[userId]
-    });
+    if (!tracking) {
+      return res.status(404).json({ message: 'No tracking found for this user' });
+    }
+
+    // Remove airdrop from tracking
+    tracking.airdropIds = tracking.airdropIds.filter(id => id !== airdropId);
+    await tracking.save();
+
+    res.json({ message: 'Airdrop untracked successfully' });
   } catch (error) {
-    console.error('Error removing tracked airdrop:', error);
-    res.status(500).json({ message: error.message });
+    console.error('Error untracking airdrop:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-app.get('/api/tracking/:userId', (req, res) => {
+app.get('/api/tracking/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Check if user has tracking data
-    if (!userTracking[userId]) {
-      // Return empty array if user has no tracking data
+    // Find tracking for this user
+    const tracking = await Tracking.findOne({ userId });
+
+    if (!tracking || tracking.airdropIds.length === 0) {
       return res.status(200).json([]);
     }
 
     // Get all airdrops tracked by user
-    const trackedAirdrops = airdrops.filter(airdrop =>
-      userTracking[userId].includes(airdrop._id)
-    );
+    const trackedAirdrops = await Airdrop.find({ airdropId: { $in: tracking.airdropIds } });
 
     res.status(200).json(trackedAirdrops);
   } catch (error) {
@@ -351,18 +307,13 @@ app.get('/', (req, res) => {
 });
 
 // Reset view data (for testing purposes only)
-app.post('/api/reset-views', (req, res) => {
+app.post('/api/reset-views', async (req, res) => {
   try {
     // Reset view counts for all airdrops
-    airdrops.forEach(airdrop => {
-      airdrop.views = 0;
-    });
+    await Airdrop.updateMany({}, { views: 0 });
 
     // Clear the view tracking data
-    viewTracking = {};
-
-    // Save the updated data
-    saveData();
+    await View.deleteMany({});
 
     res.json({ message: 'View data has been reset successfully' });
   } catch (error) {
@@ -370,6 +321,16 @@ app.post('/api/reset-views', (req, res) => {
     res.status(500).json({ message: 'Failed to reset view data' });
   }
 });
+
+// Serve static assets in production
+if (process.env.NODE_ENV === 'production') {
+  // Set static folder
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
+  });
+}
 
 // Start server
 const PORT = process.env.PORT || 5000;
