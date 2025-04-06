@@ -14,6 +14,27 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: false, // Set to true if you need cookies to be sent
+  timeout: 10000, // 10 seconds timeout
+});
+
+// Add request interceptor for debugging
+api.interceptors.request.use(config => {
+  console.log('Making request to:', config.url);
+  console.log('Request config:', config);
+  return config;
+}, error => {
+  console.error('Request error:', error);
+  return Promise.reject(error);
+});
+
+// Add response interceptor for debugging
+api.interceptors.response.use(response => {
+  console.log('Response received:', response);
+  return response;
+}, error => {
+  console.error('Response error:', error);
+  return Promise.reject(error);
 });
 
 // Airdrop API services

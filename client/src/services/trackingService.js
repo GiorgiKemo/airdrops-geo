@@ -10,6 +10,26 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: false,
+  timeout: 10000, // 10 seconds timeout
+});
+
+// Add request interceptor for debugging
+api.interceptors.request.use(config => {
+  console.log('Tracking service - Making request to:', config.url);
+  return config;
+}, error => {
+  console.error('Tracking service - Request error:', error);
+  return Promise.reject(error);
+});
+
+// Add response interceptor for debugging
+api.interceptors.response.use(response => {
+  console.log('Tracking service - Response received:', response);
+  return response;
+}, error => {
+  console.error('Tracking service - Response error:', error);
+  return Promise.reject(error);
 });
 
 // Tracking service
@@ -28,7 +48,8 @@ export const trackingService = {
   // Add an airdrop to user's tracking
   trackAirdrop: async (userId, airdropId) => {
     try {
-      const response = await api.post(`/tracking/${userId}/${airdropId}`);
+      console.log('Tracking airdrop:', { userId, airdropId });
+      const response = await api.post('/tracking', { userId, airdropId });
       return response.data;
     } catch (error) {
       console.error('Error tracking airdrop:', error);
@@ -39,7 +60,8 @@ export const trackingService = {
   // Remove an airdrop from user's tracking
   untrackAirdrop: async (userId, airdropId) => {
     try {
-      const response = await api.delete(`/tracking/${userId}/${airdropId}`);
+      console.log('Untracking airdrop:', { userId, airdropId });
+      const response = await api.delete('/tracking', { data: { userId, airdropId } });
       return response.data;
     } catch (error) {
       console.error('Error untracking airdrop:', error);
