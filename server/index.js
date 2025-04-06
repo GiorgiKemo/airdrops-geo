@@ -7,8 +7,14 @@ const connectDB = require('./config/db');
 // Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
+// Import seed function
+const seedDatabase = require('./scripts/seedDatabase');
+
+// Connect to MongoDB and seed database
+connectDB().then(() => {
+  // Check if we need to seed the database
+  seedDatabase.checkAndSeedDatabase();
+});
 
 // Import models
 const Airdrop = require('./models/airdropModel');

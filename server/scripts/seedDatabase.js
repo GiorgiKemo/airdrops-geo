@@ -1,25 +1,9 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
-
 // Import models
 const Airdrop = require('../models/airdropModel');
-
-// Connect to MongoDB
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
-  }
-};
 
 // Read airdrops from JSON file
 const loadAirdropsFromFile = () => {
@@ -36,25 +20,23 @@ const loadAirdropsFromFile = () => {
   }
 };
 
-// Seed database with airdrops
-const seedDatabase = async () => {
+// Check if database needs seeding and seed if necessary
+const checkAndSeedDatabase = async () => {
   try {
-    // Connect to database
-    const conn = await connectDB();
-
     // Check if database already has airdrops
     const existingCount = await Airdrop.countDocuments();
     if (existingCount > 0) {
       console.log(`Database already has ${existingCount} airdrops. Skipping seed.`);
-      await mongoose.disconnect();
       return;
     }
+
+    console.log('No airdrops found in database. Seeding...');
 
     // Load airdrops from file
     const airdrops = loadAirdropsFromFile();
     if (airdrops.length === 0) {
       console.log('No airdrops found in file. Creating sample airdrop.');
-      
+
       // Create a sample airdrop
       const sampleAirdrop = {
         airdropId: 1,
@@ -81,13 +63,13 @@ const seedDatabase = async () => {
         },
         views: 0
       };
-      
+
       await Airdrop.create(sampleAirdrop);
       console.log('Sample airdrop created successfully.');
     } else {
       // Insert airdrops from file
       console.log(`Seeding database with ${airdrops.length} airdrops...`);
-      
+
       // Map airdrops to include airdropId
       const mappedAirdrops = airdrops.map((airdrop, index) => ({
         ...airdrop,
@@ -101,19 +83,38 @@ const seedDatabase = async () => {
           instagram: ''
         }
       }));
-      
+
       await Airdrop.insertMany(mappedAirdrops);
       console.log(`${airdrops.length} airdrops seeded successfully.`);
     }
-
-    // Disconnect from database
-    await mongoose.disconnect();
-    console.log('Database connection closed.');
   } catch (error) {
     console.error('Error seeding database:', error);
-    process.exit(1);
   }
 };
 
-// Run the seed function
-seedDatabase();
+// For direct execution via npm run seed
+if (require.main === module) {
+  const mongoose = require('mongoose');
+  const dotenv = require('dotenv');
+  const path = require('path');
+
+  // Load environment variables
+  dotenv.config({ path: path.join(__dirname, '../.env') });
+
+  // Connect to MongoDB
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(async () => {
+      console.log('MongoDB Connected for seeding');
+      await checkAndSeedDatabase();
+      await mongoose.disconnect();
+      console.log('Database connection closed.');
+    })
+    .catch(err => {
+      console.error('Error connecting to MongoDB:', err);
+      process.exit(1);
+    });
+}
+
+module.exports = {
+  checkAndSeedDatabase
+};
