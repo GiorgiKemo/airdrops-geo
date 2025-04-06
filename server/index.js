@@ -286,6 +286,15 @@ app.put('/api/airdrops/:id', async (req, res) => {
       console.log('Updating logo URL only to:', logoUrl);
     } else if (isStatusUpdateOnly) {
       // Only update the status
+
+      // Special validation for 'claim' status
+      if (status === 'claim' && !airdrop.claimUrl) {
+        console.log('Cannot update to claim status without a claim URL');
+        return res.status(400).json({
+          message: 'Cannot set status to "Claim" without a claim URL. Please edit the airdrop to add a claim URL first.'
+        });
+      }
+
       airdrop.status = status;
       console.log('Updating status only to:', status);
     } else {
@@ -296,7 +305,16 @@ app.put('/api/airdrops/:id', async (req, res) => {
       if (criteria) airdrop.criteria = criteria;
       if (deadline) airdrop.deadline = deadline;
       if (startDate) airdrop.startDate = startDate;
-      if (status) airdrop.status = status;
+      // Special validation for 'claim' status in multi-field update
+      if (status) {
+        if (status === 'claim' && !claimUrl && !airdrop.claimUrl) {
+          console.log('Cannot update to claim status without a claim URL');
+          return res.status(400).json({
+            message: 'Cannot set status to "Claim" without a claim URL. Please provide a claim URL.'
+          });
+        }
+        airdrop.status = status;
+      }
       if (costType) airdrop.costType = costType;
       if (link) airdrop.link = link;
       if (claimUrl !== undefined) airdrop.claimUrl = claimUrl;

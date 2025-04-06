@@ -94,8 +94,14 @@ const AdminPage = () => {
   };
 
   // Update airdrop status
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = async (id, newStatus, airdrop) => {
     try {
+      // Special handling for 'claim' status
+      if (newStatus === 'claim' && !airdrop.claimUrl) {
+        setError('Cannot set status to "Claim" without a claim URL. Please edit the airdrop to add a claim URL first.');
+        return;
+      }
+
       await airdropService.updateAirdrop(id, { status: newStatus });
       setSuccessMessage(`Airdrop status updated to ${newStatus}!`);
       fetchAirdrops();
@@ -105,8 +111,9 @@ const AdminPage = () => {
         setSuccessMessage('');
       }, 3000);
     } catch (err) {
-      setError('Failed to update airdrop status. Please try again.');
-      console.error(err);
+      setError(err.response?.data?.message || 'Failed to update airdrop status. Please try again.');
+      console.error('Status update error:', err);
+      console.error('Error response:', err.response?.data);
     }
   };
 
@@ -234,6 +241,8 @@ const AdminPage = () => {
                             ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
                             : airdrop.status === 'upcoming'
                             ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
+                            : airdrop.status === 'claim'
+                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                         }`}
                       >
@@ -249,13 +258,19 @@ const AdminPage = () => {
                       {/* Status dropdown */}
                       <select
                         value={airdrop.status}
-                        onChange={(e) => handleStatusChange(airdrop._id, e.target.value)}
+                        onChange={(e) => handleStatusChange(airdrop._id, e.target.value, airdrop)}
                         className="mr-2 sm:mr-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm"
                       >
                         <option value="upcoming">Upcoming</option>
                         <option value="active">Active</option>
                         <option value="ended">Ended</option>
-                        <option value="claim">Claim</option>
+                        <option
+                          value="claim"
+                          disabled={!airdrop.claimUrl}
+                          title={airdrop.claimUrl ? 'Set status to Claim' : 'Requires a Claim URL - Edit the airdrop first'}
+                        >
+                          Claim {!airdrop.claimUrl && '(Requires Claim URL)'}
+                        </option>
                       </select>
 
                       <button
