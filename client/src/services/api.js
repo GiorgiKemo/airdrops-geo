@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Remove trailing slash if present
+const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
+const API_URL = `${apiUrl}/api`;
+
+// Log the API URL for debugging
+console.log('API URL:', API_URL);
+console.log('Environment:', import.meta.env.MODE);
 
 // Create axios instance
 const api = axios.create({
@@ -15,10 +21,18 @@ export const airdropService = {
   // Get all airdrops
   getAirdrops: async () => {
     try {
+      console.log('Fetching airdrops from:', `${API_URL}/airdrops`);
       const response = await api.get('/airdrops');
+      console.log('Airdrops response:', response);
       return response.data;
     } catch (error) {
       console.error('Error fetching airdrops:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
       throw error;
     }
   },
