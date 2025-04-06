@@ -347,15 +347,17 @@ app.get('/api/tracking/:userId', async (req, res) => {
 
     console.log('Found tracking with airdropIds:', tracking.airdropIds);
 
-    // Convert all airdropIds to numbers for querying
-    const numericIds = tracking.airdropIds
-      .map(id => typeof id === 'string' && !isNaN(Number(id)) ? Number(id) : id)
-      .filter(id => typeof id === 'number');
+    // Get all airdrops
+    const allAirdrops = await Airdrop.find({});
+    console.log(`Found ${allAirdrops.length} total airdrops`);
 
-    console.log('Numeric airdropIds for query:', numericIds);
-
-    // Get all airdrops tracked by user
-    const trackedAirdrops = await Airdrop.find({ airdropId: { $in: numericIds } });
+    // Filter airdrops by _id (MongoDB ObjectID)
+    const trackedAirdrops = allAirdrops.filter(airdrop => {
+      // Convert airdrop._id to string for comparison
+      const airdropIdStr = airdrop._id.toString();
+      // Check if this airdrop's _id is in the tracking.airdropIds array
+      return tracking.airdropIds.some(id => id.toString() === airdropIdStr);
+    });
 
     console.log(`Found ${trackedAirdrops.length} tracked airdrops`);
     res.status(200).json(trackedAirdrops);
