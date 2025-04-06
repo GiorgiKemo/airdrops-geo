@@ -2,18 +2,20 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   server: {
     port: 5173,
     open: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false
+    ...(mode !== 'production' && {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          secure: false
+        }
       }
-    }
+    })
   },
   base: '/',
   build: {
@@ -21,4 +23,4 @@ export default defineConfig({
     assetsDir: 'assets',
     emptyOutDir: true
   }
-})
+}))
