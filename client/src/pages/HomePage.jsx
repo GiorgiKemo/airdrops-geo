@@ -277,8 +277,7 @@ const HomePage = () => {
                 <FaFilter className="text-[var(--macos-text-secondary)]" />
                 <span>
                   {costFilter === 'free' ? 'Free' :
-                   costFilter === 'paid' ? '$ Required' :
-                   costFilter === 'both' ? 'Both Options' : 'All'}
+                   costFilter === 'paid' ? '$ Required' : 'All'}
                 </span>
               </button>
 
@@ -318,17 +317,7 @@ const HomePage = () => {
                         $ Required
                       </button>
                     </li>
-                    <li>
-                      <button
-                        onClick={() => {
-                          setCostFilter('both');
-                          setShowCostFilter(false);
-                        }}
-                        className={`block w-full text-left px-4 py-2 text-sm ${costFilter === 'both' ? 'bg-blue-600 text-white font-medium' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-[var(--macos-text)]'}`}
-                      >
-                        Both Options
-                      </button>
-                    </li>
+
                   </ul>
                 </div>
               )}
