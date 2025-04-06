@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const airdropSchema = mongoose.Schema(
   {
+    airdropId: {
+      type: Number,
+      unique: true,
+    },
     title: {
       type: String,
       required: true,
@@ -19,8 +23,12 @@ const airdropSchema = mongoose.Schema(
       required: true,
     },
     deadline: {
-      type: Date,
+      type: String,
       required: true,
+    },
+    startDate: {
+      type: String,
+      default: () => new Date().toISOString().split('T')[0],
     },
     status: {
       type: String,
@@ -28,9 +36,41 @@ const airdropSchema = mongoose.Schema(
       enum: ['active', 'upcoming', 'ended'],
       default: 'upcoming',
     },
+    costType: {
+      type: String,
+      default: 'free',
+    },
     link: {
       type: String,
       required: true,
+    },
+    claimUrl: {
+      type: String,
+      default: '',
+    },
+    logoUrl: {
+      type: String,
+      default: '',
+    },
+    cardColor: {
+      type: String,
+      default: '',
+    },
+    predefinedColor: {
+      type: String,
+      default: 'default',
+    },
+    socialLinks: {
+      website: { type: String, default: '' },
+      discord: { type: String, default: '' },
+      twitter: { type: String, default: '' },
+      telegram: { type: String, default: '' },
+      github: { type: String, default: '' },
+      instagram: { type: String, default: '' },
+    },
+    views: {
+      type: Number,
+      default: 0,
     },
   },
   {
