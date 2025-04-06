@@ -8,7 +8,7 @@ const trackingSchema = mongoose.Schema(
       unique: true,
     },
     airdropIds: {
-      type: [Number],
+      type: [mongoose.Schema.Types.Mixed], // Accept both numbers and strings
       default: [],
     },
   },

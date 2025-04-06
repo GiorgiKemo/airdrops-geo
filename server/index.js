@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 
@@ -267,6 +268,8 @@ app.post('/api/tracking', async (req, res) => {
       return res.status(400).json({ message: 'User ID and Airdrop ID are required' });
     }
 
+    console.log('Tracking airdrop:', { userId, airdropId, airdropIdType: typeof airdropId });
+
     // Find or create tracking for this user
     let tracking = await Tracking.findOne({ userId });
 
@@ -277,8 +280,12 @@ app.post('/api/tracking', async (req, res) => {
       });
     }
 
+    // Convert airdropIds to strings for comparison
+    const airdropIdStr = String(airdropId);
+    const existingIds = tracking.airdropIds.map(id => String(id));
+
     // Check if airdrop is already tracked
-    if (tracking.airdropIds.includes(airdropId)) {
+    if (existingIds.includes(airdropIdStr)) {
       return res.status(400).json({ message: 'Airdrop already tracked by user' });
     }
 
@@ -301,6 +308,8 @@ app.delete('/api/tracking', async (req, res) => {
       return res.status(400).json({ message: 'User ID and Airdrop ID are required' });
     }
 
+    console.log('Untracking airdrop:', { userId, airdropId, airdropIdType: typeof airdropId });
+
     // Find tracking for this user
     const tracking = await Tracking.findOne({ userId });
 
@@ -308,8 +317,11 @@ app.delete('/api/tracking', async (req, res) => {
       return res.status(404).json({ message: 'No tracking found for this user' });
     }
 
+    // Convert airdropId to string for comparison
+    const airdropIdStr = String(airdropId);
+
     // Remove airdrop from tracking
-    tracking.airdropIds = tracking.airdropIds.filter(id => id !== airdropId);
+    tracking.airdropIds = tracking.airdropIds.filter(id => String(id) !== airdropIdStr);
     await tracking.save();
 
     res.json({ message: 'Airdrop untracked successfully' });
@@ -323,20 +335,34 @@ app.get('/api/tracking/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
+    console.log('Fetching tracked airdrops for user:', userId);
+
     // Find tracking for this user
     const tracking = await Tracking.findOne({ userId });
 
     if (!tracking || tracking.airdropIds.length === 0) {
+      console.log('No tracking found or empty tracking for user:', userId);
       return res.status(200).json([]);
     }
 
-    // Get all airdrops tracked by user
-    const trackedAirdrops = await Airdrop.find({ airdropId: { $in: tracking.airdropIds } });
+    console.log('Found tracking with airdropIds:', tracking.airdropIds);
 
+    // Convert all airdropIds to numbers for querying
+    const numericIds = tracking.airdropIds
+      .map(id => typeof id === 'string' && !isNaN(Number(id)) ? Number(id) : id)
+      .filter(id => typeof id === 'number');
+
+    console.log('Numeric airdropIds for query:', numericIds);
+
+    // Get all airdrops tracked by user
+    const trackedAirdrops = await Airdrop.find({ airdropId: { $in: numericIds } });
+
+    console.log(`Found ${trackedAirdrops.length} tracked airdrops`);
     res.status(200).json(trackedAirdrops);
   } catch (error) {
     console.error('Error fetching tracked airdrops:', error);
-    res.status(500).json({ message: error.message });
+    // Return empty array instead of error to prevent frontend from crashing
+    res.status(200).json([]);
   }
 });
 
@@ -363,12 +389,33 @@ app.post('/api/reset-views', async (req, res) => {
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
-  // Set static folder
-  app.use(express.static(path.join(__dirname, '../client/dist')));
+  try {
+    const staticPath = path.join(__dirname, '../client/dist');
+    // Check if the directory exists before setting up static serving
+    if (fs.existsSync(staticPath)) {
+      console.log('Serving static files from:', staticPath);
+      app.use(express.static(staticPath));
 
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
-  });
+      app.get('*', (req, res) => {
+        const indexPath = path.resolve(staticPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.send('API is running, but client files are not available.');
+        }
+      });
+    } else {
+      console.log('Static directory not found:', staticPath);
+      // Fallback route for all non-API routes
+      app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+          res.send('API is running, but client files are not available.');
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error setting up static file serving:', error);
+  }
 }
 
 // Start server
