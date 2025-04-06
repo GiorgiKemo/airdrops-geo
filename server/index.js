@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 
 // Load environment variables
@@ -11,9 +12,16 @@ dotenv.config();
 const seedDatabase = require('./scripts/seedDatabase');
 
 // Connect to MongoDB and seed database
-connectDB().then(() => {
-  // Check if we need to seed the database
-  seedDatabase.checkAndSeedDatabase();
+connectDB().then((conn) => {
+  if (conn) {
+    console.log('MongoDB connection successful, checking if database needs seeding...');
+    // Check if we need to seed the database
+    seedDatabase.checkAndSeedDatabase();
+  } else {
+    console.log('MongoDB connection failed, skipping database seeding.');
+  }
+}).catch(err => {
+  console.error('Unexpected error during MongoDB connection:', err);
 });
 
 // Import models
@@ -51,11 +59,19 @@ app.use(express.urlencoded({ extended: false }));
 // Airdrop routes
 app.get('/api/airdrops', async (req, res) => {
   try {
-    const airdrops = await Airdrop.find({});
+    // Check if MongoDB is connected
+    if (mongoose.connection.readyState !== 1) {
+      console.log('MongoDB not connected, returning empty array');
+      return res.json([]);
+    }
+
+    const airdrops = await Airdrop.find({}).maxTimeMS(5000);
+    console.log(`Found ${airdrops.length} airdrops`);
     res.json(airdrops);
   } catch (error) {
     console.error('Error fetching airdrops:', error);
-    res.status(500).json({ message: 'Server error' });
+    // Return empty array instead of error to prevent frontend from crashing
+    res.json([]);
   }
 });
 
