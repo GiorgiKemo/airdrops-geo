@@ -225,6 +225,29 @@ app.post('/api/airdrops', upload.single('logo'), async (req, res) => {
     const airdrop = new Airdrop(airdropData);
     const savedAirdrop = await airdrop.save();
 
+    // Explicitly send the new airdrop to Telegram
+    try {
+      console.log('Explicitly sending new airdrop to Telegram');
+      const telegramService = require('./services/telegramService');
+      const result = await telegramService.sendAirdropToTelegram(savedAirdrop);
+
+      // If successful, store the Telegram message ID
+      if (result.success && result.messageId) {
+        await Airdrop.findByIdAndUpdate(savedAirdrop._id, {
+          'telegram.messageId': result.messageId,
+          'telegram.chatId': result.chatId,
+          'telegram.lastUpdated': new Date()
+        });
+
+        console.log(`Stored Telegram message ID ${result.messageId} for new airdrop ${savedAirdrop.airdropId}`);
+      } else {
+        console.log('Failed to send new airdrop to Telegram');
+      }
+    } catch (telegramError) {
+      console.error('Error sending new airdrop to Telegram:', telegramError);
+      // Don't fail the request if Telegram notification fails
+    }
+
     res.status(201).json(savedAirdrop);
   } catch (error) {
     console.error('Error creating airdrop:', error);
@@ -288,8 +311,23 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
       }
     }
 
-    // Add a flag to indicate this is a regular edit or status change (not an update button press)
-    airdropData.skipTelegramNotification = true;
+    // Check if this is a status update (which should trigger a notification)
+    const isStatusUpdate = airdropData.status && existingAirdrop.status !== airdropData.status;
+    const isBellUpdate = req.query.notifyTelegram === 'true';
+
+    console.log(`Update type: ${isStatusUpdate ? 'Status Update' : isBellUpdate ? 'Bell Update' : 'Regular Edit'}`);
+    console.log(`Status: ${existingAirdrop.status} -> ${airdropData.status || existingAirdrop.status}`);
+    console.log(`Notify Telegram: ${req.query.notifyTelegram}`);
+
+    // Only skip Telegram notification for regular edits (not status updates or bell updates)
+    if (!isStatusUpdate && !isBellUpdate) {
+      console.log('Skipping Telegram notification for regular edit');
+      airdropData.skipTelegramNotification = true;
+    } else {
+      console.log('Will send Telegram notification for this update');
+      // Make sure we don't have the skip flag
+      delete airdropData.skipTelegramNotification;
+    }
 
     // Update the airdrop using the _id field
     const updatedAirdrop = await Airdrop.findByIdAndUpdate(
