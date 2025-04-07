@@ -1,6 +1,6 @@
-# Airdrops.geo - Cryptocurrency Airdrops Platform
+# Airdrops-Geo - Cryptocurrency Airdrops Platform
 
-A full-stack web application for posting and displaying cryptocurrency airdrops, inspired by airdrops.io. The application allows administrators to post airdrops and users to view them.
+A full-stack web application for posting and displaying cryptocurrency airdrops. The application allows administrators to post airdrops and users to view them.
 
 ## Tech Stack
 
@@ -87,7 +87,7 @@ npm run dev
 
 - **Homepage**: Display a list of all airdrops with filtering options
 - **Details Page**: Show full details of a single airdrop
-- **Admin Page**: 
+- **Admin Page**:
   - List all airdrops with edit/delete options
   - Form to add new airdrops
   - Form to edit existing airdrops
