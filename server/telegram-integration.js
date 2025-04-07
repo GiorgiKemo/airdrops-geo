@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const telegramService = require('./services/telegramService');
 
+// Store the last time an airdrop was sent to Telegram
+const lastSentTime = new Map();
+
 /**
  * Set up a MongoDB change stream to watch for new or updated airdrops
  * and send them to Telegram
@@ -59,10 +62,41 @@ function setupTelegramIntegration(options = {}) {
         if (logActivity) {
           console.log(`Airdrop updated: ${airdrop.title} (ID: ${airdrop.airdropId})`);
         }
+
+        // Check if this is just a Telegram metadata update
+        if (change.updateDescription && change.updateDescription.updatedFields) {
+          const updatedFields = Object.keys(change.updateDescription.updatedFields);
+          const onlyTelegramFieldsUpdated = updatedFields.every(field =>
+            field.startsWith('telegram.') || field === 'updatedAt'
+          );
+
+          if (onlyTelegramFieldsUpdated) {
+            if (logActivity) {
+              console.log(`Skipping Telegram notification for airdrop ${airdrop.airdropId} - only Telegram metadata was updated`);
+            }
+            return; // Skip sending to Telegram
+          }
+        }
       }
 
       // Send the airdrop to Telegram
       if (airdrop) {
+        // Implement debounce - don't send the same airdrop too frequently
+        const airdropId = airdrop._id.toString();
+        const now = Date.now();
+        const lastSent = lastSentTime.get(airdropId) || 0;
+        const debounceTime = 60000; // 1 minute in milliseconds
+
+        if (now - lastSent < debounceTime) {
+          if (logActivity) {
+            console.log(`Skipping Telegram notification for airdrop ${airdrop.airdropId} - sent too recently (within ${debounceTime/1000} seconds)`);
+          }
+          return; // Skip sending to Telegram
+        }
+
+        // Update the last sent time
+        lastSentTime.set(airdropId, now);
+
         // Determine if this is a new airdrop or an update
         const isUpdate = change.operationType === 'update';
 
