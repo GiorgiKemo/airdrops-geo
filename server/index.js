@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
+const telegramService = require('./services/telegramService');
 
 // Load environment variables
 dotenv.config();
@@ -202,6 +203,16 @@ app.post('/api/airdrops', async (req, res) => {
     });
 
     const savedAirdrop = await newAirdrop.save();
+
+    // Send the airdrop to Telegram
+    try {
+      await telegramService.sendAirdropToTelegram(savedAirdrop);
+      console.log(`Airdrop "${savedAirdrop.title}" sent to Telegram`);
+    } catch (telegramError) {
+      // Just log the error, don't fail the request
+      console.error('Failed to send airdrop to Telegram:', telegramError);
+    }
+
     res.status(201).json(savedAirdrop);
   } catch (error) {
     console.error('Error creating airdrop:', error);
@@ -326,6 +337,18 @@ app.put('/api/airdrops/:id', async (req, res) => {
     }
 
     const updatedAirdrop = await airdrop.save();
+
+    // Only send to Telegram if this is a significant update (not just a view count change)
+    if (!isLogoUpdateOnly) {
+      try {
+        await telegramService.sendAirdropToTelegram(updatedAirdrop);
+        console.log(`Updated airdrop "${updatedAirdrop.title}" sent to Telegram`);
+      } catch (telegramError) {
+        // Just log the error, don't fail the request
+        console.error('Failed to send updated airdrop to Telegram:', telegramError);
+      }
+    }
+
     res.json(updatedAirdrop);
   } catch (error) {
     console.error('Error updating airdrop:', error);
