@@ -82,6 +82,7 @@ const airdropSchema = mongoose.Schema(
       date: { type: Date, default: Date.now },
       telegramMessageId: { type: Number, default: null }
     }],
+    skipTelegramNotification: { type: Boolean, default: false },
   },
   {
     timestamps: true,

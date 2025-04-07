@@ -353,8 +353,23 @@ app.put('/api/airdrops/:id', async (req, res) => {
 
     const updatedAirdrop = await airdrop.save();
 
-    // Note: We no longer need to explicitly send airdrops to Telegram here
-    // The MongoDB Change Stream will automatically detect updated airdrops and send them to Telegram
+    // Add a flag to indicate this is a regular edit or status change (not an update button press)
+    // This will be used by the MongoDB Change Stream to skip sending to Telegram
+    updatedAirdrop.skipTelegramNotification = true;
+    await updatedAirdrop.save();
+
+    // Remove the flag after a short delay (to ensure the change stream picks it up)
+    setTimeout(async () => {
+      try {
+        await Airdrop.updateOne(
+          { _id: updatedAirdrop._id },
+          { $unset: { skipTelegramNotification: 1 } }
+        );
+        console.log(`Removed skipTelegramNotification flag from airdrop ${updatedAirdrop.airdropId}`);
+      } catch (err) {
+        console.error('Error removing skipTelegramNotification flag:', err);
+      }
+    }, 2000);
 
     res.json(updatedAirdrop);
   } catch (error) {

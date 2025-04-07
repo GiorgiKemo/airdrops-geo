@@ -64,18 +64,28 @@ function setupTelegramIntegration(options = {}) {
         }
 
         // Check if this is just a Telegram metadata update or views update
+        // or if it has the skipTelegramNotification flag
+        if (airdrop.skipTelegramNotification) {
+          if (logActivity) {
+            console.log(`Skipping Telegram notification for airdrop ${airdrop.airdropId} - skipTelegramNotification flag is set`);
+          }
+          return; // Skip sending to Telegram
+        }
+
         if (change.updateDescription && change.updateDescription.updatedFields) {
           const updatedFields = Object.keys(change.updateDescription.updatedFields);
 
           // Skip if only Telegram metadata or views were updated
           const onlyIgnoredFieldsUpdated = updatedFields.every(field =>
-            field.startsWith('telegram.') || field === 'updatedAt' || field === 'views'
+            field.startsWith('telegram.') || field === 'updatedAt' || field === 'views' || field === 'skipTelegramNotification'
           );
 
           if (onlyIgnoredFieldsUpdated) {
             if (logActivity) {
               if (updatedFields.includes('views')) {
                 console.log(`Skipping Telegram notification for airdrop ${airdrop.airdropId} - only views count was updated`);
+              } else if (updatedFields.includes('skipTelegramNotification')) {
+                console.log(`Skipping Telegram notification for airdrop ${airdrop.airdropId} - skipTelegramNotification flag was updated`);
               } else {
                 console.log(`Skipping Telegram notification for airdrop ${airdrop.airdropId} - only Telegram metadata was updated`);
               }
