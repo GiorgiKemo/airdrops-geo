@@ -1,0 +1,20 @@
+{
+  "name": "airdrops-geo",
+  "version": "1.0.0",
+  "description": "Cryptocurrency airdrops platform",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "cd server && node index.js",
+    "build": "cd server && npm install",
+    "dev": "cd server && npm run dev"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GiorgiKemo/airdrops-geo.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
