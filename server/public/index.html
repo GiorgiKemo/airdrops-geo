@@ -63,8 +63,36 @@
     </p>
   </div>
   <script>
-    // Redirect to the React app
-    window.location.href = '/';
+    // Store the current path
+    const currentPath = window.location.pathname;
+
+    // If we're not already on the homepage, redirect there
+    if (currentPath !== '/' && currentPath !== '/index.html') {
+      // Store the current path in session storage
+      sessionStorage.setItem('redirectPath', currentPath);
+
+      // Redirect to the homepage
+      window.location.href = '/';
+    } else if (sessionStorage.getItem('redirectPath')) {
+      // If we have a stored path and we're on the homepage, try to navigate to the stored path
+      const redirectPath = sessionStorage.getItem('redirectPath');
+      sessionStorage.removeItem('redirectPath');
+
+      // Use history API to change the URL without reloading
+      window.history.pushState({}, '', redirectPath);
+
+      // Display a message about the redirect
+      document.addEventListener('DOMContentLoaded', () => {
+        const container = document.querySelector('.container');
+        if (container) {
+          const message = document.createElement('p');
+          message.textContent = `Redirected from: ${redirectPath}`;
+          message.style.color = '#666';
+          message.style.fontSize = '0.9rem';
+          container.appendChild(message);
+        }
+      });
+    }
   </script>
 </body>
 </html>
