@@ -236,12 +236,34 @@ app.post('/api/airdrops', upload.single('logo'), async (req, res) => {
 app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
   try {
     const airdropData = req.body;
+    const id = req.params.id;
 
-    // Check if the airdrop exists
-    const existingAirdrop = await Airdrop.findOne({ airdropId: req.params.id });
+    // Try to find by MongoDB ObjectID first
+    let existingAirdrop = null;
+
+    // Check if the ID is a valid MongoDB ObjectID
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      console.log(`Updating airdrop: ID ${id} is a valid MongoDB ObjectID, searching by _id`);
+      existingAirdrop = await Airdrop.findById(id);
+    }
+
+    // If not found, try to find by airdropId (as a number)
     if (!existingAirdrop) {
+      console.log(`Updating airdrop: No airdrop found with _id ${id}, trying airdropId`);
+      // Try to convert to number if possible
+      const numericId = parseInt(id, 10);
+      if (!isNaN(numericId)) {
+        existingAirdrop = await Airdrop.findOne({ airdropId: numericId });
+      }
+    }
+
+    if (!existingAirdrop) {
+      console.log(`Updating airdrop: No airdrop found with ID ${id}`);
       return res.status(404).json({ message: 'Airdrop not found' });
     }
+
+    console.log(`Updating airdrop: Found airdrop with title ${existingAirdrop.title}`);
+
 
     // Handle logo upload if provided
     if (req.file) {
@@ -269,9 +291,9 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
     // Add a flag to indicate this is a regular edit or status change (not an update button press)
     airdropData.skipTelegramNotification = true;
 
-    // Update the airdrop
-    const updatedAirdrop = await Airdrop.findOneAndUpdate(
-      { airdropId: req.params.id },
+    // Update the airdrop using the _id field
+    const updatedAirdrop = await Airdrop.findByIdAndUpdate(
+      existingAirdrop._id,
       { $set: airdropData },
       { new: true }
     );
@@ -299,11 +321,35 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
 // Delete airdrop
 app.delete('/api/airdrops/:id', async (req, res) => {
   try {
-    const airdrop = await Airdrop.findOne({ airdropId: req.params.id });
+    const id = req.params.id;
+    console.log(`Deleting airdrop with ID: ${id}`);
+
+    // Try to find by MongoDB ObjectID first
+    let airdrop = null;
+
+    // Check if the ID is a valid MongoDB ObjectID
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      console.log(`Deleting airdrop: ID ${id} is a valid MongoDB ObjectID, searching by _id`);
+      airdrop = await Airdrop.findById(id);
+    }
+
+    // If not found, try to find by airdropId (as a number)
+    if (!airdrop) {
+      console.log(`Deleting airdrop: No airdrop found with _id ${id}, trying airdropId`);
+      // Try to convert to number if possible
+      const numericId = parseInt(id, 10);
+      if (!isNaN(numericId)) {
+        airdrop = await Airdrop.findOne({ airdropId: numericId });
+      }
+    }
 
     if (!airdrop) {
+      console.log(`Deleting airdrop: No airdrop found with ID ${id}`);
       return res.status(404).json({ message: 'Airdrop not found' });
     }
+
+    console.log(`Deleting airdrop: Found airdrop with title ${airdrop.title}`);
+
 
     // Delete the logo file if it exists
     if (airdrop.logoPath) {
@@ -313,8 +359,10 @@ app.delete('/api/airdrops/:id', async (req, res) => {
       }
     }
 
-    await Airdrop.deleteOne({ airdropId: req.params.id });
+    // Delete the airdrop using its _id
+    await Airdrop.findByIdAndDelete(airdrop._id);
 
+    console.log(`Airdrop deleted successfully: ${airdrop.title} (ID: ${airdrop._id})`);
     res.json({ message: 'Airdrop deleted successfully' });
   } catch (error) {
     console.error('Error deleting airdrop:', error);
