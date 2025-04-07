@@ -71,6 +71,25 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Serve static files from client build directory
+const possibleStaticPaths = [
+  path.join(__dirname, '../client/dist'),
+  path.join(__dirname, '../client/build'),
+  '/opt/render/project/src/client/dist',
+  '/opt/render/project/src/client/build'
+];
+
+for (const staticPath of possibleStaticPaths) {
+  if (fs.existsSync(staticPath)) {
+    console.log(`Serving static files from: ${staticPath}`);
+    app.use(express.static(staticPath));
+    break;
+  }
+}
+
 // Airdrop routes
 app.get('/api/airdrops', async (_req, res) => {
   try {
@@ -566,8 +585,40 @@ app.post('/api/reset-views', async (_req, res) => {
 });
 
 // Configure the server for client-side routing
-const configureServer = require('./server-config');
-configureServer(app);
+// This must be placed AFTER all API routes and BEFORE the 404 handler
+app.use((req, res, next) => {
+  // Skip API routes and static files
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+    return next();
+  }
+
+  console.log(`Handling client-side route: ${req.path}`);
+
+  // Find the client build directory
+  let indexPath = null;
+  const possiblePaths = [
+    path.join(__dirname, '../client/dist/index.html'),
+    path.join(__dirname, '../client/build/index.html'),
+    '/opt/render/project/src/client/dist/index.html',
+    '/opt/render/project/src/client/build/index.html'
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      indexPath = p;
+      break;
+    }
+  }
+
+  if (indexPath) {
+    console.log(`Serving index.html from: ${indexPath}`);
+    return res.sendFile(indexPath);
+  }
+
+  // If we couldn't find the index.html file, continue to the next middleware
+  console.log('Could not find index.html, continuing to next middleware');
+  next();
+});
 
 
 
