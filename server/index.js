@@ -568,13 +568,29 @@ app.post('/api/reset-views', async (_req, res) => {
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   try {
-    const staticPath = path.join(__dirname, '../client/dist');
+    // First, try the standard build directory
+    let staticPath = path.join(__dirname, '../client/dist');
+
+    // If that doesn't exist, try the Render-specific directory
+    if (!fs.existsSync(staticPath)) {
+      staticPath = path.join(__dirname, '../client/build');
+    }
+
+    // If that doesn't exist either, try the absolute path that Render might use
+    if (!fs.existsSync(staticPath)) {
+      staticPath = '/opt/render/project/src/client/dist';
+    }
+
     // Check if the directory exists before setting up static serving
     if (fs.existsSync(staticPath)) {
       console.log('Serving static files from:', staticPath);
       app.use(express.static(staticPath));
     } else {
-      console.log('Static directory not found:', staticPath);
+      console.log('Static directory not found. Tried paths:',
+        path.join(__dirname, '../client/dist'),
+        path.join(__dirname, '../client/build'),
+        '/opt/render/project/src/client/dist'
+      );
     }
   } catch (error) {
     console.error('Error setting up static file serving:', error);
@@ -643,19 +659,51 @@ app.post('/api/airdrops/:id/updates', async (req, res) => {
 
 // Catch-all route for client-side routing (works in both development and production)
 app.get('*', (req, res) => {
+  console.log(`Catch-all route handling request for: ${req.path}`);
+
   // Skip API routes
   if (req.path.startsWith('/api')) {
+    console.log('Skipping API route');
     return res.status(404).json({ message: 'API endpoint not found' });
   }
 
   // For client-side routes
   if (process.env.NODE_ENV === 'production') {
-    const staticPath = path.join(__dirname, '../client/dist');
-    const indexPath = path.resolve(staticPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
+    // Try multiple possible paths for the index.html file
+    let indexPath;
+    const possiblePaths = [
+      path.resolve(__dirname, '../client/dist/index.html'),
+      path.resolve(__dirname, '../client/build/index.html'),
+      '/opt/render/project/src/client/dist/index.html',
+      '/opt/render/project/src/client/build/index.html'
+    ];
+
+    // Find the first path that exists
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        indexPath = p;
+        console.log(`Found index.html at: ${indexPath}`);
+        break;
+      }
+    }
+
+    if (indexPath) {
       return res.sendFile(indexPath);
     } else {
-      return res.send('API is running, but client files are not available.');
+      console.log('Could not find index.html in any of the expected locations');
+      return res.status(404).send(`
+        <html>
+          <head><title>Airdrops-Geo - File Not Found</title></head>
+          <body>
+            <h1>File Not Found</h1>
+            <p>The client-side application files could not be found. This is likely a deployment issue.</p>
+            <p>Attempted to find index.html in the following locations:</p>
+            <ul>
+              ${possiblePaths.map(p => `<li>${p}</li>`).join('')}
+            </ul>
+          </body>
+        </html>
+      `);
     }
   } else {
     // In development, return a message that helps debug the issue
