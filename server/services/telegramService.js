@@ -77,7 +77,7 @@ const formatAirdropMessage = (airdrop, isUpdate = false) => {
 
     // Add a footer with website link
     if (airdrop.airdropId) {
-      message += `\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrop/${airdrop.airdropId})`;
+      message += `\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrops/${airdrop.airdropId})`;
     } else {
       message += `\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com)`;
     }
@@ -88,7 +88,10 @@ const formatAirdropMessage = (airdrop, isUpdate = false) => {
     // Return a simple fallback message
     const alertType = isUpdate ? 'AIRDROP UPDATE' : 'NEW AIRDROP ALERT';
     const emoji = isUpdate ? '📢' : '🚀';
-    return `${emoji} *${alertType}* ${emoji}\n\n*${airdrop.title || 'Airdrop'}*\n\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com)`;
+    const viewUrl = airdrop.airdropId
+      ? `https://airdrops-geo.onrender.com/airdrops/${airdrop.airdropId}`
+      : 'https://airdrops-geo.onrender.com';
+    return `${emoji} *${alertType}* ${emoji}\n\n*${airdrop.title || 'Airdrop'}*\n\n🌐 *View on Airdrops-Geo*: [Click here](${viewUrl})`;
   }
 };
 
@@ -202,7 +205,7 @@ const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
       message += `*${safeAirdrop.title}*\n\n`;
       message += `💬 *Update*: ${updateContent}\n\n`;
       message += `📅 *Update Date*: ${new Date().toLocaleDateString()}\n\n`;
-      message += `🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrop/${safeAirdrop.airdropId})`;
+      message += `🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrops/${safeAirdrop.airdropId})`;
     } else {
       message = formatAirdropMessage(safeAirdrop, true); // true = this is an update
     }
