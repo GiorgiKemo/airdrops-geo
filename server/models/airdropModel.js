@@ -72,6 +72,11 @@ const airdropSchema = mongoose.Schema(
       type: Number,
       default: 0,
     },
+    telegram: {
+      messageId: { type: Number, default: null },
+      chatId: { type: String, default: null },
+      lastUpdated: { type: Date, default: null },
+    },
   },
   {
     timestamps: true,

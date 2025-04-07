@@ -10,18 +10,18 @@ const telegramService = require('./services/telegramService');
  * @returns {Object} - The change stream object
  */
 function setupTelegramIntegration(options = {}) {
-  const { 
-    watchForUpdates = true, 
-    logActivity = true 
+  const {
+    watchForUpdates = true,
+    logActivity = true
   } = options;
-  
+
   // Get the Airdrop model
   const Airdrop = mongoose.model('Airdrop');
-  
+
   if (logActivity) {
     console.log('Setting up Telegram integration with MongoDB Change Streams');
   }
-  
+
   // Create a pipeline that watches for new or updated airdrops
   const pipeline = [
     {
@@ -30,19 +30,19 @@ function setupTelegramIntegration(options = {}) {
       }
     }
   ];
-  
+
   // Create the change stream
   const changeStream = Airdrop.watch(pipeline);
-  
+
   // Handle change events
   changeStream.on('change', async (change) => {
     try {
       if (logActivity) {
         console.log(`Detected ${change.operationType} operation on airdrop`);
       }
-      
+
       let airdrop;
-      
+
       // Handle insert operations
       if (change.operationType === 'insert') {
         airdrop = change.fullDocument;
@@ -50,7 +50,7 @@ function setupTelegramIntegration(options = {}) {
           console.log(`New airdrop created: ${airdrop.title} (ID: ${airdrop.airdropId})`);
         }
       }
-      
+
       // Handle update operations
       else if (change.operationType === 'update') {
         // Get the updated document
@@ -60,20 +60,60 @@ function setupTelegramIntegration(options = {}) {
           console.log(`Airdrop updated: ${airdrop.title} (ID: ${airdrop.airdropId})`);
         }
       }
-      
+
       // Send the airdrop to Telegram
       if (airdrop) {
+        // Determine if this is a new airdrop or an update
+        const isUpdate = change.operationType === 'update';
+
         if (logActivity) {
-          console.log(`Sending airdrop "${airdrop.title}" to Telegram...`);
-        }
-        
-        const result = await telegramService.sendAirdropToTelegram(airdrop);
-        
-        if (logActivity) {
-          if (result) {
-            console.log(`Successfully sent airdrop "${airdrop.title}" to Telegram`);
+          if (isUpdate) {
+            console.log(`Sending airdrop update for "${airdrop.title}" to Telegram...`);
           } else {
-            console.log(`Failed to send airdrop "${airdrop.title}" to Telegram`);
+            console.log(`Sending new airdrop "${airdrop.title}" to Telegram...`);
+          }
+        }
+
+        let result;
+
+        // For new airdrops, send as new
+        if (!isUpdate) {
+          result = await telegramService.sendAirdropToTelegram(airdrop);
+
+          // If successful, store the message ID in the airdrop document
+          if (result.success && result.messageId) {
+            await Airdrop.findByIdAndUpdate(airdrop._id, {
+              'telegram.messageId': result.messageId,
+              'telegram.chatId': result.chatId,
+              'telegram.lastUpdated': new Date()
+            });
+
+            if (logActivity) {
+              console.log(`Stored Telegram message ID ${result.messageId} for airdrop ${airdrop.airdropId}`);
+            }
+          }
+        }
+        // For updates, send as update and reply to original message if possible
+        else {
+          result = await telegramService.sendAirdropUpdateToTelegram(airdrop);
+
+          // Even for updates, we store the new message ID for potential future reference
+          if (result.success && result.messageId) {
+            await Airdrop.findByIdAndUpdate(airdrop._id, {
+              'telegram.lastUpdated': new Date()
+            });
+
+            if (logActivity) {
+              console.log(`Updated Telegram lastUpdated timestamp for airdrop ${airdrop.airdropId}`);
+            }
+          }
+        }
+
+        if (logActivity) {
+          if (result.success) {
+            console.log(`Successfully sent airdrop ${isUpdate ? 'update' : ''} "${airdrop.title}" to Telegram`);
+          } else {
+            console.log(`Failed to send airdrop ${isUpdate ? 'update' : ''} "${airdrop.title}" to Telegram`);
           }
         }
       }
@@ -81,16 +121,16 @@ function setupTelegramIntegration(options = {}) {
       console.error('Error processing change event:', error);
     }
   });
-  
+
   // Handle errors
   changeStream.on('error', (error) => {
     console.error('Error in change stream:', error);
   });
-  
+
   if (logActivity) {
     console.log('Telegram integration set up successfully');
   }
-  
+
   return changeStream;
 }
 

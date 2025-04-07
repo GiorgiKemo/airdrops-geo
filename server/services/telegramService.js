@@ -32,12 +32,15 @@ if (token && token !== 'YOUR_TELEGRAM_BOT_TOKEN') {
 /**
  * Format an airdrop object into a Telegram message
  * @param {Object} airdrop - The airdrop object
+ * @param {boolean} isUpdate - Whether this is an update to an existing airdrop
  * @returns {string} - Formatted message text
  */
-const formatAirdropMessage = (airdrop) => {
+const formatAirdropMessage = (airdrop, isUpdate = false) => {
   try {
     // Create a nicely formatted message with markdown
-    let message = `🚀 *NEW AIRDROP ALERT* 🚀\n\n`;
+    let message = isUpdate
+      ? `📢 *AIRDROP UPDATE* 📢\n\n`
+      : `🚀 *NEW AIRDROP ALERT* 🚀\n\n`;
     message += `*${airdrop.title}*\n\n`;
 
     // Only add fields that have values
@@ -83,17 +86,43 @@ const formatAirdropMessage = (airdrop) => {
   } catch (error) {
     console.error('Error formatting Telegram message:', error);
     // Return a simple fallback message
-    return `🚀 *NEW AIRDROP ALERT* 🚀\n\n*${airdrop.title || 'New Airdrop'}*\n\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com)`;
+    const alertType = isUpdate ? 'AIRDROP UPDATE' : 'NEW AIRDROP ALERT';
+    const emoji = isUpdate ? '📢' : '🚀';
+    return `${emoji} *${alertType}* ${emoji}\n\n*${airdrop.title || 'Airdrop'}*\n\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com)`;
   }
 };
 
 /**
- * Send an airdrop to Telegram
+ * Create a safe airdrop object with fallbacks for missing fields
+ * @param {Object} airdrop - The original airdrop object
+ * @returns {Object} - A safe airdrop object with fallbacks
+ */
+const createSafeAirdrop = (airdrop) => {
+  return {
+    airdropId: airdrop.airdropId || 0,
+    title: airdrop.title || 'Airdrop',
+    description: airdrop.description || 'No description provided',
+    token: airdrop.token || 'Unknown',
+    criteria: airdrop.criteria || 'No criteria specified',
+    deadline: airdrop.deadline || 'Not specified',
+    startDate: airdrop.startDate || 'Not specified',
+    status: airdrop.status || 'Unknown',
+    costType: airdrop.costType || 'Unknown',
+    link: airdrop.link || 'https://airdrops-geo.onrender.com',
+    claimUrl: airdrop.claimUrl || '',
+    logoUrl: airdrop.logoUrl || '',
+    socialLinks: airdrop.socialLinks || {},
+    telegram: airdrop.telegram || { messageId: null, chatId: null, lastUpdated: null }
+  };
+};
+
+/**
+ * Send a new airdrop to Telegram
  * @param {Object} airdrop - The airdrop object to send
- * @returns {Promise<boolean>} - Whether the message was sent successfully
+ * @returns {Promise<Object>} - Result object with success status and message ID
  */
 const sendAirdropToTelegram = async (airdrop) => {
-  console.log('Attempting to send airdrop to Telegram:', {
+  console.log('Attempting to send new airdrop to Telegram:', {
     botInitialized: !!bot,
     chatIdProvided: !!chatId,
     chatIdValue: chatId,
@@ -102,49 +131,101 @@ const sendAirdropToTelegram = async (airdrop) => {
 
   if (!bot || !chatId || chatId === 'YOUR_TELEGRAM_CHAT_ID') {
     console.log('Telegram notification skipped: Bot not initialized or chat ID not set');
-    return false;
+    return { success: false, messageId: null };
   }
 
   try {
     // Make sure airdrop has all required fields with fallbacks
-    const safeAirdrop = {
-      airdropId: airdrop.airdropId || 0,
-      title: airdrop.title || 'New Airdrop',
-      description: airdrop.description || 'No description provided',
-      token: airdrop.token || 'Unknown',
-      criteria: airdrop.criteria || 'No criteria specified',
-      deadline: airdrop.deadline || 'Not specified',
-      startDate: airdrop.startDate || 'Not specified',
-      status: airdrop.status || 'Unknown',
-      costType: airdrop.costType || 'Unknown',
-      link: airdrop.link || 'https://airdrops-geo.onrender.com',
-      claimUrl: airdrop.claimUrl || '',
-      logoUrl: airdrop.logoUrl || '',
-      socialLinks: airdrop.socialLinks || {}
-    };
+    const safeAirdrop = createSafeAirdrop(airdrop);
 
-    const message = formatAirdropMessage(safeAirdrop);
+    const message = formatAirdropMessage(safeAirdrop, false); // false = not an update
     console.log('Formatted Telegram message:', message.substring(0, 100) + '...');
 
     // Send the message with markdown formatting
     console.log(`Sending to Telegram chat ID: ${chatId}`);
-    await bot.sendMessage(chatId, message, {
+    const sentMessage = await bot.sendMessage(chatId, message, {
       parse_mode: 'Markdown',
       disable_web_page_preview: false
     });
 
-    console.log(`Airdrop "${safeAirdrop.title}" successfully posted to Telegram`);
-    return true;
+    console.log(`Airdrop "${safeAirdrop.title}" successfully posted to Telegram with message ID: ${sentMessage.message_id}`);
+    return {
+      success: true,
+      messageId: sentMessage.message_id,
+      chatId: chatId
+    };
   } catch (error) {
     console.error('Error sending airdrop to Telegram:', error);
     console.error('Error details:', error.message);
     if (error.response) {
       console.error('Telegram API response:', error.response.body);
     }
-    return false;
+    return { success: false, messageId: null };
+  }
+};
+
+/**
+ * Send an airdrop update to Telegram
+ * @param {Object} airdrop - The updated airdrop object
+ * @returns {Promise<Object>} - Result object with success status and message ID
+ */
+const sendAirdropUpdateToTelegram = async (airdrop) => {
+  console.log('Attempting to send airdrop update to Telegram:', {
+    botInitialized: !!bot,
+    chatIdProvided: !!chatId,
+    chatIdValue: chatId,
+    airdropTitle: airdrop?.title || 'No title',
+    originalMessageId: airdrop?.telegram?.messageId || 'None'
+  });
+
+  if (!bot || !chatId || chatId === 'YOUR_TELEGRAM_CHAT_ID') {
+    console.log('Telegram notification skipped: Bot not initialized or chat ID not set');
+    return { success: false, messageId: null };
+  }
+
+  try {
+    // Make sure airdrop has all required fields with fallbacks
+    const safeAirdrop = createSafeAirdrop(airdrop);
+
+    const message = formatAirdropMessage(safeAirdrop, true); // true = this is an update
+    console.log('Formatted Telegram update message:', message.substring(0, 100) + '...');
+
+    let sentMessage;
+
+    // If we have the original message ID, reply to it
+    if (safeAirdrop.telegram && safeAirdrop.telegram.messageId) {
+      console.log(`Sending as reply to message ID: ${safeAirdrop.telegram.messageId}`);
+      sentMessage = await bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: false,
+        reply_to_message_id: safeAirdrop.telegram.messageId
+      });
+    } else {
+      // Otherwise send as a new message
+      console.log('No original message ID found, sending as new message');
+      sentMessage = await bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: false
+      });
+    }
+
+    console.log(`Airdrop update for "${safeAirdrop.title}" successfully posted to Telegram with message ID: ${sentMessage.message_id}`);
+    return {
+      success: true,
+      messageId: sentMessage.message_id,
+      chatId: chatId
+    };
+  } catch (error) {
+    console.error('Error sending airdrop update to Telegram:', error);
+    console.error('Error details:', error.message);
+    if (error.response) {
+      console.error('Telegram API response:', error.response.body);
+    }
+    return { success: false, messageId: null };
   }
 };
 
 module.exports = {
-  sendAirdropToTelegram
+  sendAirdropToTelegram,
+  sendAirdropUpdateToTelegram
 };
