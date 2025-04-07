@@ -40,6 +40,23 @@ cp -r dist/* ../server/public/
 echo "Creating _redirects file..."
 echo "/* /index.html 200" > ../server/public/_redirects
 
+# Copy other SPA routing files
+echo "Copying SPA routing files..."
+cp -f ../static.json ../server/public/
+cp -f ../netlify.toml ../server/public/
+cp -f ../vercel.json ../server/public/
+
+# Create .htaccess file
+echo "Creating .htaccess file..."
+cat > ../server/public/.htaccess << 'EOL'
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+EOL
+
 # Install server dependencies
 echo "Installing server dependencies..."
 cd ../server

@@ -654,6 +654,37 @@ app.use('/api/*', (req, res) => {
   return res.status(404).json({ message: 'API endpoint not found' });
 });
 
+// Add specific routes for client-side routing
+const clientRoutes = [
+  '/admin',
+  '/admin/*',
+  '/airdrops',
+  '/airdrops/*',
+  '/login',
+  '/register',
+  '/dashboard',
+  '/dashboard/*',
+  '/terms',
+  '/privacy',
+  '/cookies',
+  '/all'
+];
+
+// Handle specific client-side routes
+clientRoutes.forEach(route => {
+  app.get(route, (req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] Handling specific client route: ${req.path}`);
+
+    // Serve the index.html file
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+    next();
+  });
+});
+
 // IMPORTANT: This catch-all route handler must be placed AFTER all other routes
 // It will handle ALL client-side routes by serving the index.html file
 app.get('*', (req, res) => {
