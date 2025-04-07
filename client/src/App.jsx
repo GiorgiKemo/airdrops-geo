@@ -59,6 +59,8 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  {/* Catch-all route to handle 404s */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </main>
               <Footer />

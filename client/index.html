@@ -2,9 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <base href="/" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Airdrops.geo - Cryptocurrency Airdrops</title>
+    <script>
+      // This script helps with client-side routing when refreshing the page
+      (function() {
+        // Check if this is a direct page load (not a navigation within the app)
+        if (window.location.pathname !== '/' && !window.location.pathname.includes('.')) {
+          console.log('Direct page load detected at:', window.location.pathname);
+          // Store the current URL to restore it after redirect
+          sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search + window.location.hash);
+        }
+
+        // Check if we have a stored path to restore
+        const redirectPath = sessionStorage.getItem('redirectPath');
+        if (redirectPath && window.location.pathname === '/') {
+          console.log('Restoring path:', redirectPath);
+          // Clear the stored path
+          sessionStorage.removeItem('redirectPath');
+          // Use history API to change the URL without reloading
+          window.history.replaceState(null, null, redirectPath);
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

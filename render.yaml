@@ -1,6 +1,7 @@
 services:
+  # API service
   - type: web
-    name: airdrops-geo
+    name: airdrops-geo-api
     env: node
     buildCommand: chmod +x render-build.sh && ./render-build.sh
     startCommand: npm start
@@ -11,3 +12,18 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
+
+  # Static site for client
+  - type: web
+    name: airdrops-geo
+    env: static
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
