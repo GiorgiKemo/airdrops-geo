@@ -76,8 +76,8 @@ const formatAirdropMessage = (airdrop, isUpdate = false) => {
     }
 
     // Add a footer with website link
-    if (airdrop.airdropId) {
-      message += `\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrops/${airdrop.airdropId})`;
+    if (airdrop._id) {
+      message += `\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrops/${airdrop._id})`;
     } else {
       message += `\n🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com)`;
     }
@@ -88,8 +88,8 @@ const formatAirdropMessage = (airdrop, isUpdate = false) => {
     // Return a simple fallback message
     const alertType = isUpdate ? 'AIRDROP UPDATE' : 'NEW AIRDROP ALERT';
     const emoji = isUpdate ? '📢' : '🚀';
-    const viewUrl = airdrop.airdropId
-      ? `https://airdrops-geo.onrender.com/airdrops/${airdrop.airdropId}`
+    const viewUrl = airdrop._id
+      ? `https://airdrops-geo.onrender.com/airdrops/${airdrop._id}`
       : 'https://airdrops-geo.onrender.com';
     return `${emoji} *${alertType}* ${emoji}\n\n*${airdrop.title || 'Airdrop'}*\n\n🌐 *View on Airdrops-Geo*: [Click here](${viewUrl})`;
   }
@@ -102,6 +102,7 @@ const formatAirdropMessage = (airdrop, isUpdate = false) => {
  */
 const createSafeAirdrop = (airdrop) => {
   return {
+    _id: airdrop._id || null,
     airdropId: airdrop.airdropId || 0,
     title: airdrop.title || 'Airdrop',
     description: airdrop.description || 'No description provided',
@@ -205,7 +206,7 @@ const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
       message += `*${safeAirdrop.title}*\n\n`;
       message += `💬 *Update*: ${updateContent}\n\n`;
       message += `📅 *Update Date*: ${new Date().toLocaleDateString()}\n\n`;
-      message += `🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrops/${safeAirdrop.airdropId})`;
+      message += `🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrops/${safeAirdrop._id})`;
     } else {
       message = formatAirdropMessage(safeAirdrop, true); // true = this is an update
     }
