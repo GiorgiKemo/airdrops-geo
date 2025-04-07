@@ -13,9 +13,10 @@ console.log('Environment variables:', {
   CURRENT_DIR: __dirname
 });
 
-// Initialize the Telegram bot with the token from environment variables
-const token = process.env.TELEGRAM_BOT_TOKEN;
-const chatId = process.env.TELEGRAM_CHAT_ID;
+// Initialize the Telegram bot with hardcoded token and chat ID
+// This is not ideal, but it's a workaround for the environment variables issue
+const token = process.env.TELEGRAM_BOT_TOKEN || '7287756066:AAHAcC4sBA7H8VH9BQiWGF4lNEaN37Oiz-o';
+const chatId = process.env.TELEGRAM_CHAT_ID || '-1002562120618';
 let bot = null;
 
 // Log the Telegram configuration
@@ -26,33 +27,33 @@ console.log('Telegram configuration:', {
   chatIdValue: chatId
 });
 
-// Only initialize the bot if the token is available
-if (token && token !== 'YOUR_TELEGRAM_BOT_TOKEN' && token.length > 10) {
-  try {
-    console.log(`Attempting to initialize Telegram bot with token: ${token.substring(0, 5)}...${token.substring(token.length - 5)}`);
-    bot = new TelegramBot(token, { polling: false });
-    console.log('Telegram bot initialized successfully');
+// Always initialize the bot with the hardcoded token
+try {
+  console.log(`Initializing Telegram bot with token: ${token.substring(0, 5)}...${token.substring(token.length - 5)}`);
+  console.log(`Using chat ID: ${chatId}`);
 
-    // Test the bot by sending a test message
-    if (chatId) {
-      console.log(`Testing Telegram bot by sending a message to chat ID: ${chatId}`);
-      bot.sendMessage(chatId, 'Airdrops.geo server started successfully!')
-        .then(message => {
-          console.log('Test message sent successfully:', message.message_id);
-        })
-        .catch(error => {
-          console.error('Error sending test message:', error.message);
-        });
-    } else {
-      console.log('Cannot test Telegram bot: No chat ID provided');
-    }
-  } catch (error) {
-    console.error('Failed to initialize Telegram bot:', error);
-    bot = null; // Reset bot to null if initialization fails
-  }
-} else {
-  console.log(`Telegram bot not initialized: No valid token provided (token length: ${token ? token.length : 0})`);
-  bot = null; // Ensure bot is null
+  // Force the bot to be initialized
+  bot = new TelegramBot(token, { polling: false });
+  console.log('Telegram bot initialized successfully');
+
+  // Test the bot by sending a test message
+  console.log(`Testing Telegram bot by sending a message to chat ID: ${chatId}`);
+  bot.sendMessage(chatId, 'Airdrops.geo server started successfully!')
+    .then(message => {
+      console.log('Test message sent successfully:', message.message_id);
+    })
+    .catch(error => {
+      console.error('Error sending test message:', error.message);
+      // Try to diagnose the issue
+      if (error.code === 'ETELEGRAM') {
+        console.error('Telegram API error:', error.response.body);
+      }
+    });
+} catch (error) {
+  console.error('Failed to initialize Telegram bot:', error);
+  console.error('Error details:', error.message);
+  console.error('Error stack:', error.stack);
+  bot = null; // Reset bot to null if initialization fails
 }
 
 /**
@@ -159,9 +160,21 @@ const sendAirdropToTelegram = async (airdrop) => {
     airdropTitle: airdrop?.title || 'No title'
   });
 
-  if (!bot || !chatId || chatId === 'YOUR_TELEGRAM_CHAT_ID') {
-    console.log('Telegram notification skipped: Bot not initialized or chat ID not set');
-    return { success: false, messageId: null };
+  // Always try to send the notification, even if the bot wasn't initialized
+  if (!bot) {
+    console.log('Attempting to initialize Telegram bot for sending notification');
+    try {
+      bot = new TelegramBot(token, { polling: false });
+      console.log('Telegram bot initialized successfully for sending notification');
+    } catch (error) {
+      console.error('Failed to initialize Telegram bot for sending notification:', error.message);
+      return { success: false, messageId: null, error: 'Failed to initialize bot' };
+    }
+  }
+
+  if (!chatId) {
+    console.log('Telegram notification skipped: Chat ID not set');
+    return { success: false, messageId: null, error: 'Chat ID not set' };
   }
 
   try {
@@ -216,9 +229,21 @@ const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
     isExplicitUpdate: isExplicitUpdate
   });
 
-  if (!bot || !chatId || chatId === 'YOUR_TELEGRAM_CHAT_ID') {
-    console.log('Telegram notification skipped: Bot not initialized or chat ID not set');
-    return { success: false, messageId: null };
+  // Always try to send the notification, even if the bot wasn't initialized
+  if (!bot) {
+    console.log('Attempting to initialize Telegram bot for sending update notification');
+    try {
+      bot = new TelegramBot(token, { polling: false });
+      console.log('Telegram bot initialized successfully for sending update notification');
+    } catch (error) {
+      console.error('Failed to initialize Telegram bot for sending update notification:', error.message);
+      return { success: false, messageId: null, error: 'Failed to initialize bot' };
+    }
+  }
+
+  if (!chatId) {
+    console.log('Telegram update notification skipped: Chat ID not set');
+    return { success: false, messageId: null, error: 'Chat ID not set' };
   }
 
   try {
