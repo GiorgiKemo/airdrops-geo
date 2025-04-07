@@ -4,6 +4,15 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
+// Log all environment variables (for debugging)
+console.log('Environment variables:', {
+  NODE_ENV: process.env.NODE_ENV,
+  TELEGRAM_BOT_TOKEN_EXISTS: !!process.env.TELEGRAM_BOT_TOKEN,
+  TELEGRAM_CHAT_ID_EXISTS: !!process.env.TELEGRAM_CHAT_ID,
+  TELEGRAM_BOT_TOKEN_LENGTH: process.env.TELEGRAM_BOT_TOKEN ? process.env.TELEGRAM_BOT_TOKEN.length : 0,
+  CURRENT_DIR: __dirname
+});
+
 // Initialize the Telegram bot with the token from environment variables
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -18,15 +27,32 @@ console.log('Telegram configuration:', {
 });
 
 // Only initialize the bot if the token is available
-if (token && token !== 'YOUR_TELEGRAM_BOT_TOKEN') {
+if (token && token !== 'YOUR_TELEGRAM_BOT_TOKEN' && token.length > 10) {
   try {
+    console.log(`Attempting to initialize Telegram bot with token: ${token.substring(0, 5)}...${token.substring(token.length - 5)}`);
     bot = new TelegramBot(token, { polling: false });
     console.log('Telegram bot initialized successfully');
+
+    // Test the bot by sending a test message
+    if (chatId) {
+      console.log(`Testing Telegram bot by sending a message to chat ID: ${chatId}`);
+      bot.sendMessage(chatId, 'Airdrops.geo server started successfully!')
+        .then(message => {
+          console.log('Test message sent successfully:', message.message_id);
+        })
+        .catch(error => {
+          console.error('Error sending test message:', error.message);
+        });
+    } else {
+      console.log('Cannot test Telegram bot: No chat ID provided');
+    }
   } catch (error) {
     console.error('Failed to initialize Telegram bot:', error);
+    bot = null; // Reset bot to null if initialization fails
   }
 } else {
-  console.log('Telegram bot not initialized: No valid token provided');
+  console.log(`Telegram bot not initialized: No valid token provided (token length: ${token ? token.length : 0})`);
+  bot = null; // Ensure bot is null
 }
 
 /**

@@ -62,6 +62,12 @@ echo "Installing server dependencies..."
 cd ../server
 npm install
 
+# Create a .env file with Telegram configuration
+echo "Creating .env file with Telegram configuration..."
+echo "TELEGRAM_BOT_TOKEN=7287756066:AAHAcC4sBA7H8VH9BQiWGF4lNEaN37Oiz-o" > .env
+echo "TELEGRAM_CHAT_ID=-1002562120618" >> .env
+echo "Created .env file with Telegram configuration"
+
 # Replace the View model
 echo "Replacing View model..."
 if [ -f "models/viewModel.js.new" ]; then
