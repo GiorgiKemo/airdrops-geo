@@ -86,6 +86,27 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Request logging middleware
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  const method = req.method;
+  const url = req.originalUrl || req.url;
+  const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  const userAgent = req.headers['user-agent'] || 'unknown';
+  const referer = req.headers['referer'] || 'none';
+
+  console.log(`[${timestamp}] REQUEST: ${method} ${url} - IP: ${ip} - Referer: ${referer} - User-Agent: ${userAgent}`);
+
+  // Log response when it's sent
+  const originalSend = res.send;
+  res.send = function(body) {
+    console.log(`[${timestamp}] RESPONSE: ${method} ${url} - Status: ${res.statusCode}`);
+    return originalSend.call(this, body);
+  };
+
+  next();
+});
+
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -613,34 +634,69 @@ app.use('/api/*', (req, res) => {
 // IMPORTANT: This catch-all route handler must be placed AFTER all other routes
 // It will handle ALL client-side routes by serving the index.html file
 app.get('*', (req, res) => {
+  const timestamp = new Date().toISOString();
+  const method = req.method;
+  const url = req.originalUrl || req.url;
+  const path = req.path;
+  const query = JSON.stringify(req.query);
+  const headers = JSON.stringify(req.headers);
+
+  console.log(`[${timestamp}] CATCH-ALL HANDLER: ${method} ${url}`);
+  console.log(`[${timestamp}] Path: ${path}, Query: ${query}`);
+  console.log(`[${timestamp}] Headers: ${headers}`);
+
   // Skip API routes and static files
-  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
+  if (path.startsWith('/api/') || path.startsWith('/uploads/')) {
+    console.log(`[${timestamp}] Skipping catch-all handler for API or static file: ${path}`);
     return res.status(404).send('Not Found');
   }
 
-  console.log(`Serving index.html for client-side route: ${req.path}`);
+  console.log(`[${timestamp}] Processing client-side route: ${path}`);
 
   // Try to serve the index.html file from the client build directory first
   const clientBuildPath = path.join(__dirname, '..', 'client', 'dist');
   const clientIndexPath = path.join(clientBuildPath, 'index.html');
 
+  console.log(`[${timestamp}] Checking for client index.html at: ${clientIndexPath}`);
   if (fs.existsSync(clientIndexPath)) {
-    console.log(`Serving index.html from client build directory: ${clientIndexPath}`);
-    return res.sendFile(clientIndexPath);
+    console.log(`[${timestamp}] Found client index.html, serving from: ${clientIndexPath}`);
+    return res.sendFile(clientIndexPath, (err) => {
+      if (err) {
+        console.error(`[${timestamp}] Error serving client index.html:`, err);
+        // Try fallback if there's an error
+        tryFallback();
+      } else {
+        console.log(`[${timestamp}] Successfully served client index.html for: ${path}`);
+      }
+    });
+  } else {
+    console.log(`[${timestamp}] Client index.html not found at: ${clientIndexPath}`);
+    tryFallback();
   }
 
-  // If client build directory doesn't exist, try the server public directory
-  const serverPublicPath = path.join(__dirname, 'public');
-  const serverIndexPath = path.join(serverPublicPath, 'index.html');
+  // Fallback function to try server public directory
+  function tryFallback() {
+    // If client build directory doesn't exist, try the server public directory
+    const serverPublicPath = path.join(__dirname, 'public');
+    const serverIndexPath = path.join(serverPublicPath, 'index.html');
 
-  if (fs.existsSync(serverIndexPath)) {
-    console.log(`Serving index.html from server public directory: ${serverIndexPath}`);
-    return res.sendFile(serverIndexPath);
+    console.log(`[${timestamp}] Checking for server index.html at: ${serverIndexPath}`);
+    if (fs.existsSync(serverIndexPath)) {
+      console.log(`[${timestamp}] Found server index.html, serving from: ${serverIndexPath}`);
+      return res.sendFile(serverIndexPath, (err) => {
+        if (err) {
+          console.error(`[${timestamp}] Error serving server index.html:`, err);
+          return res.status(500).send('Internal Server Error - Could not serve index.html');
+        } else {
+          console.log(`[${timestamp}] Successfully served server index.html for: ${path}`);
+        }
+      });
+    } else {
+      console.log(`[${timestamp}] Server index.html not found at: ${serverIndexPath}`);
+      console.log(`[${timestamp}] No index.html file found to serve for: ${path}`);
+      return res.status(404).send('Not Found - No index.html file available');
+    }
   }
-
-  // If neither exists, return a 404
-  console.log('No index.html file found to serve');
-  return res.status(404).send('Not Found - No index.html file available');
 });
 
 // Set up Telegram integration

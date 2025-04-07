@@ -67,11 +67,60 @@
     </p>
   </div>
   <script>
-    // Simple redirect to the root
-    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
-      console.log('Redirecting to homepage from:', window.location.pathname);
-      window.location.href = '/';
-    }
+    // Log page load information
+    (function() {
+      const timestamp = new Date().toISOString();
+      const pathname = window.location.pathname;
+      const search = window.location.search;
+      const hash = window.location.hash;
+      const referrer = document.referrer;
+      const userAgent = navigator.userAgent;
+
+      console.log(`[${timestamp}] CLIENT: Page loaded at path: ${pathname}`);
+      console.log(`[${timestamp}] CLIENT: Search params: ${search}`);
+      console.log(`[${timestamp}] CLIENT: Hash: ${hash}`);
+      console.log(`[${timestamp}] CLIENT: Referrer: ${referrer}`);
+      console.log(`[${timestamp}] CLIENT: User Agent: ${userAgent}`);
+
+      // Add visible debug info
+      const debugInfo = document.createElement('div');
+      debugInfo.style.position = 'fixed';
+      debugInfo.style.bottom = '10px';
+      debugInfo.style.left = '10px';
+      debugInfo.style.right = '10px';
+      debugInfo.style.padding = '10px';
+      debugInfo.style.backgroundColor = 'rgba(0,0,0,0.8)';
+      debugInfo.style.color = 'white';
+      debugInfo.style.fontSize = '12px';
+      debugInfo.style.fontFamily = 'monospace';
+      debugInfo.style.zIndex = '9999';
+      debugInfo.style.maxHeight = '200px';
+      debugInfo.style.overflow = 'auto';
+      debugInfo.style.borderRadius = '5px';
+
+      debugInfo.innerHTML = `
+        <h3 style="margin: 0 0 10px 0;">Debug Information</h3>
+        <p><strong>Path:</strong> ${pathname}</p>
+        <p><strong>Search:</strong> ${search}</p>
+        <p><strong>Hash:</strong> ${hash}</p>
+        <p><strong>Referrer:</strong> ${referrer}</p>
+        <p><strong>Time:</strong> ${timestamp}</p>
+      `;
+
+      // Add to body after it's loaded
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.appendChild(debugInfo);
+      });
+
+      // Simple redirect to the root
+      if (pathname !== '/' && pathname !== '/index.html') {
+        console.log(`[${timestamp}] CLIENT: Redirecting to homepage from: ${pathname}`);
+        // Add a small delay to ensure logs are visible
+        setTimeout(function() {
+          window.location.href = '/';
+        }, 3000); // 3 second delay to see the debug info
+      }
+    })();
   </script>
 </body>
 </html>
