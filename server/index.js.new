@@ -660,21 +660,21 @@ app.get('*', (req, res) => {
   const timestamp = new Date().toISOString();
   const method = req.method;
   const url = req.originalUrl || req.url;
-  const path = req.path;
+  const reqPath = req.path;
   const query = JSON.stringify(req.query);
   const headers = JSON.stringify(req.headers);
 
   console.log(`[${timestamp}] CATCH-ALL HANDLER: ${method} ${url}`);
-  console.log(`[${timestamp}] Path: ${path}, Query: ${query}`);
+  console.log(`[${timestamp}] Path: ${reqPath}, Query: ${query}`);
   console.log(`[${timestamp}] Headers: ${headers}`);
 
   // Skip API routes and static files
-  if (path.startsWith('/api/') || path.startsWith('/uploads/')) {
-    console.log(`[${timestamp}] Skipping catch-all handler for API or static file: ${path}`);
+  if (reqPath.startsWith('/api/') || reqPath.startsWith('/uploads/')) {
+    console.log(`[${timestamp}] Skipping catch-all handler for API or static file: ${reqPath}`);
     return res.status(404).send('Not Found');
   }
 
-  console.log(`[${timestamp}] Processing client-side route: ${path}`);
+  console.log(`[${timestamp}] Processing client-side route: ${reqPath}`);
 
   // Try to serve the index.html file from the client build directory first
   const clientBuildPath = path.join(__dirname, '..', 'client', 'dist');
@@ -689,7 +689,7 @@ app.get('*', (req, res) => {
         // Try fallback if there's an error
         tryFallback();
       } else {
-        console.log(`[${timestamp}] Successfully served client index.html for: ${path}`);
+        console.log(`[${timestamp}] Successfully served client index.html for: ${reqPath}`);
       }
     });
   } else {
@@ -711,12 +711,12 @@ app.get('*', (req, res) => {
           console.error(`[${timestamp}] Error serving server index.html:`, err);
           return res.status(500).send('Internal Server Error - Could not serve index.html');
         } else {
-          console.log(`[${timestamp}] Successfully served server index.html for: ${path}`);
+          console.log(`[${timestamp}] Successfully served server index.html for: ${reqPath}`);
         }
       });
     } else {
       console.log(`[${timestamp}] Server index.html not found at: ${serverIndexPath}`);
-      console.log(`[${timestamp}] No index.html file found to serve for: ${path}`);
+      console.log(`[${timestamp}] No index.html file found to serve for: ${reqPath}`);
       return res.status(404).send('Not Found - No index.html file available');
     }
   }
