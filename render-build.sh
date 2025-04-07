@@ -59,4 +59,16 @@ if [ -f "index.js.new" ]; then
   echo "Server index.js replaced successfully!"
 fi
 
+# Create a script to run on first startup to fix the MongoDB index
+echo "Creating index fix script..."
+cat > fix-index.js << 'EOL'
+const { dropViewsIndex } = require('./scripts/dropViewsIndex');
+
+dropViewsIndex()
+  .then(() => console.log('Index fix completed'))
+  .catch(err => console.error('Index fix failed:', err));
+EOL
+
+echo "Index fix script created successfully!"
+
 echo "Build process complete!"

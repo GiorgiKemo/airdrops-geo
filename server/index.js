@@ -14,6 +14,20 @@ dotenv.config();
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
+
+    // Check if we need to run the index fix script
+    const fixIndexPath = path.join(__dirname, 'fix-index.js');
+    if (fs.existsSync(fixIndexPath)) {
+      console.log('Running index fix script...');
+      try {
+        require('./fix-index');
+        // Remove the script after running it
+        fs.unlinkSync(fixIndexPath);
+        console.log('Index fix script executed and removed');
+      } catch (fixError) {
+        console.error('Error running index fix script:', fixError);
+      }
+    }
   })
   .catch((error) => {
     console.error('MongoDB connection error:', error);
@@ -90,11 +104,17 @@ app.get('/api/airdrops/:id', async (req, res) => {
     await airdrop.save();
 
     // Track the view
-    const view = new View({
-      airdropId: airdrop._id,
-      timestamp: new Date()
-    });
-    await view.save();
+    try {
+      const view = new View({
+        airdropId: airdrop._id,
+        timestamp: new Date(),
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || 'unknown'
+      });
+      await view.save();
+    } catch (viewError) {
+      console.error('Error tracking view:', viewError);
+      // Don't fail the request if view tracking fails
+    }
 
     res.json(airdrop);
   } catch (error) {

@@ -21,6 +21,9 @@ const viewSchema = mongoose.Schema(
   }
 );
 
+// Explicitly define a non-unique index on airdropId
+viewSchema.index({ airdropId: 1 }, { unique: false });
+
 const View = mongoose.model('View', viewSchema);
 
 module.exports = View;
