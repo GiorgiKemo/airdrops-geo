@@ -3,14 +3,18 @@ const mongoose = require('mongoose');
 const viewSchema = mongoose.Schema(
   {
     airdropId: {
-      type: Number,
-      required: true,
-      unique: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Airdrop',
+      required: true
     },
-    ipAddresses: {
-      type: [String],
-      default: [],
+    timestamp: {
+      type: Date,
+      default: Date.now
     },
+    ipAddress: {
+      type: String,
+      default: ''
+    }
   },
   {
     timestamps: true,

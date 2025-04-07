@@ -70,32 +70,32 @@ app.get('/api/airdrops/:id', async (req, res) => {
   try {
     // Try to find by MongoDB ObjectID first
     let airdrop = null;
-    
+
     // Check if the ID is a valid MongoDB ObjectID
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
       airdrop = await Airdrop.findById(req.params.id);
     }
-    
+
     // If not found, try to find by airdropId
     if (!airdrop) {
       airdrop = await Airdrop.findOne({ airdropId: req.params.id });
     }
-    
+
     if (!airdrop) {
       return res.status(404).json({ message: 'Airdrop not found' });
     }
-    
+
     // Increment view count
     airdrop.views = (airdrop.views || 0) + 1;
     await airdrop.save();
-    
+
     // Track the view
     const view = new View({
       airdropId: airdrop._id,
       timestamp: new Date()
     });
     await view.save();
-    
+
     res.json(airdrop);
   } catch (error) {
     console.error(`Error fetching airdrop with ID ${req.params.id}:`, error);
@@ -107,26 +107,26 @@ app.get('/api/airdrops/:id', async (req, res) => {
 app.post('/api/airdrops', upload.single('logo'), async (req, res) => {
   try {
     const airdropData = req.body;
-    
+
     // Handle logo upload if provided
     if (req.file) {
       const logoFilename = `${Date.now()}-${req.file.originalname}`;
       const logoPath = path.join('uploads', logoFilename);
       airdropData.logoPath = logoPath;
       airdropData.logoUrl = `/uploads/${logoFilename}`;
-      
+
       // Move the uploaded file to the uploads directory
       fs.renameSync(req.file.path, path.join(__dirname, logoPath));
     }
-    
+
     // Generate a unique airdropId
     const latestAirdrop = await Airdrop.findOne().sort({ airdropId: -1 });
     airdropData.airdropId = latestAirdrop ? latestAirdrop.airdropId + 1 : 1;
-    
+
     // Create the airdrop
     const airdrop = new Airdrop(airdropData);
     const savedAirdrop = await airdrop.save();
-    
+
     res.status(201).json(savedAirdrop);
   } catch (error) {
     console.error('Error creating airdrop:', error);
@@ -138,27 +138,27 @@ app.post('/api/airdrops', upload.single('logo'), async (req, res) => {
 app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
   try {
     const airdropData = req.body;
-    
+
     // Check if the airdrop exists
     const existingAirdrop = await Airdrop.findOne({ airdropId: req.params.id });
     if (!existingAirdrop) {
       return res.status(404).json({ message: 'Airdrop not found' });
     }
-    
+
     // Handle logo upload if provided
     if (req.file) {
       // Get the old logo path to delete it later
       const oldLogoPath = existingAirdrop.logoPath;
-      
+
       // Set the new logo path and URL
       const logoFilename = `${Date.now()}-${req.file.originalname}`;
       const logoPath = path.join('uploads', logoFilename);
       airdropData.logoPath = logoPath;
       airdropData.logoUrl = `/uploads/${logoFilename}`;
-      
+
       // Move the uploaded file to the uploads directory
       fs.renameSync(req.file.path, path.join(__dirname, logoPath));
-      
+
       // Delete the old logo file if it exists
       if (oldLogoPath) {
         const oldLogoFullPath = path.join(__dirname, oldLogoPath);
@@ -167,17 +167,17 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
         }
       }
     }
-    
+
     // Add a flag to indicate this is a regular edit or status change (not an update button press)
     airdropData.skipTelegramNotification = true;
-    
+
     // Update the airdrop
     const updatedAirdrop = await Airdrop.findOneAndUpdate(
       { airdropId: req.params.id },
       { $set: airdropData },
       { new: true }
     );
-    
+
     // Remove the flag after a short delay (to ensure the change stream picks it up)
     setTimeout(async () => {
       try {
@@ -190,7 +190,7 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
         console.error('Error removing skipTelegramNotification flag:', err);
       }
     }, 2000);
-    
+
     res.json(updatedAirdrop);
   } catch (error) {
     console.error('Error updating airdrop:', error);
@@ -202,11 +202,11 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
 app.delete('/api/airdrops/:id', async (req, res) => {
   try {
     const airdrop = await Airdrop.findOne({ airdropId: req.params.id });
-    
+
     if (!airdrop) {
       return res.status(404).json({ message: 'Airdrop not found' });
     }
-    
+
     // Delete the logo file if it exists
     if (airdrop.logoPath) {
       const logoFullPath = path.join(__dirname, airdrop.logoPath);
@@ -214,9 +214,9 @@ app.delete('/api/airdrops/:id', async (req, res) => {
         fs.unlinkSync(logoFullPath);
       }
     }
-    
+
     await Airdrop.deleteOne({ airdropId: req.params.id });
-    
+
     res.json({ message: 'Airdrop deleted successfully' });
   } catch (error) {
     console.error('Error deleting airdrop:', error);
@@ -228,53 +228,53 @@ app.delete('/api/airdrops/:id', async (req, res) => {
 app.post('/api/airdrops/:id/updates', async (req, res) => {
   try {
     const { content } = req.body;
-    
+
     if (!content) {
       return res.status(400).json({ message: 'Update content is required' });
     }
-    
+
     const airdrop = await Airdrop.findOne({ airdropId: req.params.id });
-    
+
     if (!airdrop) {
       return res.status(404).json({ message: 'Airdrop not found' });
     }
-    
+
     // Create a new update
     const update = {
       content,
       date: new Date()
     };
-    
+
     // Add the update to the airdrop
     airdrop.updates.push(update);
-    
+
     // Save the airdrop
     const updatedAirdrop = await airdrop.save();
-    
+
     // Explicitly send the update to Telegram
     try {
       const telegramService = require('./services/telegramService');
-      const result = await telegramService.sendAirdropUpdateToTelegram(updatedAirdrop, { 
+      const result = await telegramService.sendAirdropUpdateToTelegram(updatedAirdrop, {
         updateContent: content,
         isExplicitUpdate: true  // Flag to indicate this is from the update button
       });
-      
+
       // If successful, store the Telegram message ID with the update
       if (result.success && result.messageId) {
         // Get the index of the update we just added
         const updateIndex = updatedAirdrop.updates.length - 1;
-        
+
         // Update the Telegram message ID for this update
         updatedAirdrop.updates[updateIndex].telegramMessageId = result.messageId;
         await updatedAirdrop.save();
-        
+
         console.log(`Stored Telegram message ID ${result.messageId} for update`);
       }
     } catch (telegramError) {
       console.error('Failed to send update to Telegram:', telegramError);
       // Don't fail the request if Telegram posting fails
     }
-    
+
     res.status(201).json(updatedAirdrop);
   } catch (error) {
     console.error('Error adding update to airdrop:', error);
@@ -306,7 +306,7 @@ app.get('/api/diagnose', (req, res) => {
       },
       clientBuildDirectories: {}
     };
-    
+
     // Check for client build directories
     const possiblePaths = [
       path.resolve(__dirname, '../client/dist'),
@@ -314,19 +314,19 @@ app.get('/api/diagnose', (req, res) => {
       '/opt/render/project/src/client/dist',
       '/opt/render/project/src/client/build'
     ];
-    
+
     possiblePaths.forEach(p => {
       const exists = fs.existsSync(p);
       diagnostics.clientBuildDirectories[p] = {
         exists,
         contents: []
       };
-      
+
       if (exists) {
         // Check for index.html
         const indexPath = path.join(p, 'index.html');
         diagnostics.clientBuildDirectories[p].indexHtml = fs.existsSync(indexPath);
-        
+
         // List directory contents
         try {
           const files = fs.readdirSync(p);
@@ -342,16 +342,16 @@ app.get('/api/diagnose', (req, res) => {
         }
       }
     });
-    
+
     res.json(diagnostics);
   } catch (error) {
     res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
-// 404 handler for API routes
+// 404 handler for API routes - must be placed AFTER all API routes
 app.use('/api/*', (req, res) => {
-  console.log(`API route not found: ${req.path}`);
+  console.log(`API route not found: ${req.originalUrl}`);
   return res.status(404).json({ message: 'API endpoint not found' });
 });
 
