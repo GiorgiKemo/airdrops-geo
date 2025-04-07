@@ -723,8 +723,77 @@ app.get('*', (req, res) => {
   }
 });
 
+// Import diagnostics
+const { printRoutes } = require('./diagnose');
+
+// Add a diagnostic endpoint
+app.get('/api/diagnose', (req, res) => {
+  try {
+    // Run the diagnostics script
+    const fs = require('fs');
+    const path = require('path');
+
+    const diagnostics = {
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        currentDirectory: process.cwd(),
+        dirname: __dirname
+      },
+      clientBuildDirectories: {}
+    };
+
+    // Check for client build directories
+    const possiblePaths = [
+      path.resolve(__dirname, '../client/dist'),
+      path.resolve(__dirname, '../client/build'),
+      '/opt/render/project/src/client/dist',
+      '/opt/render/project/src/client/build'
+    ];
+
+    possiblePaths.forEach(p => {
+      const exists = fs.existsSync(p);
+      diagnostics.clientBuildDirectories[p] = {
+        exists,
+        contents: []
+      };
+
+      if (exists) {
+        // Check for index.html
+        const indexPath = path.join(p, 'index.html');
+        diagnostics.clientBuildDirectories[p].indexHtml = fs.existsSync(indexPath);
+
+        // List directory contents
+        try {
+          const files = fs.readdirSync(p);
+          diagnostics.clientBuildDirectories[p].contents = files.map(file => {
+            const stats = fs.statSync(path.join(p, file));
+            return {
+              name: file,
+              type: stats.isDirectory() ? 'directory' : 'file'
+            };
+          });
+        } catch (err) {
+          diagnostics.clientBuildDirectories[p].error = err.message;
+        }
+      }
+    });
+
+    res.json(diagnostics);
+  } catch (error) {
+    res.status(500).json({ error: error.message, stack: error.stack });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+
+  // Print routes for diagnostics
+  printRoutes(app);
+
+  // Print environment info
+  console.log(`\nEnvironment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Current directory: ${process.cwd()}`);
+  console.log(`Server directory: ${__dirname}`);
 });
