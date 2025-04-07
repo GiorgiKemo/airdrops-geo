@@ -259,7 +259,7 @@ const AdminPage = () => {
                       <select
                         value={airdrop.status}
                         onChange={(e) => handleStatusChange(airdrop._id, e.target.value, airdrop)}
-                        className="mr-2 sm:mr-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm"
+                        className="mr-2 sm:mr-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm w-28 sm:w-32"
                       >
                         <option value="upcoming">Upcoming</option>
                         <option value="active">Active</option>
