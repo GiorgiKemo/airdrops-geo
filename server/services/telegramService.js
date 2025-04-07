@@ -36,19 +36,9 @@ try {
   bot = new TelegramBot(token, { polling: false });
   console.log('Telegram bot initialized successfully');
 
-  // Test the bot by sending a test message
-  console.log(`Testing Telegram bot by sending a message to chat ID: ${chatId}`);
-  bot.sendMessage(chatId, 'Airdrops.geo server started successfully!')
-    .then(message => {
-      console.log('Test message sent successfully:', message.message_id);
-    })
-    .catch(error => {
-      console.error('Error sending test message:', error.message);
-      // Try to diagnose the issue
-      if (error.code === 'ETELEGRAM') {
-        console.error('Telegram API error:', error.response.body);
-      }
-    });
+  // Log success but don't send a test message
+  console.log(`Telegram bot ready to send messages to chat ID: ${chatId}`);
+
 } catch (error) {
   console.error('Failed to initialize Telegram bot:', error);
   console.error('Error details:', error.message);

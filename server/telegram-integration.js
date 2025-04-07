@@ -53,13 +53,12 @@ function setupTelegramIntegration(options = {}) {
           console.log(`New airdrop created: ${airdrop.title} (ID: ${airdrop.airdropId})`);
         }
 
-        // Check if this airdrop was explicitly sent (has telegram.messageId)
-        if (airdrop.telegram && airdrop.telegram.messageId) {
-          if (logActivity) {
-            console.log(`Skipping Telegram notification for new airdrop ${airdrop.airdropId} - already has telegram.messageId`);
-          }
-          return; // Skip sending to Telegram
+        // ALWAYS skip sending notifications for new airdrops from the change stream
+        // We'll handle this explicitly in the create route
+        if (logActivity) {
+          console.log(`Skipping Telegram notification for new airdrop ${airdrop.airdropId} from change stream - will be sent explicitly`);
         }
+        return; // Skip sending to Telegram
       }
 
       // Handle update operations
@@ -170,12 +169,19 @@ function setupTelegramIntegration(options = {}) {
 
             // Check if this update was explicitly sent (sendTelegramNotification flag is set)
             const explicitlySent = updatedFields.includes('sendTelegramNotification') ||
-                                 (airdrop.sendTelegramNotification === true);
+                                 (airdrop.sendTelegramNotification === true) ||
+                                 (airdrop.telegram && airdrop.telegram.explicitlySent === true);
 
-            if (onlyTelegramMessageIdUpdated || explicitlySent) {
+            // Check if this is a bell update (which should be handled explicitly)
+            const isBellUpdate = updatedFields.includes('updates') ||
+                               (airdrop.updates && airdrop.updates.length > 0);
+
+            if (onlyTelegramMessageIdUpdated || explicitlySent || isBellUpdate) {
               if (logActivity) {
                 if (explicitlySent) {
                   console.log(`Skipping Telegram notification - update was explicitly sent already`);
+                } else if (isBellUpdate) {
+                  console.log(`Skipping Telegram notification - bell update will be sent explicitly`);
                 } else {
                   console.log(`Skipping Telegram notification - only telegramMessageId was updated`);
                 }

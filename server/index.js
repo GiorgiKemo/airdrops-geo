@@ -229,6 +229,16 @@ app.post('/api/airdrops', upload.single('logo'), async (req, res) => {
     try {
       console.log('Explicitly sending new airdrop to Telegram');
       const telegramService = require('./services/telegramService');
+
+      // Set a flag to prevent duplicate notifications
+      savedAirdrop.telegram = savedAirdrop.telegram || {};
+      savedAirdrop.telegram.explicitlySent = true;
+      await Airdrop.findByIdAndUpdate(savedAirdrop._id, {
+        'telegram.explicitlySent': true
+      });
+      console.log(`Set explicitlySent flag for new airdrop ${savedAirdrop.airdropId}`);
+
+      // Send the notification
       const result = await telegramService.sendAirdropToTelegram(savedAirdrop);
 
       // If successful, store the Telegram message ID
@@ -236,8 +246,7 @@ app.post('/api/airdrops', upload.single('logo'), async (req, res) => {
         await Airdrop.findByIdAndUpdate(savedAirdrop._id, {
           'telegram.messageId': result.messageId,
           'telegram.chatId': result.chatId,
-          'telegram.lastUpdated': new Date(),
-          'telegram.explicitlySent': true // Flag to indicate this was explicitly sent
+          'telegram.lastUpdated': new Date()
         });
 
         console.log(`Stored Telegram message ID ${result.messageId} for new airdrop ${savedAirdrop.airdropId}`);
