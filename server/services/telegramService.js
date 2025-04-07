@@ -4,19 +4,17 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
-// Log all environment variables (for debugging)
-console.log('Environment variables:', {
-  NODE_ENV: process.env.NODE_ENV,
-  TELEGRAM_BOT_TOKEN_EXISTS: !!process.env.TELEGRAM_BOT_TOKEN,
-  TELEGRAM_CHAT_ID_EXISTS: !!process.env.TELEGRAM_CHAT_ID,
-  TELEGRAM_BOT_TOKEN_LENGTH: process.env.TELEGRAM_BOT_TOKEN ? process.env.TELEGRAM_BOT_TOKEN.length : 0,
-  CURRENT_DIR: __dirname
+// Log essential Telegram configuration info
+console.log('Telegram configuration:', {
+  tokenProvided: !!process.env.TELEGRAM_BOT_TOKEN,
+  tokenLength: process.env.TELEGRAM_BOT_TOKEN ? process.env.TELEGRAM_BOT_TOKEN.length : 0,
+  chatIdProvided: !!process.env.TELEGRAM_CHAT_ID,
+  chatIdValue: process.env.TELEGRAM_CHAT_ID
 });
 
-// Initialize the Telegram bot with hardcoded token and chat ID
-// This is not ideal, but it's a workaround for the environment variables issue
-const token = process.env.TELEGRAM_BOT_TOKEN || '7287756066:AAHAcC4sBA7H8VH9BQiWGF4lNEaN37Oiz-o';
-const chatId = process.env.TELEGRAM_CHAT_ID || '-1002562120618';
+// Initialize the Telegram bot with token and chat ID from environment variables
+const token = process.env.TELEGRAM_BOT_TOKEN;
+const chatId = process.env.TELEGRAM_CHAT_ID;
 let bot = null;
 
 // Log the Telegram configuration
@@ -27,24 +25,21 @@ console.log('Telegram configuration:', {
   chatIdValue: chatId
 });
 
-// Always initialize the bot with the hardcoded token
-try {
-  console.log(`Initializing Telegram bot with token: ${token.substring(0, 5)}...${token.substring(token.length - 5)}`);
-  console.log(`Using chat ID: ${chatId}`);
-
-  // Force the bot to be initialized
-  bot = new TelegramBot(token, { polling: false });
-  console.log('Telegram bot initialized successfully');
-
-  // Log success but don't send a test message
-  console.log(`Telegram bot ready to send messages to chat ID: ${chatId}`);
-
-} catch (error) {
-  console.error('Failed to initialize Telegram bot:', error);
-  console.error('Error details:', error.message);
-  console.error('Error stack:', error.stack);
-  bot = null; // Reset bot to null if initialization fails
+// Initialize the bot if token is available
+if (token && token !== 'YOUR_TELEGRAM_BOT_TOKEN' && token.length > 10) {
+  try {
+    // Initialize the bot
+    bot = new TelegramBot(token, { polling: false });
+    console.log('Telegram bot initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize Telegram bot:', error.message);
+    bot = null; // Reset bot to null if initialization fails
+  }
+} else {
+  console.log('Telegram bot not initialized: No valid token provided');
+  bot = null; // Ensure bot is null
 }
+
 
 /**
  * Format an airdrop object into a Telegram message

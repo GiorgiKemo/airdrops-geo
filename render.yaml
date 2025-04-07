@@ -11,9 +11,9 @@ services:
       - key: CORS_ORIGIN
         value: https://airdrops-geo.onrender.com
       - key: TELEGRAM_BOT_TOKEN
-        value: 7287756066:AAHAcC4sBA7H8VH9BQiWGF4lNEaN37Oiz-o
+        sync: false
       - key: TELEGRAM_CHAT_ID
-        value: -1002562120618
+        sync: false
     routes:
       - type: rewrite
         source: /*
