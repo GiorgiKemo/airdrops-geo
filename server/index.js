@@ -436,6 +436,106 @@ app.get('/api/fix-index', async (req, res) => {
   }
 });
 
+// User tracking routes
+// Get tracked airdrops for a user
+app.get('/api/tracking/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find the user's tracking document
+    const tracking = await Tracking.findOne({ userId });
+
+    if (!tracking) {
+      // If no tracking found, return empty array
+      return res.json([]);
+    }
+
+    // Get the airdrops that the user is tracking
+    const trackedAirdrops = await Airdrop.find({
+      _id: { $in: tracking.airdropIds }
+    });
+
+    res.json(trackedAirdrops);
+  } catch (error) {
+    console.error('Error fetching tracked airdrops:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add an airdrop to user's tracking
+app.post('/api/tracking', async (req, res) => {
+  try {
+    const { userId, airdropId } = req.body;
+
+    if (!userId || !airdropId) {
+      return res.status(400).json({ message: 'User ID and Airdrop ID are required' });
+    }
+
+    // Check if the airdrop exists
+    const airdrop = await Airdrop.findById(airdropId);
+    if (!airdrop) {
+      return res.status(404).json({ message: 'Airdrop not found' });
+    }
+
+    // Find or create the user's tracking document
+    let tracking = await Tracking.findOne({ userId });
+
+    if (!tracking) {
+      // Create new tracking document for this user
+      tracking = new Tracking({
+        userId,
+        airdropIds: [airdropId]
+      });
+    } else {
+      // Add the airdrop to the user's tracking if not already there
+      if (!tracking.airdropIds.includes(airdropId)) {
+        tracking.airdropIds.push(airdropId);
+      }
+    }
+
+    await tracking.save();
+
+    res.json({
+      message: 'Airdrop tracked successfully',
+      tracking: tracking.airdropIds
+    });
+  } catch (error) {
+    console.error('Error tracking airdrop:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove an airdrop from user's tracking
+app.delete('/api/tracking', async (req, res) => {
+  try {
+    const { userId, airdropId } = req.body;
+
+    if (!userId || !airdropId) {
+      return res.status(400).json({ message: 'User ID and Airdrop ID are required' });
+    }
+
+    // Find the user's tracking document
+    const tracking = await Tracking.findOne({ userId });
+
+    if (!tracking) {
+      return res.status(404).json({ message: 'User tracking not found' });
+    }
+
+    // Remove the airdrop from the user's tracking
+    tracking.airdropIds = tracking.airdropIds.filter(id => id.toString() !== airdropId.toString());
+
+    await tracking.save();
+
+    res.json({
+      message: 'Airdrop untracked successfully',
+      tracking: tracking.airdropIds
+    });
+  } catch (error) {
+    console.error('Error untracking airdrop:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // 404 handler for API routes - must be placed AFTER all API routes
 app.use('/api/*', (req, res) => {
   console.log(`API route not found: ${req.originalUrl}`);
