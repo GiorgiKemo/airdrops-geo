@@ -8,6 +8,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: CORS_ORIGIN
+        value: https://airdrops-geo.onrender.com
     routes:
       - type: rewrite
         source: /*
@@ -19,6 +21,9 @@ services:
     env: static
     buildCommand: cd client && npm install && npm run build
     staticPublishPath: ./client/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://airdrops-geo-api.onrender.com
     routes:
       - type: rewrite
         source: /*

@@ -81,10 +81,24 @@ const upload = multer({ storage });
 // Create Express app
 const app = express();
 
+// CORS configuration
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
 // Basic middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Log CORS configuration
+console.log('CORS configuration:', {
+  origin: process.env.CORS_ORIGIN || '*',
+  environment: process.env.NODE_ENV
+});
 
 // Request logging middleware
 app.use((req, res, next) => {
