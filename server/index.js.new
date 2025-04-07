@@ -477,6 +477,10 @@ app.post('/api/airdrops/:id/updates', async (req, res) => {
       date: new Date()
     };
 
+    // Set the explicitlySent flag to prevent duplicate notifications
+    airdrop.telegram = airdrop.telegram || {};
+    airdrop.telegram.explicitlySent = true;
+
     // Add the update to the airdrop
     airdrop.updates.push(update);
 

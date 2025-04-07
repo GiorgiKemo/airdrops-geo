@@ -79,6 +79,17 @@ function setupTelegramIntegration(options = {}) {
           return; // Skip sending to Telegram
         }
 
+        // ALWAYS skip if this is an update to the updates array
+        // These are handled explicitly in the routes
+        if (change.updateDescription &&
+            change.updateDescription.updatedFields &&
+            Object.keys(change.updateDescription.updatedFields).some(field => field.startsWith('updates'))) {
+          if (logActivity) {
+            console.log(`Skipping Telegram notification for airdrop ${airdrop.airdropId} - updates array was modified`);
+          }
+          return; // Skip sending to Telegram
+        }
+
         if (change.updateDescription && change.updateDescription.updatedFields) {
           const updatedFields = Object.keys(change.updateDescription.updatedFields);
 
@@ -173,7 +184,9 @@ function setupTelegramIntegration(options = {}) {
                                  (airdrop.telegram && airdrop.telegram.explicitlySent === true);
 
             // Check if this is a bell update (which should be handled explicitly)
+            // ALWAYS skip updates to the updates array - these are handled explicitly in the routes
             const isBellUpdate = updatedFields.includes('updates') ||
+                               updatedFields.some(field => field.startsWith('updates')) ||
                                (airdrop.updates && airdrop.updates.length > 0);
 
             if (onlyTelegramMessageIdUpdated || explicitlySent || isBellUpdate) {
