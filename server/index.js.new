@@ -12,21 +12,44 @@ dotenv.config();
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
+  .then(async () => {
     console.log('Connected to MongoDB');
 
-    // Check if we need to run the index fix script
-    const fixIndexPath = path.join(__dirname, 'fix-index.js');
-    if (fs.existsSync(fixIndexPath)) {
-      console.log('Running index fix script...');
+    // Run the index fix on startup
+    try {
+      console.log('Running index fix on startup...');
+
+      // Get the MongoDB connection
+      const db = mongoose.connection.db;
+
+      // Get the views collection
+      const collection = db.collection('views');
+
+      // List all indexes before changes
+      console.log('Current indexes on views collection:');
+      const indexes = await collection.indexes();
+      console.log(indexes);
+
+      // Try to drop the unique index on airdropId if it exists
       try {
-        require('./fix-index');
-        // Remove the script after running it
-        fs.unlinkSync(fixIndexPath);
-        console.log('Index fix script executed and removed');
-      } catch (fixError) {
-        console.error('Error running index fix script:', fixError);
+        await collection.dropIndex('airdropId_1');
+        console.log('Successfully dropped the unique index on airdropId');
+      } catch (indexError) {
+        console.log('No index named airdropId_1 found or error dropping index:', indexError.message);
       }
+
+      // Create a new non-unique index
+      await collection.createIndex({ airdropId: 1 }, { unique: false });
+      console.log('Created new non-unique index on airdropId');
+
+      // List indexes after changes
+      console.log('Updated indexes on views collection:');
+      const updatedIndexes = await collection.indexes();
+      console.log(updatedIndexes);
+
+      console.log('Index fix completed successfully');
+    } catch (fixError) {
+      console.error('Error fixing MongoDB index:', fixError);
     }
   })
   .catch((error) => {
@@ -390,6 +413,50 @@ if (process.env.NODE_ENV === 'production') {
     console.error('Error setting up Telegram integration:', error);
   }
 }
+
+// Add an endpoint to fix the MongoDB index issue
+app.get('/api/fix-index', async (req, res) => {
+  try {
+    console.log('Running index fix from API endpoint...');
+
+    // Get the MongoDB connection
+    const db = mongoose.connection.db;
+
+    // Get the views collection
+    const collection = db.collection('views');
+
+    // List all indexes before changes
+    console.log('Current indexes on views collection:');
+    const indexes = await collection.indexes();
+    console.log(indexes);
+
+    // Try to drop the unique index on airdropId if it exists
+    try {
+      await collection.dropIndex('airdropId_1');
+      console.log('Successfully dropped the unique index on airdropId');
+    } catch (indexError) {
+      console.log('No index named airdropId_1 found or error dropping index:', indexError.message);
+    }
+
+    // Create a new non-unique index
+    await collection.createIndex({ airdropId: 1 }, { unique: false });
+    console.log('Created new non-unique index on airdropId');
+
+    // List indexes after changes
+    console.log('Updated indexes on views collection:');
+    const updatedIndexes = await collection.indexes();
+    console.log(updatedIndexes);
+
+    res.json({
+      message: 'Index fix completed successfully',
+      beforeIndexes: indexes,
+      afterIndexes: updatedIndexes
+    });
+  } catch (error) {
+    console.error('Error fixing index:', error);
+    res.status(500).json({ message: 'Error fixing index', error: error.message });
+  }
+});
 
 // 404 handler for API routes - must be placed AFTER all API routes
 app.use('/api/*', (req, res) => {
