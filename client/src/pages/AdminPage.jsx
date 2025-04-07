@@ -122,17 +122,17 @@ const AdminPage = () => {
       console.error('Error response:', err.response?.data);
     }
   };
-  
+
   // Handle adding an update to an airdrop
   const handleAddUpdate = async (updateContent) => {
     try {
       if (!updatingAirdrop) return;
-      
+
       await airdropService.addAirdropUpdate(updatingAirdrop.airdropId, updateContent);
       setSuccessMessage('Update added successfully!');
       setUpdatingAirdrop(null);
       fetchAirdrops();
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setSuccessMessage('');
@@ -142,7 +142,7 @@ const AdminPage = () => {
       console.error('Update error:', err);
     }
   };
-  
+
   // Toggle expanded airdrop to show updates
   const toggleExpandAirdrop = (airdrop) => {
     if (expandedAirdrop && expandedAirdrop._id === airdrop._id) {
@@ -226,8 +226,8 @@ const AdminPage = () => {
             </button>
           </div>
           <div className="w-full sm:w-auto">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="relative rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2">
+              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                 <FaSearch className="text-gray-400 dark:text-gray-500" />
               </div>
               <input
@@ -235,7 +235,7 @@ const AdminPage = () => {
                 placeholder="Search airdrops..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-transparent border-none outline-none text-sm w-full text-[var(--macos-text)]"
+                className="pl-6 bg-transparent border-none outline-none text-sm w-full text-gray-700 dark:text-gray-200"
               />
             </div>
           </div>
@@ -310,64 +310,68 @@ const AdminPage = () => {
                           </div>
                         </td>
                         <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium">
-                          {/* Status dropdown */}
-                          <select
-                            value={airdrop.status}
-                            onChange={(e) => handleStatusChange(airdrop._id, e.target.value, airdrop)}
-                            className="mr-2 sm:mr-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm w-28 sm:w-32"
-                          >
-                            <option value="upcoming">Upcoming</option>
-                            <option value="active">Active</option>
-                            <option value="ended">Ended</option>
-                            <option
-                              value="claim"
-                              disabled={!airdrop.claimUrl}
-                              title={airdrop.claimUrl ? 'Set status to Claim' : 'Requires a Claim URL - Edit the airdrop first'}
+                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 mb-2 sm:mb-0">
+                            {/* Status dropdown */}
+                            <select
+                              value={airdrop.status}
+                              onChange={(e) => handleStatusChange(airdrop._id, e.target.value, airdrop)}
+                              className="mr-2 sm:mr-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm w-28 sm:w-32"
                             >
-                              Claim {!airdrop.claimUrl && '(Requires Claim URL)'}
-                            </option>
-                          </select>
+                              <option value="upcoming">Upcoming</option>
+                              <option value="active">Active</option>
+                              <option value="ended">Ended</option>
+                              <option
+                                value="claim"
+                                disabled={!airdrop.claimUrl}
+                                title={airdrop.claimUrl ? 'Set status to Claim' : 'Requires a Claim URL - Edit the airdrop first'}
+                              >
+                                Claim {!airdrop.claimUrl && '(Requires Claim URL)'}
+                              </option>
+                            </select>
 
-                          <button
-                            onClick={() => {
-                              setEditingAirdrop(airdrop);
-                              // Scroll to the form after a short delay to ensure it's rendered
-                              setTimeout(() => {
-                                if (formRef.current) {
-                                  formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                              }, 100);
-                            }}
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-2 sm:mr-4 text-xs sm:text-sm"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              setUpdatingAirdrop(airdrop);
-                              // Scroll to the update form
-                              setTimeout(() => {
-                                if (updateFormRef.current) {
-                                  updateFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                              }, 100);
-                            }}
-                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-2 sm:mr-4 text-xs sm:text-sm flex items-center"
-                          >
-                            <FaBell className="mr-1" /> Update
-                          </button>
-                          <button
-                            onClick={() => toggleExpandAirdrop(airdrop)}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-2 sm:mr-4 text-xs sm:text-sm"
-                          >
-                            {expandedAirdrop && expandedAirdrop._id === airdrop._id ? 'Hide Updates' : 'Show Updates'}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAirdrop(airdrop._id)}
-                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 text-xs sm:text-sm"
-                          >
-                            Delete
-                          </button>
+                            <button
+                              onClick={() => {
+                                setEditingAirdrop(airdrop);
+                                // Scroll to the form after a short delay to ensure it's rendered
+                                setTimeout(() => {
+                                  if (formRef.current) {
+                                    formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                  }
+                                }, 100);
+                              }}
+                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-2 sm:mr-4 text-xs sm:text-sm"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0">
+                            <button
+                              onClick={() => {
+                                setUpdatingAirdrop(airdrop);
+                                // Scroll to the update form
+                                setTimeout(() => {
+                                  if (updateFormRef.current) {
+                                    updateFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                  }
+                                }, 100);
+                              }}
+                              className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-2 sm:mr-4 text-xs sm:text-sm flex items-center justify-center"
+                            >
+                              <FaBell className="mr-1" /> Update
+                            </button>
+                            <button
+                              onClick={() => toggleExpandAirdrop(airdrop)}
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-2 sm:mr-4 text-xs sm:text-sm"
+                            >
+                              {expandedAirdrop && expandedAirdrop._id === airdrop._id ? 'Hide Updates' : 'Show Updates'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAirdrop(airdrop._id)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 text-xs sm:text-sm"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                       {/* Expanded row for updates */}

@@ -611,7 +611,29 @@ app.post('/api/airdrops/:id/updates', async (req, res) => {
     // Save the airdrop
     const updatedAirdrop = await airdrop.save();
 
-    // The MongoDB change stream will handle sending to Telegram
+    // Explicitly send the update to Telegram
+    try {
+      const telegramService = require('./services/telegramService');
+      const result = await telegramService.sendAirdropUpdateToTelegram(updatedAirdrop, {
+        updateContent: content,
+        isExplicitUpdate: true  // Flag to indicate this is from the update button
+      });
+
+      // If successful, store the Telegram message ID with the update
+      if (result.success && result.messageId) {
+        // Get the index of the update we just added
+        const updateIndex = updatedAirdrop.updates.length - 1;
+
+        // Update the Telegram message ID for this update
+        updatedAirdrop.updates[updateIndex].telegramMessageId = result.messageId;
+        await updatedAirdrop.save();
+
+        console.log(`Stored Telegram message ID ${result.messageId} for update`);
+      }
+    } catch (telegramError) {
+      console.error('Failed to send update to Telegram:', telegramError);
+      // Don't fail the request if Telegram posting fails
+    }
 
     res.status(201).json(updatedAirdrop);
   } catch (error) {

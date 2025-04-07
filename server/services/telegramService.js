@@ -169,10 +169,11 @@ const sendAirdropToTelegram = async (airdrop) => {
  * @param {Object} airdrop - The updated airdrop object
  * @param {Object} options - Additional options
  * @param {string} options.updateContent - Specific update content to send (optional)
+ * @param {boolean} options.isExplicitUpdate - Whether this is an explicit update from the update button
  * @returns {Promise<Object>} - Result object with success status and message ID
  */
 const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
-  const { updateContent } = options;
+  const { updateContent, isExplicitUpdate = false } = options;
   const isSpecificUpdate = !!updateContent;
 
   console.log('Attempting to send airdrop update to Telegram:', {
@@ -181,7 +182,8 @@ const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
     chatIdValue: chatId,
     airdropTitle: airdrop?.title || 'No title',
     originalMessageId: airdrop?.telegram?.messageId || 'None',
-    isSpecificUpdate: isSpecificUpdate
+    isSpecificUpdate: isSpecificUpdate,
+    isExplicitUpdate: isExplicitUpdate
   });
 
   if (!bot || !chatId || chatId === 'YOUR_TELEGRAM_CHAT_ID') {
