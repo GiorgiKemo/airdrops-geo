@@ -570,19 +570,22 @@ if (process.env.NODE_ENV === 'production') {
   try {
     // First, try the standard build directory
     let staticPath = path.join(__dirname, '../client/dist');
+    let staticPathExists = fs.existsSync(staticPath);
 
     // If that doesn't exist, try the Render-specific directory
-    if (!fs.existsSync(staticPath)) {
+    if (!staticPathExists) {
       staticPath = path.join(__dirname, '../client/build');
+      staticPathExists = fs.existsSync(staticPath);
     }
 
     // If that doesn't exist either, try the absolute path that Render might use
-    if (!fs.existsSync(staticPath)) {
+    if (!staticPathExists) {
       staticPath = '/opt/render/project/src/client/dist';
+      staticPathExists = fs.existsSync(staticPath);
     }
 
     // Check if the directory exists before setting up static serving
-    if (fs.existsSync(staticPath)) {
+    if (staticPathExists) {
       console.log('Serving static files from:', staticPath);
       app.use(express.static(staticPath));
     } else {
@@ -592,6 +595,11 @@ if (process.env.NODE_ENV === 'production') {
         '/opt/render/project/src/client/dist'
       );
     }
+
+    // Always serve our fallback public directory
+    const publicPath = path.join(__dirname, 'public');
+    console.log('Serving fallback files from:', publicPath);
+    app.use(express.static(publicPath));
   } catch (error) {
     console.error('Error setting up static file serving:', error);
   }
@@ -690,20 +698,27 @@ app.get('*', (req, res) => {
     if (indexPath) {
       return res.sendFile(indexPath);
     } else {
-      console.log('Could not find index.html in any of the expected locations');
-      return res.status(404).send(`
-        <html>
-          <head><title>Airdrops-Geo - File Not Found</title></head>
-          <body>
-            <h1>File Not Found</h1>
-            <p>The client-side application files could not be found. This is likely a deployment issue.</p>
-            <p>Attempted to find index.html in the following locations:</p>
-            <ul>
-              ${possiblePaths.map(p => `<li>${p}</li>`).join('')}
-            </ul>
-          </body>
-        </html>
-      `);
+      console.log('Could not find index.html in any of the expected locations, using fallback');
+      // Use our fallback HTML file
+      const fallbackPath = path.join(__dirname, 'public/index.html');
+      if (fs.existsSync(fallbackPath)) {
+        return res.sendFile(fallbackPath);
+      } else {
+        return res.status(404).send(`
+          <html>
+            <head><title>Airdrops-Geo - File Not Found</title></head>
+            <body>
+              <h1>File Not Found</h1>
+              <p>The client-side application files could not be found. This is likely a deployment issue.</p>
+              <p>Attempted to find index.html in the following locations:</p>
+              <ul>
+                ${possiblePaths.map(p => `<li>${p}</li>`).join('')}
+                <li>${fallbackPath} (fallback)</li>
+              </ul>
+            </body>
+          </html>
+        `);
+      }
     }
   } else {
     // In development, return a message that helps debug the issue
