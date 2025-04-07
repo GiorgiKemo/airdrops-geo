@@ -9,6 +9,14 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 const chatId = process.env.TELEGRAM_CHAT_ID;
 let bot = null;
 
+// Log the Telegram configuration
+console.log('Telegram configuration:', {
+  tokenProvided: !!token,
+  tokenLength: token ? token.length : 0,
+  chatIdProvided: !!chatId,
+  chatIdValue: chatId
+});
+
 // Only initialize the bot if the token is available
 if (token && token !== 'YOUR_TELEGRAM_BOT_TOKEN') {
   try {
