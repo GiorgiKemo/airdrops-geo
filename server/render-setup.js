@@ -71,11 +71,16 @@ function setupRenderServer(app) {
 
         console.log(`Handling client-side route with fallback: ${req.path}`);
 
+        // Special handling for airdrop detail pages
+        if (req.path.startsWith('/airdrops/')) {
+          console.log(`Special handling for airdrop detail page: ${req.path}`);
+        }
+
         // Send the index.html file
         const indexPath = path.join(publicPath, 'index.html');
         if (fs.existsSync(indexPath)) {
-          console.log(`Serving index.html for path: ${req.path}`);
-          return res.sendFile(indexPath, { root: publicPath });
+          console.log(`Serving index.html for path: ${req.path} from ${indexPath}`);
+          return res.sendFile('index.html', { root: publicPath });
         } else {
           console.log(`index.html not found at ${indexPath}`);
         }
@@ -101,15 +106,23 @@ function setupRenderServer(app) {
       return next();
     }
 
-    console.log(`Handling client-side route: ${req.path}`);
+    console.log(`Handling client-side route in render-setup: ${req.path}`);
 
     // Send the index.html file
     const indexPath = path.join(clientBuildPath, 'index.html');
     if (fs.existsSync(indexPath)) {
-      console.log(`Serving index.html for path: ${req.path}`);
-      return res.sendFile(indexPath, { root: clientBuildPath });
+      console.log(`Serving index.html for path: ${req.path} from ${indexPath}`);
+      return res.sendFile('index.html', { root: clientBuildPath });
     } else {
-      console.log(`index.html not found at ${indexPath}`);
+      console.log(`index.html not found at ${indexPath}, trying fallback`);
+      // Try fallback to server/public/index.html
+      const fallbackPath = path.join(__dirname, 'public', 'index.html');
+      if (fs.existsSync(fallbackPath)) {
+        console.log(`Serving fallback index.html for path: ${req.path} from ${fallbackPath}`);
+        return res.sendFile('index.html', { root: path.join(__dirname, 'public') });
+      } else {
+        console.log(`Fallback index.html not found at ${fallbackPath}`);
+      }
     }
 
     // If index.html doesn't exist, continue to the next middleware

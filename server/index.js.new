@@ -559,6 +559,32 @@ app.delete('/api/tracking', async (req, res) => {
   }
 });
 
+// Define a list of client-side routes that should be handled by React Router
+const clientRoutes = [
+  '/airdrops/*',
+  '/admin',
+  '/login',
+  '/register',
+  '/dashboard',
+  '/terms',
+  '/privacy',
+  '/cookies',
+  '/all'
+];
+
+// Handle client-side routes before the API 404 handler
+clientRoutes.forEach(route => {
+  app.get(route, (req, res, next) => {
+    console.log(`Handling client-side route: ${req.path}`);
+    // Send the index.html file from the public directory
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    }
+    next();
+  });
+});
+
 // 404 handler for API routes - must be placed AFTER all API routes
 app.use('/api/*', (req, res) => {
   console.log(`API route not found: ${req.originalUrl}`);
