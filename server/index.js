@@ -6,6 +6,7 @@ const fs = require('fs');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const telegramService = require('./services/telegramService');
+const setupTelegramIntegration = require('./telegram-integration');
 
 // Load environment variables
 dotenv.config();
@@ -19,8 +20,21 @@ connectDB().then((conn) => {
     console.log('MongoDB connection successful, checking if database needs seeding...');
     // Check if we need to seed the database
     seedDatabase.checkAndSeedDatabase();
+
+    // Set up Telegram integration with MongoDB Change Streams
+    const changeStream = setupTelegramIntegration({
+      watchForUpdates: true,  // Watch for updates to existing airdrops
+      logActivity: true       // Log activity to the console
+    });
+
+    // Handle process termination
+    process.on('SIGINT', () => {
+      console.log('Closing MongoDB change stream...');
+      changeStream.close();
+      process.exit(0);
+    });
   } else {
-    console.log('MongoDB connection failed, skipping database seeding.');
+    console.log('MongoDB connection failed, skipping database seeding and Telegram integration.');
   }
 }).catch(err => {
   console.error('Unexpected error during MongoDB connection:', err);
