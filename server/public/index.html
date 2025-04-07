@@ -63,13 +63,16 @@
     </p>
   </div>
   <script>
-    // Store the current path
+    // Store the current path and query string
     const currentPath = window.location.pathname;
+    const currentSearch = window.location.search;
+    const currentHash = window.location.hash;
+    const fullPath = currentPath + currentSearch + currentHash;
 
-    // If we're not already on the homepage, redirect there
+    // If we're not already on the homepage, redirect there with the path as a hash parameter
     if (currentPath !== '/' && currentPath !== '/index.html') {
       // Store the current path in session storage
-      sessionStorage.setItem('redirectPath', currentPath);
+      sessionStorage.setItem('redirectPath', fullPath);
 
       // Redirect to the homepage
       window.location.href = '/';
@@ -92,6 +95,11 @@
           container.appendChild(message);
         }
       });
+
+      // Reload the page after a short delay to ensure the client-side router picks up the new URL
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     }
   </script>
 </body>

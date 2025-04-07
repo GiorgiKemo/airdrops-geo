@@ -74,7 +74,10 @@ function setupRenderServer(app) {
         // Send the index.html file
         const indexPath = path.join(publicPath, 'index.html');
         if (fs.existsSync(indexPath)) {
-          return res.sendFile(indexPath);
+          console.log(`Serving index.html for path: ${req.path}`);
+          return res.sendFile(indexPath, { root: publicPath });
+        } else {
+          console.log(`index.html not found at ${indexPath}`);
         }
 
         // If index.html doesn't exist, continue to the next middleware
@@ -103,7 +106,10 @@ function setupRenderServer(app) {
     // Send the index.html file
     const indexPath = path.join(clientBuildPath, 'index.html');
     if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
+      console.log(`Serving index.html for path: ${req.path}`);
+      return res.sendFile(indexPath, { root: clientBuildPath });
+    } else {
+      console.log(`index.html not found at ${indexPath}`);
     }
 
     // If index.html doesn't exist, continue to the next middleware
