@@ -627,73 +627,43 @@ app.delete('/api/tracking', async (req, res) => {
   }
 });
 
-// Define a list of client-side routes that should be handled by React Router
-const clientRoutes = [
-  '/admin',
-  '/login',
-  '/register',
-  '/dashboard',
-  '/terms',
-  '/privacy',
-  '/cookies',
-  '/all'
-];
-
-// Special handler for airdrop detail pages
-app.get('/airdrops/:id', async (req, res, next) => {
-  const id = req.params.id;
-  console.log(`Handling client-side route for airdrop detail: ${id}`);
-
-  try {
-    // Check if the airdrop exists in the database
-    let airdrop = null;
-
-    // Check if the ID is a valid MongoDB ObjectID
-    if (mongoose.Types.ObjectId.isValid(id)) {
-      console.log(`Checking if airdrop exists with _id: ${id}`);
-      airdrop = await Airdrop.findById(id);
-    }
-
-    // If not found, try to find by airdropId
-    if (!airdrop) {
-      console.log(`Checking if airdrop exists with airdropId: ${id}`);
-      airdrop = await Airdrop.findOne({ airdropId: id });
-    }
-
-    if (airdrop) {
-      console.log(`Airdrop exists: ${airdrop.title}, serving client-side route`);
-    } else {
-      console.log(`Airdrop does not exist with ID: ${id}, but still serving client-side route`);
-    }
-  } catch (error) {
-    console.error(`Error checking airdrop existence: ${error.message}`);
-  }
-
-  // Always serve the index.html file for client-side routing
-  const indexPath = path.join(__dirname, 'public', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  }
-  next();
-});
-
-// Handle other client-side routes before the API 404 handler
-clientRoutes.forEach(route => {
-  app.get(route, (req, res, next) => {
-    console.log(`Handling client-side route: ${req.path}`);
-    // Send the index.html file from the public directory
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    if (fs.existsSync(indexPath)) {
-      return res.sendFile(indexPath);
-    }
-    next();
-  });
-});
-
 // 404 handler for API routes - must be placed AFTER all API routes
 app.use('/api/*', (req, res) => {
   console.log(`API route not found: ${req.originalUrl}`);
   return res.status(404).json({ message: 'API endpoint not found' });
+});
+
+// IMPORTANT: This catch-all route handler must be placed AFTER all other routes
+// It will handle ALL client-side routes by serving the index.html file
+app.get('*', (req, res) => {
+  // Skip API routes and static files
+  if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
+    return res.status(404).send('Not Found');
+  }
+
+  console.log(`Serving index.html for client-side route: ${req.path}`);
+
+  // Try to serve the index.html file from the client build directory first
+  const clientBuildPath = path.join(__dirname, '..', 'client', 'dist');
+  const clientIndexPath = path.join(clientBuildPath, 'index.html');
+
+  if (fs.existsSync(clientIndexPath)) {
+    console.log(`Serving index.html from client build directory: ${clientIndexPath}`);
+    return res.sendFile(clientIndexPath);
+  }
+
+  // If client build directory doesn't exist, try the server public directory
+  const serverPublicPath = path.join(__dirname, 'public');
+  const serverIndexPath = path.join(serverPublicPath, 'index.html');
+
+  if (fs.existsSync(serverIndexPath)) {
+    console.log(`Serving index.html from server public directory: ${serverIndexPath}`);
+    return res.sendFile(serverIndexPath);
+  }
+
+  // If neither exists, return a 404
+  console.log('No index.html file found to serve');
+  return res.status(404).send('Not Found - No index.html file available');
 });
 
 // Serve static files

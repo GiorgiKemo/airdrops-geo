@@ -45,6 +45,12 @@
     .button:hover {
       background-color: #4338ca;
     }
+    #loading {
+      display: block;
+      margin-top: 20px;
+      font-style: italic;
+      color: #666;
+    }
   </style>
 </head>
 <body>
@@ -52,54 +58,19 @@
     <h1>Airdrops-Geo</h1>
     <p>
       Welcome to Airdrops-Geo, your platform for cryptocurrency airdrops.
-      This is a static fallback page that is served when client-side routing is not working correctly.
     </p>
-    <p>
-      You're seeing this page because you're trying to access a client-side route directly.
-      The server is correctly handling your request, but the React application is not being loaded properly.
+    <p id="loading">
+      Loading application...
     </p>
     <p>
       <a href="/" class="button">Go to Homepage</a>
     </p>
   </div>
   <script>
-    // Store the current path and query string
-    const currentPath = window.location.pathname;
-    const currentSearch = window.location.search;
-    const currentHash = window.location.hash;
-    const fullPath = currentPath + currentSearch + currentHash;
-
-    // If we're not already on the homepage, redirect there with the path as a hash parameter
-    if (currentPath !== '/' && currentPath !== '/index.html') {
-      // Store the current path in session storage
-      sessionStorage.setItem('redirectPath', fullPath);
-
-      // Redirect to the homepage
+    // Simple redirect to the root
+    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+      console.log('Redirecting to homepage from:', window.location.pathname);
       window.location.href = '/';
-    } else if (sessionStorage.getItem('redirectPath')) {
-      // If we have a stored path and we're on the homepage, try to navigate to the stored path
-      const redirectPath = sessionStorage.getItem('redirectPath');
-      sessionStorage.removeItem('redirectPath');
-
-      // Use history API to change the URL without reloading
-      window.history.pushState({}, '', redirectPath);
-
-      // Display a message about the redirect
-      document.addEventListener('DOMContentLoaded', () => {
-        const container = document.querySelector('.container');
-        if (container) {
-          const message = document.createElement('p');
-          message.textContent = `Redirected from: ${redirectPath}`;
-          message.style.color = '#666';
-          message.style.fontSize = '0.9rem';
-          container.appendChild(message);
-        }
-      });
-
-      // Reload the page after a short delay to ensure the client-side router picks up the new URL
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
     }
   </script>
 </body>

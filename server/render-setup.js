@@ -62,32 +62,9 @@ function setupRenderServer(app) {
       console.log(`Using fallback public directory: ${publicPath}`);
       app.use(express.static(publicPath));
 
-      // Create a catch-all route handler for client-side routing
-      app.get('*', (req, res, next) => {
-        // Skip API routes and static files
-        if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-          return next();
-        }
-
-        console.log(`Handling client-side route with fallback: ${req.path}`);
-
-        // Special handling for airdrop detail pages
-        if (req.path.startsWith('/airdrops/')) {
-          console.log(`Special handling for airdrop detail page: ${req.path}`);
-        }
-
-        // Send the index.html file
-        const indexPath = path.join(publicPath, 'index.html');
-        if (fs.existsSync(indexPath)) {
-          console.log(`Serving index.html for path: ${req.path} from ${indexPath}`);
-          return res.sendFile('index.html', { root: publicPath });
-        } else {
-          console.log(`index.html not found at ${indexPath}`);
-        }
-
-        // If index.html doesn't exist, continue to the next middleware
-        next();
-      });
+      // Note: We're not adding a catch-all route handler here anymore.
+      // The catch-all route handler is now defined in server/index.js
+      console.log('Client-side routing will be handled by the catch-all route in server/index.js');
 
       return;
     }
@@ -99,35 +76,9 @@ function setupRenderServer(app) {
   // Serve static files from the client build directory
   app.use(express.static(clientBuildPath));
 
-  // Create a catch-all route handler for client-side routing
-  app.get('*', (req, res, next) => {
-    // Skip API routes and static files
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-      return next();
-    }
-
-    console.log(`Handling client-side route in render-setup: ${req.path}`);
-
-    // Send the index.html file
-    const indexPath = path.join(clientBuildPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      console.log(`Serving index.html for path: ${req.path} from ${indexPath}`);
-      return res.sendFile('index.html', { root: clientBuildPath });
-    } else {
-      console.log(`index.html not found at ${indexPath}, trying fallback`);
-      // Try fallback to server/public/index.html
-      const fallbackPath = path.join(__dirname, 'public', 'index.html');
-      if (fs.existsSync(fallbackPath)) {
-        console.log(`Serving fallback index.html for path: ${req.path} from ${fallbackPath}`);
-        return res.sendFile('index.html', { root: path.join(__dirname, 'public') });
-      } else {
-        console.log(`Fallback index.html not found at ${fallbackPath}`);
-      }
-    }
-
-    // If index.html doesn't exist, continue to the next middleware
-    next();
-  });
+  // Note: We're not adding a catch-all route handler here anymore.
+  // The catch-all route handler is now defined in server/index.js
+  console.log('Client-side routing will be handled by the catch-all route in server/index.js');
 }
 
 module.exports = setupRenderServer;
