@@ -573,31 +573,15 @@ if (process.env.NODE_ENV === 'production') {
     if (fs.existsSync(staticPath)) {
       console.log('Serving static files from:', staticPath);
       app.use(express.static(staticPath));
-
-      app.get('*', (_req, res) => {
-        const indexPath = path.resolve(staticPath, 'index.html');
-        if (fs.existsSync(indexPath)) {
-          res.sendFile(indexPath);
-        } else {
-          res.send('API is running, but client files are not available.');
-        }
-      });
     } else {
       console.log('Static directory not found:', staticPath);
-      // Fallback route for all non-API routes
-      app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-          res.send('API is running, but client files are not available.');
-        } else {
-          // Continue to next middleware for API routes
-          res.status(404).json({ message: 'API endpoint not found' });
-        }
-      });
     }
   } catch (error) {
     console.error('Error setting up static file serving:', error);
   }
 }
+
+
 
 // Add an update to an airdrop
 app.post('/api/airdrops/:id/updates', async (req, res) => {
@@ -654,6 +638,40 @@ app.post('/api/airdrops/:id/updates', async (req, res) => {
   } catch (error) {
     console.error('Error adding update to airdrop:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Catch-all route for client-side routing (works in both development and production)
+app.get('*', (req, res) => {
+  // Skip API routes
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ message: 'API endpoint not found' });
+  }
+
+  // For client-side routes
+  if (process.env.NODE_ENV === 'production') {
+    const staticPath = path.join(__dirname, '../client/dist');
+    const indexPath = path.resolve(staticPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      return res.sendFile(indexPath);
+    } else {
+      return res.send('API is running, but client files are not available.');
+    }
+  } else {
+    // In development, return a message that helps debug the issue
+    res.send(`
+      <html>
+        <head><title>Airdrops-Geo API Server</title></head>
+        <body>
+          <h1>Airdrops-Geo API Server</h1>
+          <p>This is the API server. For client-side routes like "${req.path}", you need to:</p>
+          <ol>
+            <li>Make sure your React dev server is running (npm run dev in the client directory)</li>
+            <li>Access the route through the React dev server at <a href="http://localhost:3000${req.path}">http://localhost:3000${req.path}</a></li>
+          </ol>
+        </body>
+      </html>
+    `);
   }
 });
 
