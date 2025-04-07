@@ -320,22 +320,24 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
       }
     }
 
-    // Check if this is a status update (which should trigger a notification)
-    const isStatusUpdate = airdropData.status && existingAirdrop.status !== airdropData.status;
+    // Check if this is a bell update (which should trigger a notification)
     const isBellUpdate = req.query.notifyTelegram === 'true';
 
-    console.log(`Update type: ${isStatusUpdate ? 'Status Update' : isBellUpdate ? 'Bell Update' : 'Regular Edit'}`);
+    console.log(`Update type: ${isBellUpdate ? 'Bell Update' : 'Regular Edit'}`);
     console.log(`Status: ${existingAirdrop.status} -> ${airdropData.status || existingAirdrop.status}`);
     console.log(`Notify Telegram: ${req.query.notifyTelegram}`);
 
-    // Only skip Telegram notification for regular edits (not status updates or bell updates)
-    if (!isStatusUpdate && !isBellUpdate) {
-      console.log('Skipping Telegram notification for regular edit');
+    // Only send Telegram notification for bell updates
+    if (!isBellUpdate) {
+      console.log('Skipping Telegram notification for regular edit or status change');
       airdropData.skipTelegramNotification = true;
     } else {
-      console.log('Will send Telegram notification for this update');
+      console.log('Will send Telegram notification for bell update');
       // Make sure we don't have the skip flag
       delete airdropData.skipTelegramNotification;
+
+      // For bell updates, we'll also explicitly send the notification after saving
+      airdropData.sendTelegramNotification = true;
     }
 
     // Update the airdrop using the _id field
@@ -345,16 +347,35 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
       { new: true }
     );
 
-    // Remove the flag after a short delay (to ensure the change stream picks it up)
+    // For bell updates, explicitly send the notification
+    if (airdropData.sendTelegramNotification) {
+      try {
+        console.log('Explicitly sending bell update to Telegram');
+        const telegramService = require('./services/telegramService');
+        const result = await telegramService.sendAirdropUpdateToTelegram(updatedAirdrop, {
+          isExplicitUpdate: true
+        });
+
+        if (result.success && result.messageId) {
+          console.log(`Successfully sent bell update to Telegram with message ID ${result.messageId}`);
+        } else {
+          console.log('Failed to send bell update to Telegram');
+        }
+      } catch (telegramError) {
+        console.error('Error sending bell update to Telegram:', telegramError);
+      }
+    }
+
+    // Remove the flags after a short delay
     setTimeout(async () => {
       try {
         await Airdrop.updateOne(
           { _id: updatedAirdrop._id },
-          { $unset: { skipTelegramNotification: 1 } }
+          { $unset: { skipTelegramNotification: 1, sendTelegramNotification: 1 } }
         );
-        console.log(`Removed skipTelegramNotification flag from airdrop ${updatedAirdrop.airdropId}`);
+        console.log(`Removed notification flags from airdrop ${updatedAirdrop.airdropId}`);
       } catch (err) {
-        console.error('Error removing skipTelegramNotification flag:', err);
+        console.error('Error removing notification flags:', err);
       }
     }, 2000);
 
