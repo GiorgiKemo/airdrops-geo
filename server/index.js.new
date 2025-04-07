@@ -114,22 +114,42 @@ app.get('/api/airdrops', async (req, res) => {
 // Get single airdrop by ID
 app.get('/api/airdrops/:id', async (req, res) => {
   try {
+    const id = req.params.id;
+    console.log(`Fetching airdrop with ID: ${id}`);
+
     // Try to find by MongoDB ObjectID first
     let airdrop = null;
 
     // Check if the ID is a valid MongoDB ObjectID
-    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      airdrop = await Airdrop.findById(req.params.id);
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      console.log(`ID ${id} is a valid MongoDB ObjectID, searching by _id`);
+      airdrop = await Airdrop.findById(id);
+      if (airdrop) {
+        console.log(`Found airdrop by _id: ${airdrop.title}`);
+      } else {
+        console.log(`No airdrop found with _id: ${id}`);
+      }
+    } else {
+      console.log(`ID ${id} is not a valid MongoDB ObjectID`);
     }
 
     // If not found, try to find by airdropId
     if (!airdrop) {
-      airdrop = await Airdrop.findOne({ airdropId: req.params.id });
+      console.log(`Searching by airdropId: ${id}`);
+      airdrop = await Airdrop.findOne({ airdropId: id });
+      if (airdrop) {
+        console.log(`Found airdrop by airdropId: ${airdrop.title}`);
+      } else {
+        console.log(`No airdrop found with airdropId: ${id}`);
+      }
     }
 
     if (!airdrop) {
+      console.log(`Airdrop not found with ID: ${id}`);
       return res.status(404).json({ message: 'Airdrop not found' });
     }
+
+    console.log(`Found airdrop: ${airdrop.title} (ID: ${airdrop._id})`);
 
     // Increment view count
     airdrop.views = (airdrop.views || 0) + 1;
@@ -415,6 +435,54 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
+// Add a diagnostic endpoint to check if an airdrop exists
+app.get('/api/check-airdrop/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    console.log(`Checking if airdrop exists with ID: ${id}`);
+
+    // Try to find by MongoDB ObjectID first
+    let airdrop = null;
+    let foundBy = '';
+
+    // Check if the ID is a valid MongoDB ObjectID
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      airdrop = await Airdrop.findById(id);
+      if (airdrop) foundBy = 'MongoDB ObjectID';
+    }
+
+    // If not found, try to find by airdropId
+    if (!airdrop) {
+      airdrop = await Airdrop.findOne({ airdropId: id });
+      if (airdrop) foundBy = 'airdropId';
+    }
+
+    if (airdrop) {
+      console.log(`Airdrop found by ${foundBy}:`, airdrop);
+      return res.json({
+        exists: true,
+        foundBy,
+        airdrop: {
+          _id: airdrop._id,
+          airdropId: airdrop.airdropId,
+          title: airdrop.title,
+          token: airdrop.token,
+          status: airdrop.status
+        }
+      });
+    } else {
+      console.log(`Airdrop with ID ${id} not found`);
+      return res.json({
+        exists: false,
+        message: `Airdrop with ID ${id} not found`
+      });
+    }
+  } catch (error) {
+    console.error(`Error checking airdrop with ID ${req.params.id}:`, error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Add an endpoint to fix the MongoDB index issue
 app.get('/api/fix-index', async (req, res) => {
   try {
@@ -561,7 +629,6 @@ app.delete('/api/tracking', async (req, res) => {
 
 // Define a list of client-side routes that should be handled by React Router
 const clientRoutes = [
-  '/airdrops/*',
   '/admin',
   '/login',
   '/register',
@@ -572,7 +639,45 @@ const clientRoutes = [
   '/all'
 ];
 
-// Handle client-side routes before the API 404 handler
+// Special handler for airdrop detail pages
+app.get('/airdrops/:id', async (req, res, next) => {
+  const id = req.params.id;
+  console.log(`Handling client-side route for airdrop detail: ${id}`);
+
+  try {
+    // Check if the airdrop exists in the database
+    let airdrop = null;
+
+    // Check if the ID is a valid MongoDB ObjectID
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      console.log(`Checking if airdrop exists with _id: ${id}`);
+      airdrop = await Airdrop.findById(id);
+    }
+
+    // If not found, try to find by airdropId
+    if (!airdrop) {
+      console.log(`Checking if airdrop exists with airdropId: ${id}`);
+      airdrop = await Airdrop.findOne({ airdropId: id });
+    }
+
+    if (airdrop) {
+      console.log(`Airdrop exists: ${airdrop.title}, serving client-side route`);
+    } else {
+      console.log(`Airdrop does not exist with ID: ${id}, but still serving client-side route`);
+    }
+  } catch (error) {
+    console.error(`Error checking airdrop existence: ${error.message}`);
+  }
+
+  // Always serve the index.html file for client-side routing
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  next();
+});
+
+// Handle other client-side routes before the API 404 handler
 clientRoutes.forEach(route => {
   app.get(route, (req, res, next) => {
     console.log(`Handling client-side route: ${req.path}`);
