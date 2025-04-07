@@ -5,9 +5,9 @@
   "main": "server/index.js",
   "scripts": {
     "start": "cd server && node index.js",
-    "build": "./build.sh",
+    "build": "./render-build.sh",
     "dev": "cd server && npm run dev",
-    "postinstall": "./build.sh"
+    "postinstall": "./render-build.sh"
   },
   "engines": {
     "node": ">=14.0.0"

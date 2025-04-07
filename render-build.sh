@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# Exit on error
+set -e
+
+echo "Starting Render build process..."
+
+# Print environment information
+echo "Current directory: $(pwd)"
+echo "Node version: $(node -v)"
+echo "NPM version: $(npm -v)"
+
+# Install client dependencies
+echo "Installing client dependencies..."
+cd client
+npm install
+
+# Build client
+echo "Building client..."
+npm run build
+
+# Check if build was successful
+if [ -d "dist" ]; then
+  echo "Client build successful!"
+  ls -la dist
+else
+  echo "Client build failed! dist directory not found."
+  exit 1
+fi
+
+# Create server public directory
+echo "Creating server public directory..."
+mkdir -p ../server/public
+
+# Copy client build to server public directory
+echo "Copying client build to server public directory..."
+cp -r dist/* ../server/public/
+
+# Create a special _redirects file in the public directory
+echo "Creating _redirects file..."
+echo "/* /index.html 200" > ../server/public/_redirects
+
+# Install server dependencies
+echo "Installing server dependencies..."
+cd ../server
+npm install
+
+# Replace the View model
+echo "Replacing View model..."
+if [ -f "models/viewModel.js.new" ]; then
+  mv models/viewModel.js.new models/viewModel.js
+  echo "View model replaced successfully!"
+fi
+
+# Replace the server's index.js
+echo "Replacing server's index.js..."
+if [ -f "index.js.new" ]; then
+  mv index.js.new index.js
+  echo "Server index.js replaced successfully!"
+fi
+
+echo "Build process complete!"
