@@ -52,6 +52,14 @@ function setupTelegramIntegration(options = {}) {
         if (logActivity) {
           console.log(`New airdrop created: ${airdrop.title} (ID: ${airdrop.airdropId})`);
         }
+
+        // Check if this airdrop was explicitly sent (has telegram.messageId)
+        if (airdrop.telegram && airdrop.telegram.messageId) {
+          if (logActivity) {
+            console.log(`Skipping Telegram notification for new airdrop ${airdrop.airdropId} - already has telegram.messageId`);
+          }
+          return; // Skip sending to Telegram
+        }
       }
 
       // Handle update operations
@@ -160,9 +168,17 @@ function setupTelegramIntegration(options = {}) {
               field.includes('telegramMessageId') || field === 'updatedAt'
             );
 
-            if (onlyTelegramMessageIdUpdated) {
+            // Check if this update was explicitly sent (sendTelegramNotification flag is set)
+            const explicitlySent = updatedFields.includes('sendTelegramNotification') ||
+                                 (airdrop.sendTelegramNotification === true);
+
+            if (onlyTelegramMessageIdUpdated || explicitlySent) {
               if (logActivity) {
-                console.log(`Skipping Telegram notification - only telegramMessageId was updated`);
+                if (explicitlySent) {
+                  console.log(`Skipping Telegram notification - update was explicitly sent already`);
+                } else {
+                  console.log(`Skipping Telegram notification - only telegramMessageId was updated`);
+                }
               }
               skipTelegramUpdate = true;
             }

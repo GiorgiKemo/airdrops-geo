@@ -236,7 +236,8 @@ app.post('/api/airdrops', upload.single('logo'), async (req, res) => {
         await Airdrop.findByIdAndUpdate(savedAirdrop._id, {
           'telegram.messageId': result.messageId,
           'telegram.chatId': result.chatId,
-          'telegram.lastUpdated': new Date()
+          'telegram.lastUpdated': new Date(),
+          'telegram.explicitlySent': true // Flag to indicate this was explicitly sent
         });
 
         console.log(`Stored Telegram message ID ${result.messageId} for new airdrop ${savedAirdrop.airdropId}`);
@@ -349,6 +350,14 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
 
         if (result.success && result.messageId) {
           console.log(`Successfully sent bell update to Telegram with message ID ${result.messageId}`);
+
+          // Update the airdrop to indicate it was explicitly sent
+          await Airdrop.findByIdAndUpdate(updatedAirdrop._id, {
+            'telegram.explicitlySent': true,
+            'telegram.lastUpdated': new Date()
+          });
+
+          console.log(`Updated airdrop ${updatedAirdrop.airdropId} to indicate it was explicitly sent`);
         } else {
           console.log('Failed to send bell update to Telegram');
         }
