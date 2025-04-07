@@ -264,7 +264,7 @@ const AdminPage = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
                     Deadline
                   </th>
-                  <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-2 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/3">
                     Status & Actions
                   </th>
                 </tr>
@@ -277,6 +277,8 @@ const AdminPage = () => {
                     airdrop.token.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     airdrop.description?.toLowerCase().includes(searchTerm.toLowerCase())
                   )
+                  // Sort by createdAt date (newest first)
+                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
                   .map((airdrop) => (
                     <>
                       <tr key={airdrop._id}>
@@ -309,13 +311,13 @@ const AdminPage = () => {
                             {formatDate(airdrop.deadline)}
                           </div>
                         </td>
-                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 mb-2 sm:mb-0">
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 text-sm font-medium">
+                          <div className="flex items-center space-x-2">
                             {/* Status dropdown */}
                             <select
                               value={airdrop.status}
                               onChange={(e) => handleStatusChange(airdrop._id, e.target.value, airdrop)}
-                              className="mr-2 sm:mr-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm w-28 sm:w-32"
+                              className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm w-28"
                             >
                               <option value="upcoming">Upcoming</option>
                               <option value="active">Active</option>
@@ -332,42 +334,41 @@ const AdminPage = () => {
                             <button
                               onClick={() => {
                                 setEditingAirdrop(airdrop);
-                                // Scroll to the form after a short delay to ensure it's rendered
                                 setTimeout(() => {
                                   if (formRef.current) {
                                     formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                   }
                                 }, 100);
                               }}
-                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-2 sm:mr-4 text-xs sm:text-sm"
+                              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 text-xs sm:text-sm px-2 py-1"
                             >
                               Edit
                             </button>
-                          </div>
-                          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0">
+
                             <button
                               onClick={() => {
                                 setUpdatingAirdrop(airdrop);
-                                // Scroll to the update form
                                 setTimeout(() => {
                                   if (updateFormRef.current) {
                                     updateFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                   }
                                 }, 100);
                               }}
-                              className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-2 sm:mr-4 text-xs sm:text-sm flex items-center justify-center"
+                              className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 text-xs sm:text-sm flex items-center px-2 py-1"
                             >
                               <FaBell className="mr-1" /> Update
                             </button>
+
                             <button
                               onClick={() => toggleExpandAirdrop(airdrop)}
-                              className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-2 sm:mr-4 text-xs sm:text-sm"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 text-xs sm:text-sm px-2 py-1"
                             >
                               {expandedAirdrop && expandedAirdrop._id === airdrop._id ? 'Hide Updates' : 'Show Updates'}
                             </button>
+
                             <button
                               onClick={() => handleDeleteAirdrop(airdrop._id)}
-                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 text-xs sm:text-sm"
+                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 text-xs sm:text-sm px-2 py-1"
                             >
                               Delete
                             </button>

@@ -7,9 +7,9 @@ const AirdropUpdates = ({ updates }) => {
 
   // Format date
   const formatDate = (dateString) => {
-    const options = { 
-      year: 'numeric', 
-      month: 'short', 
+    const options = {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -17,15 +17,18 @@ const AirdropUpdates = ({ updates }) => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Sort updates by date (newest first)
+  const sortedUpdates = [...updates].sort((a, b) => new Date(b.date) - new Date(a.date));
+
   return (
     <div className="mt-6">
       <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
         Updates
       </h3>
       <div className="space-y-4">
-        {updates.map((update, index) => (
-          <div 
-            key={update._id || index} 
+        {sortedUpdates.map((update, index) => (
+          <div
+            key={update._id || index}
             className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
           >
             <div className="flex justify-between items-start mb-2">
