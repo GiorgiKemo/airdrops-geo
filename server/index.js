@@ -5,7 +5,6 @@ const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
-const telegramService = require('./services/telegramService');
 const setupTelegramIntegration = require('./telegram-integration');
 
 // Load environment variables
@@ -71,20 +70,6 @@ app.use((req, res, next) => {
 });
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Log all requests
-app.use((req, res, next) => {
-  console.log(`\n[${new Date().toISOString()}] ${req.method} ${req.path}`);
-  console.log(`Request from: ${req.ip}`);
-  console.log(`User-Agent: ${req.headers['user-agent']}`);
-
-  // Log the request body for POST and PUT requests
-  if (req.method === 'POST' || req.method === 'PUT') {
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-  }
-
-  next();
-});
 
 // Airdrop routes
 app.get('/api/airdrops', async (_req, res) => {
@@ -240,41 +225,8 @@ app.post('/api/airdrops', async (req, res) => {
 
     const savedAirdrop = await newAirdrop.save();
 
-    // Send the airdrop to Telegram
-    console.log('\n==== SENDING AIRDROP TO TELEGRAM ====');
-    console.log('Airdrop data:', {
-      id: savedAirdrop._id,
-      airdropId: savedAirdrop.airdropId,
-      title: savedAirdrop.title,
-      hasToken: !!savedAirdrop.token,
-      hasDescription: !!savedAirdrop.description,
-      hasCriteria: !!savedAirdrop.criteria,
-      hasDeadline: !!savedAirdrop.deadline,
-      hasStatus: !!savedAirdrop.status,
-      hasSocialLinks: !!savedAirdrop.socialLinks,
-    });
-
-    // Schedule the Telegram send to happen after the response is sent
-    // This ensures the API response is not delayed by the Telegram API call
-    setTimeout(async () => {
-      try {
-        console.log(`Sending airdrop "${savedAirdrop.title}" to Telegram (delayed)...`);
-        const result = await telegramService.sendAirdropToTelegram(savedAirdrop);
-        console.log(`Airdrop "${savedAirdrop.title}" sent to Telegram. Result:`, result);
-      } catch (telegramError) {
-        console.error('Failed to send airdrop to Telegram:', telegramError);
-      }
-    }, 1000);
-
-    // Also try to send immediately (belt and suspenders approach)
-    try {
-      console.log(`Sending airdrop "${savedAirdrop.title}" to Telegram (immediate)...`);
-      const result = await telegramService.sendAirdropToTelegram(savedAirdrop);
-      console.log(`Airdrop "${savedAirdrop.title}" sent to Telegram. Result:`, result);
-    } catch (telegramError) {
-      // Just log the error, don't fail the request
-      console.error('Failed to send airdrop to Telegram:', telegramError);
-    }
+    // Note: We no longer need to explicitly send airdrops to Telegram here
+    // The MongoDB Change Stream will automatically detect new airdrops and send them to Telegram
 
     res.status(201).json(savedAirdrop);
   } catch (error) {
@@ -401,35 +353,8 @@ app.put('/api/airdrops/:id', async (req, res) => {
 
     const updatedAirdrop = await airdrop.save();
 
-    // Send to Telegram regardless of update type
-    console.log('\n==== SENDING UPDATED AIRDROP TO TELEGRAM ====');
-    console.log('Updated airdrop data:', {
-      id: updatedAirdrop._id,
-      airdropId: updatedAirdrop.airdropId,
-      title: updatedAirdrop.title,
-      updateType: isLogoUpdateOnly ? 'logo-only' : (isStatusUpdateOnly ? 'status-only' : 'full-update')
-    });
-
-    // Schedule the Telegram send to happen after the response is sent
-    setTimeout(async () => {
-      try {
-        console.log(`Sending updated airdrop "${updatedAirdrop.title}" to Telegram (delayed)...`);
-        const result = await telegramService.sendAirdropToTelegram(updatedAirdrop);
-        console.log(`Updated airdrop "${updatedAirdrop.title}" sent to Telegram. Result:`, result);
-      } catch (telegramError) {
-        console.error('Failed to send updated airdrop to Telegram:', telegramError);
-      }
-    }, 1000);
-
-    // Also try to send immediately
-    try {
-      console.log(`Sending updated airdrop "${updatedAirdrop.title}" to Telegram (immediate)...`);
-      const result = await telegramService.sendAirdropToTelegram(updatedAirdrop);
-      console.log(`Updated airdrop "${updatedAirdrop.title}" sent to Telegram. Result:`, result);
-    } catch (telegramError) {
-      // Just log the error, don't fail the request
-      console.error('Failed to send updated airdrop to Telegram:', telegramError);
-    }
+    // Note: We no longer need to explicitly send airdrops to Telegram here
+    // The MongoDB Change Stream will automatically detect updated airdrops and send them to Telegram
 
     res.json(updatedAirdrop);
   } catch (error) {
@@ -658,6 +583,42 @@ if (process.env.NODE_ENV === 'production') {
     console.error('Error setting up static file serving:', error);
   }
 }
+
+// Add an update to an airdrop
+app.post('/api/airdrops/:id/updates', async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ message: 'Update content is required' });
+    }
+
+    const airdrop = await Airdrop.findOne({ airdropId: req.params.id });
+
+    if (!airdrop) {
+      return res.status(404).json({ message: 'Airdrop not found' });
+    }
+
+    // Create a new update
+    const update = {
+      content,
+      date: new Date()
+    };
+
+    // Add the update to the airdrop
+    airdrop.updates.push(update);
+
+    // Save the airdrop
+    const updatedAirdrop = await airdrop.save();
+
+    // The MongoDB change stream will handle sending to Telegram
+
+    res.status(201).json(updatedAirdrop);
+  } catch (error) {
+    console.error('Error adding update to airdrop:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;

@@ -167,15 +167,21 @@ const sendAirdropToTelegram = async (airdrop) => {
 /**
  * Send an airdrop update to Telegram
  * @param {Object} airdrop - The updated airdrop object
+ * @param {Object} options - Additional options
+ * @param {string} options.updateContent - Specific update content to send (optional)
  * @returns {Promise<Object>} - Result object with success status and message ID
  */
-const sendAirdropUpdateToTelegram = async (airdrop) => {
+const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
+  const { updateContent } = options;
+  const isSpecificUpdate = !!updateContent;
+
   console.log('Attempting to send airdrop update to Telegram:', {
     botInitialized: !!bot,
     chatIdProvided: !!chatId,
     chatIdValue: chatId,
     airdropTitle: airdrop?.title || 'No title',
-    originalMessageId: airdrop?.telegram?.messageId || 'None'
+    originalMessageId: airdrop?.telegram?.messageId || 'None',
+    isSpecificUpdate: isSpecificUpdate
   });
 
   if (!bot || !chatId || chatId === 'YOUR_TELEGRAM_CHAT_ID') {
@@ -187,7 +193,18 @@ const sendAirdropUpdateToTelegram = async (airdrop) => {
     // Make sure airdrop has all required fields with fallbacks
     const safeAirdrop = createSafeAirdrop(airdrop);
 
-    const message = formatAirdropMessage(safeAirdrop, true); // true = this is an update
+    // Format the message differently if it's a specific update
+    let message;
+    if (isSpecificUpdate) {
+      message = `📣 *AIRDROP UPDATE* 📣\n\n`;
+      message += `*${safeAirdrop.title}*\n\n`;
+      message += `💬 *Update*: ${updateContent}\n\n`;
+      message += `📅 *Update Date*: ${new Date().toLocaleDateString()}\n\n`;
+      message += `🌐 *View on Airdrops-Geo*: [Click here](https://airdrops-geo.onrender.com/airdrop/${safeAirdrop.airdropId})`;
+    } else {
+      message = formatAirdropMessage(safeAirdrop, true); // true = this is an update
+    }
+
     console.log('Formatted Telegram update message:', message.substring(0, 100) + '...');
 
     let sentMessage;

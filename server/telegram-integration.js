@@ -129,10 +129,44 @@ function setupTelegramIntegration(options = {}) {
         }
         // For updates, send as update and reply to original message if possible
         else {
-          result = await telegramService.sendAirdropUpdateToTelegram(airdrop);
+          // Check if this is a specific update (new update added to the updates array)
+          let updateContent = null;
 
-          // Even for updates, we store the new message ID for potential future reference
-          if (result.success && result.messageId) {
+          if (change.updateDescription && change.updateDescription.updatedFields) {
+            // Check if updates array was modified
+            const updatedFields = Object.keys(change.updateDescription.updatedFields);
+            const updatesFieldModified = updatedFields.some(field => field.startsWith('updates'));
+
+            if (updatesFieldModified && airdrop.updates && airdrop.updates.length > 0) {
+              // Get the most recent update
+              const latestUpdate = airdrop.updates[airdrop.updates.length - 1];
+              updateContent = latestUpdate.content;
+
+              if (logActivity) {
+                console.log(`Detected new update content: ${updateContent}`);
+              }
+            }
+          }
+
+          // Send the update to Telegram
+          result = await telegramService.sendAirdropUpdateToTelegram(airdrop, { updateContent });
+
+          // Store the Telegram message ID with the update if it was a specific update
+          if (result.success && result.messageId && updateContent) {
+            // Update the latest update with the Telegram message ID
+            const updateIndex = airdrop.updates.length - 1;
+
+            await Airdrop.findOneAndUpdate(
+              { _id: airdrop._id, 'updates._id': airdrop.updates[updateIndex]._id },
+              { $set: { 'updates.$.telegramMessageId': result.messageId } }
+            );
+
+            if (logActivity) {
+              console.log(`Stored Telegram message ID ${result.messageId} for update`);
+            }
+          }
+          // For regular updates, just update the lastUpdated timestamp
+          else if (result.success && result.messageId) {
             await Airdrop.findByIdAndUpdate(airdrop._id, {
               'telegram.lastUpdated': new Date()
             });

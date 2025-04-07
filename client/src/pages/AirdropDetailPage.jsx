@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { airdropService } from '../services/api';
 import AirdropLogo from '../components/AirdropLogo';
 import LogoUpdater from '../components/LogoUpdater';
+import AirdropUpdates from '../components/AirdropUpdates';
 import { useAuth } from '../context/AuthContext';
 import { FaGlobe, FaDiscord, FaTwitter, FaTelegram, FaGithub, FaInstagram } from 'react-icons/fa';
 
@@ -241,6 +242,13 @@ const AirdropDetailPage = () => {
                 {airdrop.views || 0} views
               </span>
             </div>
+
+            {/* Updates Section */}
+            {airdrop.updates && airdrop.updates.length > 0 && (
+              <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <AirdropUpdates updates={airdrop.updates} />
+              </div>
+            )}
 
             {/* Admin Tools - Only visible to the admin (you) */}
             {user && user.username === 'admin' && (

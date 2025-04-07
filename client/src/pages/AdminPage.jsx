@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { airdropService } from '../services/api';
 import AirdropForm from '../components/AirdropForm';
-import { FaSearch } from 'react-icons/fa';
+import AirdropUpdateForm from '../components/AirdropUpdateForm';
+import AirdropUpdates from '../components/AirdropUpdates';
+import { FaSearch, FaBell } from 'react-icons/fa';
 
 const AdminPage = () => {
   const [airdrops, setAirdrops] = useState([]);
@@ -11,7 +13,10 @@ const AdminPage = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [updatingAirdrop, setUpdatingAirdrop] = useState(null);
+  const [expandedAirdrop, setExpandedAirdrop] = useState(null);
   const formRef = useRef(null);
+  const updateFormRef = useRef(null);
 
   // Fetch all airdrops
   const fetchAirdrops = async () => {
@@ -21,13 +26,14 @@ const AdminPage = () => {
       setAirdrops(data);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch airdrops. Please try again later.');
+      setError('Failed to fetch airdrops. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Load airdrops on component mount
   useEffect(() => {
     fetchAirdrops();
   }, []);
@@ -38,10 +44,10 @@ const AdminPage = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  // Handle create airdrop
-  const handleCreateAirdrop = async (formData) => {
+  // Handle form submission for creating a new airdrop
+  const handleCreateAirdrop = async (airdropData) => {
     try {
-      await airdropService.createAirdrop(formData);
+      await airdropService.createAirdrop(airdropData);
       setSuccessMessage('Airdrop created successfully!');
       setIsAdding(false);
       fetchAirdrops();
@@ -51,15 +57,15 @@ const AdminPage = () => {
         setSuccessMessage('');
       }, 3000);
     } catch (err) {
-      setError('Failed to create airdrop. Please try again.');
+      setError(err.response?.data?.message || 'Failed to create airdrop. Please try again.');
       console.error(err);
     }
   };
 
-  // Handle update airdrop
-  const handleUpdateAirdrop = async (formData) => {
+  // Handle form submission for updating an airdrop
+  const handleUpdateAirdrop = async (airdropData) => {
     try {
-      await airdropService.updateAirdrop(editingAirdrop._id, formData);
+      await airdropService.updateAirdrop(editingAirdrop._id, airdropData);
       setSuccessMessage('Airdrop updated successfully!');
       setEditingAirdrop(null);
       fetchAirdrops();
@@ -69,14 +75,14 @@ const AdminPage = () => {
         setSuccessMessage('');
       }, 3000);
     } catch (err) {
-      setError('Failed to update airdrop. Please try again.');
+      setError(err.response?.data?.message || 'Failed to update airdrop. Please try again.');
       console.error(err);
     }
   };
 
-  // Handle delete airdrop
+  // Handle airdrop deletion
   const handleDeleteAirdrop = async (id) => {
-    if (window.confirm('Are you sure you want to delete this airdrop?')) {
+    if (window.confirm('Are you sure you want to delete this airdrop? This action cannot be undone.')) {
       try {
         await airdropService.deleteAirdrop(id);
         setSuccessMessage('Airdrop deleted successfully!');
@@ -116,6 +122,35 @@ const AdminPage = () => {
       console.error('Error response:', err.response?.data);
     }
   };
+  
+  // Handle adding an update to an airdrop
+  const handleAddUpdate = async (updateContent) => {
+    try {
+      if (!updatingAirdrop) return;
+      
+      await airdropService.addAirdropUpdate(updatingAirdrop.airdropId, updateContent);
+      setSuccessMessage('Update added successfully!');
+      setUpdatingAirdrop(null);
+      fetchAirdrops();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to add update. Please try again.');
+      console.error('Update error:', err);
+    }
+  };
+  
+  // Toggle expanded airdrop to show updates
+  const toggleExpandAirdrop = (airdrop) => {
+    if (expandedAirdrop && expandedAirdrop._id === airdrop._id) {
+      setExpandedAirdrop(null);
+    } else {
+      setExpandedAirdrop(airdrop);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -150,32 +185,51 @@ const AdminPage = () => {
               setIsAdding(false);
               setEditingAirdrop(null);
             }}
-            className="mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 block w-full sm:w-auto text-center sm:text-left"
+            className="mt-4 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
           >
             Cancel
           </button>
         </div>
       )}
 
-      {/* Add Airdrop Button */}
-      {!isAdding && !editingAirdrop && (
-        <button
-          onClick={() => setIsAdding(true)}
-          className="mb-6 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-bold py-2 px-4 rounded block mx-auto sm:mx-0 w-full sm:w-auto"
-        >
-          Add New Airdrop
-        </button>
+      {/* Update Form Section */}
+      {updatingAirdrop && (
+        <div ref={updateFormRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white text-center sm:text-left">
+            Add Update for "{updatingAirdrop.title}"
+          </h2>
+          <AirdropUpdateForm
+            onSubmit={handleAddUpdate}
+            onCancel={() => setUpdatingAirdrop(null)}
+          />
+        </div>
       )}
 
-      {/* Airdrops List */}
+      {/* Airdrops List Section */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-b dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 sm:mb-0 text-center sm:text-left">Manage Airdrops</h2>
-
-          {/* Search input */}
-          <div className="relative w-full sm:w-auto mx-auto sm:mx-0">
-            <div className="flex items-center macos-input py-1 px-2 w-full sm:w-64">
-              <FaSearch className="text-[var(--macos-text-secondary)] mr-2" />
+        <div className="p-4 flex flex-col sm:flex-row justify-between items-center border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center mb-4 sm:mb-0">
+            <button
+              onClick={() => {
+                setIsAdding(true);
+                setEditingAirdrop(null);
+                // Scroll to the form after a short delay to ensure it's rendered
+                setTimeout(() => {
+                  if (formRef.current) {
+                    formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }, 100);
+              }}
+              className="bg-indigo-600 dark:bg-indigo-700 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors"
+            >
+              Add New Airdrop
+            </button>
+          </div>
+          <div className="w-full sm:w-auto">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaSearch className="text-gray-400 dark:text-gray-500" />
+              </div>
               <input
                 type="text"
                 placeholder="Search airdrops..."
@@ -224,78 +278,114 @@ const AdminPage = () => {
                     airdrop.description?.toLowerCase().includes(searchTerm.toLowerCase())
                   )
                   .map((airdrop) => (
-                  <tr key={airdrop._id}>
-                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {airdrop.title}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{airdrop.token}</div>
-                    </td>
-                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
-                        ${
-                          airdrop.status === 'active'
-                            ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
-                            : airdrop.status === 'upcoming'
-                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
-                            : airdrop.status === 'claim'
-                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                        }`}
-                      >
-                        {airdrop.status.charAt(0).toUpperCase() + airdrop.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(airdrop.deadline)}
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium">
-                      {/* Status dropdown */}
-                      <select
-                        value={airdrop.status}
-                        onChange={(e) => handleStatusChange(airdrop._id, e.target.value, airdrop)}
-                        className="mr-2 sm:mr-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm w-28 sm:w-32"
-                      >
-                        <option value="upcoming">Upcoming</option>
-                        <option value="active">Active</option>
-                        <option value="ended">Ended</option>
-                        <option
-                          value="claim"
-                          disabled={!airdrop.claimUrl}
-                          title={airdrop.claimUrl ? 'Set status to Claim' : 'Requires a Claim URL - Edit the airdrop first'}
-                        >
-                          Claim {!airdrop.claimUrl && '(Requires Claim URL)'}
-                        </option>
-                      </select>
+                    <>
+                      <tr key={airdrop._id}>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {airdrop.title}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{airdrop.token}</div>
+                        </td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                            ${
+                              airdrop.status === 'active'
+                                ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300'
+                                : airdrop.status === 'upcoming'
+                                ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300'
+                                : airdrop.status === 'claim'
+                                ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-300'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                            }`}
+                          >
+                            {airdrop.status.charAt(0).toUpperCase() + airdrop.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {formatDate(airdrop.deadline)}
+                          </div>
+                        </td>
+                        <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm font-medium">
+                          {/* Status dropdown */}
+                          <select
+                            value={airdrop.status}
+                            onChange={(e) => handleStatusChange(airdrop._id, e.target.value, airdrop)}
+                            className="mr-2 sm:mr-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md px-1 sm:px-2 py-1 text-xs sm:text-sm w-28 sm:w-32"
+                          >
+                            <option value="upcoming">Upcoming</option>
+                            <option value="active">Active</option>
+                            <option value="ended">Ended</option>
+                            <option
+                              value="claim"
+                              disabled={!airdrop.claimUrl}
+                              title={airdrop.claimUrl ? 'Set status to Claim' : 'Requires a Claim URL - Edit the airdrop first'}
+                            >
+                              Claim {!airdrop.claimUrl && '(Requires Claim URL)'}
+                            </option>
+                          </select>
 
-                      <button
-                        onClick={() => {
-                          setEditingAirdrop(airdrop);
-                          // Scroll to the form after a short delay to ensure it's rendered
-                          setTimeout(() => {
-                            if (formRef.current) {
-                              formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }
-                          }, 100);
-                        }}
-                        className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-2 sm:mr-4 text-xs sm:text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteAirdrop(airdrop._id)}
-                        className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 text-xs sm:text-sm"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                          <button
+                            onClick={() => {
+                              setEditingAirdrop(airdrop);
+                              // Scroll to the form after a short delay to ensure it's rendered
+                              setTimeout(() => {
+                                if (formRef.current) {
+                                  formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                              }, 100);
+                            }}
+                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 mr-2 sm:mr-4 text-xs sm:text-sm"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              setUpdatingAirdrop(airdrop);
+                              // Scroll to the update form
+                              setTimeout(() => {
+                                if (updateFormRef.current) {
+                                  updateFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                              }, 100);
+                            }}
+                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-2 sm:mr-4 text-xs sm:text-sm flex items-center"
+                          >
+                            <FaBell className="mr-1" /> Update
+                          </button>
+                          <button
+                            onClick={() => toggleExpandAirdrop(airdrop)}
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-2 sm:mr-4 text-xs sm:text-sm"
+                          >
+                            {expandedAirdrop && expandedAirdrop._id === airdrop._id ? 'Hide Updates' : 'Show Updates'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteAirdrop(airdrop._id)}
+                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 text-xs sm:text-sm"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                      {/* Expanded row for updates */}
+                      {expandedAirdrop && expandedAirdrop._id === airdrop._id && (
+                        <tr>
+                          <td colSpan="5" className="px-2 sm:px-6 py-4 bg-gray-50 dark:bg-gray-700">
+                            {airdrop.updates && airdrop.updates.length > 0 ? (
+                              <AirdropUpdates updates={airdrop.updates} />
+                            ) : (
+                              <div className="text-center text-gray-500 dark:text-gray-400 py-4">
+                                No updates available for this airdrop.
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  ))}
               </tbody>
             </table>
           </div>

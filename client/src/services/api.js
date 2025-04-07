@@ -91,6 +91,17 @@ export const airdropService = {
     }
   },
 
+  // Add an update to an airdrop
+  addAirdropUpdate: async (id, updateContent) => {
+    try {
+      const response = await api.post(`/airdrops/${id}/updates`, { content: updateContent });
+      return response.data;
+    } catch (error) {
+      console.error(`Error adding update to airdrop with ID ${id}:`, error);
+      throw error;
+    }
+  },
+
   // Delete airdrop
   deleteAirdrop: async (id) => {
     try {
