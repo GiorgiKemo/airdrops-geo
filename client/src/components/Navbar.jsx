@@ -64,9 +64,11 @@ const Navbar = () => {
                 <Link to="/dashboard" className="text-[var(--macos-text)] hover:text-[var(--macos-primary)] px-2 py-1 rounded-md hover:bg-[var(--macos-hover)] transition-colors text-sm">
                   My Airdrops
                 </Link>
-                <Link to="/admin" className="text-[var(--macos-text)] hover:text-[var(--macos-primary)] px-2 py-1 rounded-md hover:bg-[var(--macos-hover)] transition-colors text-sm">
-                  Admin
-                </Link>
+                {user.role === 'admin' && (
+                  <Link to="/admin" className="text-[var(--macos-text)] hover:text-[var(--macos-primary)] px-2 py-1 rounded-md hover:bg-[var(--macos-hover)] transition-colors text-sm">
+                    Admin
+                  </Link>
+                )}
               </>
             )}
 
@@ -124,13 +126,15 @@ const Navbar = () => {
                   >
                     My Airdrops
                   </Link>
-                  <Link
-                    to="/admin"
-                    className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 py-2"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Admin
-                  </Link>
+                  {user.role === 'admin' && (
+                    <Link
+                      to="/admin"
+                      className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 py-2"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin
+                    </Link>
+                  )}
                 </>
               )}
 

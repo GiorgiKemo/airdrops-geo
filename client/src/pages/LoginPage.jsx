@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    emailOrUsername: '',
+    email: '',
     password: '',
   });
   const [formError, setFormError] = useState('');
@@ -25,13 +25,13 @@ const LoginPage = () => {
     setFormError('');
 
     // Basic validation
-    if (!formData.emailOrUsername || !formData.password) {
+    if (!formData.email || !formData.password) {
       setFormError('Please fill in all fields');
       return;
     }
 
     try {
-      await login(formData.emailOrUsername, formData.password);
+      await login(formData.email, formData.password);
       navigate('/'); // Redirect to homepage after login
     } catch (err) {
       // Display specific error message
@@ -66,10 +66,10 @@ const LoginPage = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email/Username field */}
+              {/* Email field */}
               <div>
-                <label htmlFor="emailOrUsername" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email or Username
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -79,12 +79,12 @@ const LoginPage = () => {
                     </svg>
                   </div>
                   <input
-                    type="text"
-                    id="emailOrUsername"
-                    name="emailOrUsername"
-                    value={formData.emailOrUsername}
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
-                    placeholder="Enter your email or username"
+                    placeholder="Enter your email"
                     className="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                     required
                   />

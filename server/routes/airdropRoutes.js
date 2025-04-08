@@ -7,8 +7,14 @@ const {
   updateAirdrop,
   deleteAirdrop,
 } = require('../controllers/airdropController');
+const { protect, admin } = require('../middleware/authMiddleware');
 
-router.route('/').get(getAirdrops).post(createAirdrop);
-router.route('/:id').get(getAirdropById).put(updateAirdrop).delete(deleteAirdrop);
+// Public routes
+router.route('/').get(getAirdrops);
+router.route('/:id').get(getAirdropById);
+
+// Protected admin routes
+router.route('/').post(protect, admin, createAirdrop);
+router.route('/:id').put(protect, admin, updateAirdrop).delete(protect, admin, deleteAirdrop);
 
 module.exports = router;

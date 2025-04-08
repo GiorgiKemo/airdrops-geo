@@ -18,7 +18,7 @@ const getAirdrops = async (req, res) => {
 const getAirdropById = async (req, res) => {
   try {
     const airdrop = await Airdrop.findById(req.params.id);
-    
+
     if (airdrop) {
       res.json(airdrop);
     } else {
@@ -31,7 +31,7 @@ const getAirdropById = async (req, res) => {
 
 // @desc    Create a new airdrop
 // @route   POST /api/airdrops
-// @access  Public (would be Private in a real app)
+// @access  Private/Admin
 const createAirdrop = async (req, res) => {
   try {
     const { title, description, token, criteria, deadline, status, link } = req.body;
@@ -54,7 +54,7 @@ const createAirdrop = async (req, res) => {
 
 // @desc    Update an airdrop
 // @route   PUT /api/airdrops/:id
-// @access  Public (would be Private in a real app)
+// @access  Private/Admin
 const updateAirdrop = async (req, res) => {
   try {
     const { title, description, token, criteria, deadline, status, link } = req.body;
@@ -82,7 +82,7 @@ const updateAirdrop = async (req, res) => {
 
 // @desc    Delete an airdrop
 // @route   DELETE /api/airdrops/:id
-// @access  Public (would be Private in a real app)
+// @access  Private/Admin
 const deleteAirdrop = async (req, res) => {
   try {
     const airdrop = await Airdrop.findById(req.params.id);
