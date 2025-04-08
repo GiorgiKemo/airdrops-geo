@@ -32,7 +32,13 @@ export const AuthProvider = ({ children }) => {
           const { data } = await axios.get(`${API_URL}/verify`);
           console.log('Token verification response:', data);
           console.log('User role from server:', data.role);
+
+          // IMPORTANT: Always use the server's response to set the user state
+          // This ensures that if someone tampers with localStorage, their role will be corrected
           setUser(data);
+
+          // Update localStorage with the verified data from server
+          localStorage.setItem('currentUser', JSON.stringify(data));
         } catch (error) {
           // If token verification fails, log the user out
           console.error('Token verification failed:', error);
