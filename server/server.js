@@ -88,6 +88,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Set up API routes with rate limiting
+app.use('/api', apiLimiter); // Apply rate limiting to all API routes
 app.use('/api/airdrops', airdropRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tracking', trackingRoutes);
@@ -101,20 +102,20 @@ if (config.server.isProduction) {
     path.join(__dirname, 'client', 'dist'),
     path.join(__dirname, 'client', 'build'),
   ];
-  
+
   let clientBuildDir = null;
-  
+
   for (const dir of possibleBuildDirs) {
     if (fs.existsSync(dir)) {
       clientBuildDir = dir;
       break;
     }
   }
-  
+
   if (clientBuildDir) {
     logger.info(`Using client build directory: ${clientBuildDir}`);
     app.use(express.static(clientBuildDir));
-    
+
     // Serve index.html for all routes not handled by the API
     app.get('*', (req, res) => {
       res.sendFile(path.join(clientBuildDir, 'index.html'));
@@ -133,12 +134,12 @@ const createInitialAdminUser = async () => {
   try {
     // Check if admin user already exists
     const adminExists = await User.findOne({ role: 'admin' });
-    
+
     if (adminExists) {
       logger.info('Admin user already exists. Skipping creation.');
       return;
     }
-    
+
     // Create admin user
     const adminUser = await User.create({
       username: 'admin',
@@ -146,7 +147,7 @@ const createInitialAdminUser = async () => {
       password: process.env.ADMIN_PASSWORD || 'Admin123!',
       role: 'admin',
     });
-    
+
     logger.info(`Admin user created: ${adminUser.email}`);
   } catch (error) {
     logger.error(`Error creating admin user: ${error.message}`);
@@ -157,18 +158,18 @@ const createInitialAdminUser = async () => {
 const fixMongoDBIndexes = async () => {
   try {
     logger.info('Running index fix on startup...');
-    
+
     // Get the MongoDB connection
     const db = mongoose.connection.db;
-    
+
     // Get the views collection
     const collection = db.collection('views');
-    
+
     // List all indexes before changes
     logger.info('Current indexes on views collection:');
     const indexes = await collection.indexes();
     logger.info(JSON.stringify(indexes));
-    
+
     // Try to drop the unique index on airdropId if it exists
     try {
       await collection.dropIndex('airdropId_1');
@@ -176,16 +177,16 @@ const fixMongoDBIndexes = async () => {
     } catch (indexError) {
       logger.info(`No index named airdropId_1 found or error dropping index: ${indexError.message}`);
     }
-    
+
     // Create a new non-unique index
     await collection.createIndex({ airdropId: 1 }, { unique: false });
     logger.info('Created new non-unique index on airdropId');
-    
+
     // List indexes after changes
     logger.info('Updated indexes on views collection:');
     const updatedIndexes = await collection.indexes();
     logger.info(JSON.stringify(updatedIndexes));
-    
+
     logger.info('Index fix completed successfully');
   } catch (error) {
     logger.error(`Error fixing MongoDB indexes: ${error.message}`);
@@ -198,19 +199,19 @@ const startServer = async () => {
     // Connect to MongoDB
     await mongoose.connect(config.db.uri, config.db.options);
     logger.info('Connected to MongoDB');
-    
+
     // Create initial admin user
     await createInitialAdminUser();
-    
+
     // Fix MongoDB indexes
     await fixMongoDBIndexes();
-    
+
     // Initialize Telegram integration if enabled
     if (config.telegram.enabled) {
       const telegramService = require('./services/telegramService');
       logger.info('Telegram integration initialized');
     }
-    
+
     // Start the server
     const PORT = config.server.port;
     app.listen(PORT, () => {

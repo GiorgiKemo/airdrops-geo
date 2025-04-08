@@ -21,18 +21,24 @@ const createRateLimiter = (options = {}) => {
     },
     ...options,
   };
-  
+
   return rateLimit(defaultOptions);
 };
 
 // API rate limiter
-const apiLimiter = createRateLimiter();
+const apiLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per 15 minutes
+  message: 'Too many requests from this IP, please try again after 15 minutes.',
+  statusCode: 429, // Too Many Requests
+});
 
 // Auth rate limiter (more strict)
 const authLimiter = createRateLimiter({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // Limit each IP to 10 login/register requests per hour
-  message: 'Too many authentication attempts, please try again later.',
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login/register requests per 15 minutes
+  message: 'Too many authentication attempts, please try again after 15 minutes.',
+  statusCode: 429, // Too Many Requests
 });
 
 module.exports = {
