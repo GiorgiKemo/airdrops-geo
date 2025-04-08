@@ -99,6 +99,31 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+// @desc    Verify JWT token and return user
+// @route   GET /api/users/verify
+// @access  Private
+const verifyToken = async (req, res) => {
+  try {
+    // req.user is set by the auth middleware
+    const user = await User.findById(req.user._id).select('-password');
+
+    if (user) {
+      res.json({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        token: req.headers.authorization.split(' ')[1], // Return the same token
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid token - user not found' });
+    }
+  } catch (error) {
+    console.error('Error in verifyToken:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Create initial admin user if none exists
 // @access  Internal
 const createInitialAdminUser = async () => {
@@ -108,7 +133,7 @@ const createInitialAdminUser = async () => {
 
     if (!adminExists) {
       console.log('No admin user found. Creating initial admin user...');
-      
+
       // Create admin user
       const adminUser = await User.create({
         username: 'admin',
@@ -132,5 +157,6 @@ module.exports = {
   registerUser,
   loginUser,
   getUserProfile,
+  verifyToken,
   createInitialAdminUser,
 };

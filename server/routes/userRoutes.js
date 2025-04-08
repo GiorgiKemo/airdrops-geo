@@ -4,6 +4,7 @@ const {
   registerUser,
   loginUser,
   getUserProfile,
+  verifyToken,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -13,5 +14,6 @@ router.post('/login', loginUser);
 
 // Protected routes
 router.get('/profile', protect, getUserProfile);
+router.get('/verify', protect, verifyToken);
 
 module.exports = router;
