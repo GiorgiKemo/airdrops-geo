@@ -35,9 +35,20 @@ api.interceptors.response.use(response => {
 // Tracking service
 export const trackingService = {
   // Get all tracked airdrops for a user
-  getTrackedAirdrops: async (userId) => {
+  getTrackedAirdrops: async () => {
     try {
-      const response = await api.get(`/tracking/${userId}`);
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      // Set the Authorization header
+      const headers = {
+        Authorization: `Bearer ${token}`
+      };
+
+      const response = await api.get('/tracking', { headers });
       return response.data;
     } catch (error) {
       console.error('Error fetching tracked airdrops:', error);
@@ -49,7 +60,19 @@ export const trackingService = {
   trackAirdrop: async (userId, airdropId) => {
     try {
       console.log('Tracking airdrop:', { userId, airdropId });
-      const response = await api.post('/tracking', { userId, airdropId });
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      // Set the Authorization header
+      const headers = {
+        Authorization: `Bearer ${token}`
+      };
+
+      // Send the request with the airdropId in the URL
+      const response = await api.post(`/tracking/${airdropId}`, {}, { headers });
       return response.data;
     } catch (error) {
       console.error('Error tracking airdrop:', error);
@@ -61,7 +84,19 @@ export const trackingService = {
   untrackAirdrop: async (userId, airdropId) => {
     try {
       console.log('Untracking airdrop:', { userId, airdropId });
-      const response = await api.delete('/tracking', { data: { userId, airdropId } });
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      // Set the Authorization header
+      const headers = {
+        Authorization: `Bearer ${token}`
+      };
+
+      // Send the request with the airdropId in the URL
+      const response = await api.delete(`/tracking/${airdropId}`, { headers });
       return response.data;
     } catch (error) {
       console.error('Error untracking airdrop:', error);

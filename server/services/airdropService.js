@@ -13,16 +13,16 @@ class AirdropService {
    */
   async getAllAirdrops(filters = {}, options = {}) {
     const { page = 1, limit = 50, sortBy = 'createdAt', sortOrder = -1 } = options;
-    
+
     const skip = (page - 1) * limit;
     const sort = { [sortBy]: sortOrder };
-    
+
     return await Airdrop.find(filters)
       .sort(sort)
       .skip(skip)
       .limit(limit);
   }
-  
+
   /**
    * Get airdrop by ID
    * @param {string} id - Airdrop ID
@@ -32,15 +32,15 @@ class AirdropService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error('Invalid airdrop ID');
     }
-    
+
     const airdrop = await Airdrop.findById(id);
     if (!airdrop) {
       throw new Error('Airdrop not found');
     }
-    
+
     return airdrop;
   }
-  
+
   /**
    * Create a new airdrop
    * @param {Object} airdropData - Airdrop data
@@ -51,7 +51,7 @@ class AirdropService {
       // Generate a unique airdropId
       const latestAirdrop = await Airdrop.findOne().sort({ airdropId: -1 });
       airdropData.airdropId = latestAirdrop ? latestAirdrop.airdropId + 1 : 1;
-      
+
       // Create the airdrop
       const airdrop = await Airdrop.create(airdropData);
       return airdrop;
@@ -59,7 +59,7 @@ class AirdropService {
       throw new Error(`Error creating airdrop: ${error.message}`);
     }
   }
-  
+
   /**
    * Update an existing airdrop
    * @param {string} id - Airdrop ID
@@ -70,20 +70,20 @@ class AirdropService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error('Invalid airdrop ID');
     }
-    
+
     const airdrop = await Airdrop.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     );
-    
+
     if (!airdrop) {
       throw new Error('Airdrop not found');
     }
-    
+
     return airdrop;
   }
-  
+
   /**
    * Delete an airdrop
    * @param {string} id - Airdrop ID
@@ -93,16 +93,16 @@ class AirdropService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error('Invalid airdrop ID');
     }
-    
+
     const airdrop = await Airdrop.findByIdAndDelete(id);
-    
+
     if (!airdrop) {
       throw new Error('Airdrop not found');
     }
-    
+
     return airdrop;
   }
-  
+
   /**
    * Update airdrop status
    * @param {string} id - Airdrop ID
@@ -112,7 +112,50 @@ class AirdropService {
   async updateAirdropStatus(id, status) {
     return this.updateAirdrop(id, { status });
   }
-  
+
+  /**
+   * Add an update to an airdrop
+   * @param {string} id - Airdrop ID
+   * @param {string} content - Update content
+   * @returns {Promise<Object>} - Updated airdrop
+   */
+  async addAirdropUpdate(id, content) {
+    try {
+      // Validate ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid airdrop ID');
+      }
+
+      // Find the airdrop
+      const airdrop = await Airdrop.findById(id);
+
+      if (!airdrop) {
+        throw new Error('Airdrop not found');
+      }
+
+      // Create a new update
+      const update = {
+        content,
+        date: new Date()
+      };
+
+      // Set the telegram data
+      airdrop.telegram = airdrop.telegram || {};
+      airdrop.telegram.explicitlySent = true;
+
+      // Add the update to the airdrop
+      airdrop.updates = airdrop.updates || [];
+      airdrop.updates.push(update);
+
+      // Save the airdrop
+      await airdrop.save();
+
+      return airdrop;
+    } catch (error) {
+      throw new Error(`Error adding update to airdrop: ${error.message}`);
+    }
+  }
+
   /**
    * Get airdrops by status
    * @param {string} status - Status to filter by
