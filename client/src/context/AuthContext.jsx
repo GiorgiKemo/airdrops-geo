@@ -30,6 +30,8 @@ export const AuthProvider = ({ children }) => {
         try {
           // Verify the token with the server
           const { data } = await axios.get(`${API_URL}/verify`);
+          console.log('Token verification response:', data);
+          console.log('User role from server:', data.role);
           setUser(data);
         } catch (error) {
           // If token verification fails, log the user out
@@ -93,6 +95,9 @@ export const AuthProvider = ({ children }) => {
         email,
         password
       });
+
+      console.log('Login response:', data);
+      console.log('User role from login:', data.role);
 
       // Set user with token
       setUser(data);

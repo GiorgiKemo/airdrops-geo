@@ -105,16 +105,23 @@ const getUserProfile = async (req, res) => {
 const verifyToken = async (req, res) => {
   try {
     // req.user is set by the auth middleware
+    console.log('verifyToken - User from token:', req.user);
+
     const user = await User.findById(req.user._id).select('-password');
+    console.log('verifyToken - User from database:', user);
+    console.log('verifyToken - User role:', user?.role);
 
     if (user) {
-      res.json({
+      const responseData = {
         _id: user._id,
         username: user.username,
         email: user.email,
         role: user.role,
         token: req.headers.authorization.split(' ')[1], // Return the same token
-      });
+      };
+
+      console.log('verifyToken - Response data:', responseData);
+      res.json(responseData);
     } else {
       res.status(401).json({ message: 'Invalid token - user not found' });
     }
