@@ -1,8 +1,11 @@
 const User = require('../models/userModel');
+const PasswordResetToken = require('../models/passwordResetTokenModel');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const config = require('../config');
+const emailService = require('./emailService');
 
 /**
  * Service for handling user-related operations
@@ -15,19 +18,19 @@ class UserService {
    */
   async registerUser(userData) {
     const { username, email, password } = userData;
-    
+
     // Check if user already exists
-    const userExists = await User.findOne({ 
-      $or: [{ email }, { username }] 
+    const userExists = await User.findOne({
+      $or: [{ email }, { username }]
     });
-    
+
     if (userExists) {
       if (userExists.email === email) {
         throw new Error('Email already in use');
       }
       throw new Error('Username already taken');
     }
-    
+
     // Create user
     const user = await User.create({
       username,
@@ -35,10 +38,10 @@ class UserService {
       password,
       role: 'user',
     });
-    
+
     // Generate token
     const token = this.generateToken(user._id);
-    
+
     return {
       _id: user._id,
       username: user.username,
@@ -47,31 +50,36 @@ class UserService {
       token,
     };
   }
-  
+
   /**
    * Login a user
-   * @param {string} email - User email
+   * @param {string} emailOrUsername - User email or username
    * @param {string} password - User password
    * @returns {Promise<Object>} - Logged in user with token
    */
-  async loginUser(email, password) {
-    // Find user by email
-    const user = await User.findOne({ email });
-    
+  async loginUser(emailOrUsername, password) {
+    // Find user by email or username
+    const user = await User.findOne({
+      $or: [
+        { email: emailOrUsername },
+        { username: emailOrUsername }
+      ]
+    });
+
     if (!user) {
       throw new Error('Invalid email or password');
     }
-    
+
     // Check password
     const isPasswordMatch = await bcrypt.compare(password, user.password);
-    
+
     if (!isPasswordMatch) {
       throw new Error('Invalid email or password');
     }
-    
+
     // Generate token
     const token = this.generateToken(user._id);
-    
+
     return {
       _id: user._id,
       username: user.username,
@@ -80,7 +88,7 @@ class UserService {
       token,
     };
   }
-  
+
   /**
    * Get user by ID
    * @param {string} id - User ID
@@ -90,16 +98,16 @@ class UserService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new Error('Invalid user ID');
     }
-    
+
     const user = await User.findById(id).select('-password');
-    
+
     if (!user) {
       throw new Error('User not found');
     }
-    
+
     return user;
   }
-  
+
   /**
    * Generate JWT token
    * @param {string} userId - User ID
@@ -112,7 +120,7 @@ class UserService {
       { expiresIn: config.auth.jwtExpiresIn }
     );
   }
-  
+
   /**
    * Verify JWT token
    * @param {string} token - JWT token
@@ -121,9 +129,9 @@ class UserService {
   async verifyToken(token) {
     try {
       const decoded = jwt.verify(token, config.auth.jwtSecret);
-      
+
       const user = await this.getUserById(decoded.id);
-      
+
       return {
         _id: user._id,
         username: user.username,
@@ -134,6 +142,72 @@ class UserService {
     } catch (error) {
       throw new Error('Invalid token');
     }
+  }
+
+  /**
+   * Request a password reset
+   * @param {string} email - User email
+   * @returns {Promise<boolean>} - Success status
+   */
+  async requestPasswordReset(email) {
+    // Find user by email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Delete any existing reset tokens for this user
+    await PasswordResetToken.deleteMany({ userId: user._id });
+
+    // Generate a random token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Save the token
+    await PasswordResetToken.create({
+      userId: user._id,
+      token: resetToken,
+    });
+
+    // Send reset email
+    const emailSent = await emailService.sendPasswordResetEmail(
+      user.email,
+      user.username,
+      resetToken
+    );
+
+    return emailSent;
+  }
+
+  /**
+   * Reset password with token
+   * @param {string} token - Reset token
+   * @param {string} newPassword - New password
+   * @returns {Promise<boolean>} - Success status
+   */
+  async resetPassword(token, newPassword) {
+    // Find the token
+    const resetToken = await PasswordResetToken.findOne({ token });
+
+    if (!resetToken) {
+      throw new Error('Invalid or expired reset token');
+    }
+
+    // Find the user
+    const user = await User.findById(resetToken.userId);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    // Delete the token
+    await PasswordResetToken.deleteOne({ _id: resetToken._id });
+
+    return true;
   }
 }
 

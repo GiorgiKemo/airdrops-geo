@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -28,12 +29,8 @@ export const AuthProvider = ({ children }) => {
         axios.defaults.headers.common['Authorization'] = `Bearer ${parsedUser.token}`;
 
         try {
-          // Verify the token with the server
-          const { data } = await axios.get(`${API_URL}/verify-token`, {
-            headers: {
-              Authorization: `Bearer ${parsedUser.token}`
-            }
-          });
+          // Verify the token with the server using our API service
+          const { data } = await api.get('/users/verify-token');
           console.log('Token verification response:', data);
           console.log('User role from server:', data.role);
 
@@ -77,7 +74,8 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Register - Sending request with data:', { username, email });
 
-      const { data } = await axios.post(API_URL, {
+      // Use our API service which includes CSRF token handling
+      const { data } = await api.post('/users/register', {
         username,
         email,
         password
@@ -102,11 +100,14 @@ export const AuthProvider = ({ children }) => {
 
   // Login user
   const login = async (email, password) => {
+    console.log('AuthContext login function called with email:', email);
     setLoading(true);
     setError(null);
 
     try {
-      const { data } = await axios.post(`${API_URL}/login`, {
+      console.log('Making API request to /users/login');
+      // Use our API service which includes CSRF token handling
+      const { data } = await api.post(`/users/login`, {
         email,
         password
       });
@@ -119,9 +120,11 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       return data;
     } catch (err) {
+      console.error('Login error in AuthContext:', err);
       const message = err.response && err.response.data.message
         ? err.response.data.message
         : 'Login failed';
+      console.error('Setting error message:', message);
       setError(message);
       setLoading(false);
       throw new Error(message);
