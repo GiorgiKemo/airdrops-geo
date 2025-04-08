@@ -82,11 +82,41 @@ const AirdropDetailPage = () => {
     <>
       {airdrop && (
         <SEO
-          title={`${airdrop.title} (${airdrop.token}) Airdrop - Airdrops.geo`}
-          description={`Learn about the ${airdrop.title} airdrop. ${airdrop.description.substring(0, 150)}...`}
+          title={`${airdrop.title} (${airdrop.token}) Airdrop | Claim Free ${airdrop.token} Tokens`}
+          description={`Learn about the ${airdrop.title} crypto airdrop and how to claim free ${airdrop.token} tokens. ${airdrop.description.substring(0, 120)}...`}
           canonicalUrl={`/airdrops/${id}`}
           type="article"
-        />
+          keywords={`${airdrop.token} airdrop, ${airdrop.title} crypto, claim ${airdrop.token}, free ${airdrop.token} tokens, cryptocurrency airdrop, ${airdrop.token.toLowerCase()} blockchain, crypto airdrops`}
+        >
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Article",
+              "headline": `${airdrop.title} (${airdrop.token}) Airdrop | Claim Free Tokens`,
+              "description": `${airdrop.description.substring(0, 150)}...`,
+              "image": airdrop.logoUrl || `${window.location.origin}/og-image.jpg`,
+              "author": {
+                "@type": "Organization",
+                "name": "Airdrops.geo",
+                "url": window.location.origin
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Airdrops.geo",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": `${window.location.origin}/logo.png`
+                }
+              },
+              "datePublished": airdrop.createdAt || new Date().toISOString(),
+              "dateModified": airdrop.updatedAt || new Date().toISOString(),
+              "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": window.location.href
+              }
+            })}
+          </script>
+        </SEO>
       )}
       <div className="container mx-auto px-4 py-4 sm:py-8">
       <Link to="/" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 mb-4 inline-block text-sm sm:text-base">

@@ -169,17 +169,67 @@ const HomePage = () => {
   return (
     <>
       <SEO
-        title="Airdrops.geo - Discover and Claim Free Cryptocurrency Airdrops"
-        description="Find the latest cryptocurrency airdrops, track your favorite projects, and claim free tokens. Stay updated with upcoming, active, and popular crypto airdrops."
+        title="Crypto Airdrops 2023 | Find & Claim Free Tokens | Airdrops.geo"
+        description="Discover the latest crypto airdrops in 2023. Find, track and claim free tokens from top blockchain projects. Daily updated list of active, upcoming, and popular cryptocurrency airdrops."
         canonicalUrl="/"
-      />
+        keywords="crypto airdrops, free crypto, cryptocurrency airdrops, claim airdrops, best airdrops 2023, upcoming airdrops, active airdrops, free tokens, blockchain airdrops, airdrop tracker"
+      >
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What are crypto airdrops?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Crypto airdrops are free distributions of cryptocurrency tokens or coins to wallet addresses. Projects use airdrops as a marketing strategy to create awareness, reward loyal users, or distribute tokens widely. They're essentially free cryptocurrency that you can claim by meeting certain criteria."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I claim crypto airdrops?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "To claim crypto airdrops, you typically need to complete specific tasks like joining a Discord server, following social media accounts, or interacting with a protocol. Some airdrops require you to hold certain tokens, while others might need you to connect your wallet to a platform. Always check the airdrop's requirements and follow the instructions carefully."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are crypto airdrops safe?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "While many crypto airdrops are legitimate, you should always exercise caution. Never share your private keys or seed phrases, and be wary of connecting your wallet to unknown platforms. At Airdrops.geo, we verify airdrops before listing them, but always do your own research before participating in any airdrop."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Why do projects give away free tokens?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Blockchain projects distribute free tokens through airdrops for several reasons: to create awareness about their project, build a community, reward early adopters, distribute governance rights, or ensure a wide distribution of tokens. It's a marketing strategy that helps projects gain users and visibility in the competitive crypto space."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How can I find the best crypto airdrops?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Airdrops.geo is your best resource for finding legitimate and valuable crypto airdrops. We regularly update our platform with new opportunities, verify their authenticity, and provide all the information you need to participate. Create an account to track your favorite airdrops and get notified about new opportunities."
+                }
+              }
+            ]
+          })}
+        </script>
+      </SEO>
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 min-h-screen flex flex-col">
       <div className="mb-4">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--macos-text)] mb-2 sm:mb-4 text-center sm:text-left tracking-tight">
-          Cryptocurrency Airdrops
+          Latest Crypto Airdrops 2023 | Find & Claim Free Tokens
         </h1>
         <p className="text-[var(--macos-text-secondary)] mb-3 text-xs sm:text-sm md:text-base break-words text-center sm:text-left max-w-3xl">
-          Discover the latest cryptocurrency airdrops. Claim free tokens and participate in exciting crypto projects.
+          Welcome to Airdrops.geo, your ultimate resource for finding and claiming the best crypto airdrops. We track upcoming, active, and popular cryptocurrency airdrops daily, helping you earn free tokens from top blockchain projects. Start exploring now!
         </p>
 
       </div>
@@ -421,6 +471,38 @@ const HomePage = () => {
           </div>
         </div>
       )}
+
+      {/* FAQ Section for SEO */}
+      <div className="mt-12 mb-8 macos-card p-6">
+        <h2 className="text-2xl font-bold text-[var(--macos-text)] mb-6">Frequently Asked Questions About Crypto Airdrops</h2>
+
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">What are crypto airdrops?</h3>
+            <p className="text-[var(--macos-text-secondary)]">Crypto airdrops are free distributions of cryptocurrency tokens or coins to wallet addresses. Projects use airdrops as a marketing strategy to create awareness, reward loyal users, or distribute tokens widely. They're essentially free cryptocurrency that you can claim by meeting certain criteria.</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">How do I claim crypto airdrops?</h3>
+            <p className="text-[var(--macos-text-secondary)]">To claim crypto airdrops, you typically need to complete specific tasks like joining a Discord server, following social media accounts, or interacting with a protocol. Some airdrops require you to hold certain tokens, while others might need you to connect your wallet to a platform. Always check the airdrop's requirements and follow the instructions carefully.</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">Are crypto airdrops safe?</h3>
+            <p className="text-[var(--macos-text-secondary)]">While many crypto airdrops are legitimate, you should always exercise caution. Never share your private keys or seed phrases, and be wary of connecting your wallet to unknown platforms. At Airdrops.geo, we verify airdrops before listing them, but always do your own research before participating in any airdrop.</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">Why do projects give away free tokens?</h3>
+            <p className="text-[var(--macos-text-secondary)]">Blockchain projects distribute free tokens through airdrops for several reasons: to create awareness about their project, build a community, reward early adopters, distribute governance rights, or ensure a wide distribution of tokens. It's a marketing strategy that helps projects gain users and visibility in the competitive crypto space.</p>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">How can I find the best crypto airdrops?</h3>
+            <p className="text-[var(--macos-text-secondary)]">Airdrops.geo is your best resource for finding legitimate and valuable crypto airdrops. We regularly update our platform with new opportunities, verify their authenticity, and provide all the information you need to participate. Create an account to track your favorite airdrops and get notified about new opportunities.</p>
+          </div>
+        </div>
+      </div>
     </div>
     </>
   );
