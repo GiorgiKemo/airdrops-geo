@@ -7,6 +7,7 @@ const multer = require('multer');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
 
 // Import configuration
@@ -16,6 +17,7 @@ const logger = require('./utils/logger');
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 const { apiLimiter } = require('./middleware/rateLimitMiddleware');
+const { csrfProtection, setCsrfToken } = require('./middleware/csrfMiddleware');
 
 // Import routes
 const airdropRoutes = require('./routes/airdropRoutes');
@@ -32,6 +34,7 @@ const app = express();
 // Set up middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(cors({
   origin: config.cors.origin,
   credentials: true,
@@ -87,11 +90,24 @@ const upload = multer({
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Set up API routes with rate limiting
+// Set up API routes with rate limiting and CSRF protection
 app.use('/api', apiLimiter); // Apply rate limiting to all API routes
+
+// Set CSRF token for all routes
+app.use(setCsrfToken);
+
+// Apply CSRF protection to all routes
+app.use(csrfProtection);
+
+// API routes
 app.use('/api/airdrops', airdropRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tracking', trackingRoutes);
+
+// Endpoint to get a new CSRF token
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: res.locals.csrfToken });
+});
 
 // Serve React app in production
 if (config.server.isProduction) {
