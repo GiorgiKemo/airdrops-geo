@@ -34,20 +34,19 @@ const getAirdropById = async (req, res) => {
 // @access  Private/Admin
 const createAirdrop = async (req, res) => {
   try {
-    const { title, description, token, criteria, deadline, status, link } = req.body;
+    // Extract all fields from the request body
+    const airdropData = req.body;
 
-    const airdrop = await Airdrop.create({
-      title,
-      description,
-      token,
-      criteria,
-      deadline,
-      status,
-      link,
-    });
+    // Generate a unique airdropId
+    const latestAirdrop = await Airdrop.findOne().sort({ airdropId: -1 });
+    airdropData.airdropId = latestAirdrop ? latestAirdrop.airdropId + 1 : 1;
+
+    // Create the airdrop with all the data
+    const airdrop = await Airdrop.create(airdropData);
 
     res.status(201).json(airdrop);
   } catch (error) {
+    console.error('Error creating airdrop:', error);
     res.status(400).json({ message: error.message });
   }
 };
