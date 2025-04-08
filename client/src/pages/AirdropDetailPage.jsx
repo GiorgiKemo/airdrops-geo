@@ -162,8 +162,7 @@ const AirdropDetailPage = () => {
 
             <div className="mb-4 sm:mb-6">
               <p className="text-base sm:text-lg font-semibold text-[var(--macos-text)]">Token: {airdrop.token}</p>
-              <p className="text-sm sm:text-base text-[var(--macos-text-secondary)] mt-2">Start Date: {formatDate(airdrop.startDate)}</p>
-              <p className="text-sm sm:text-base text-[var(--macos-text-secondary)] mt-1">Deadline: {formatDate(airdrop.deadline)}</p>
+              <p className="text-sm sm:text-base text-[var(--macos-text-secondary)] mt-2">Start: {formatDate(airdrop.startDate)}</p>
             </div>
 
             <div className="mb-4 sm:mb-6">

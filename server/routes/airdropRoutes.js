@@ -26,19 +26,20 @@ router.route('/status/:status')
 router.route('/:id')
   .get(apiLimiter, optionalAuth, getAirdropById);
 
-// Protected admin routes
+// Protected admin routes - No validation for admin operations
 router.route('/')
-  .post(protect, admin, createAirdropValidation, createAirdrop);
+  .post(protect, admin, createAirdrop);
 
 router.route('/:id')
-  .put(protect, admin, updateAirdropValidation, updateAirdrop)
+  .put(protect, admin, updateAirdrop)
   .delete(protect, admin, deleteAirdrop);
 
 // Airdrop updates route
 router.route('/:id/updates')
   .post(protect, admin, (req, res) => {
-    const { content } = req.body;
+    const { content, skipTelegramNotification, sendTelegramNotification } = req.body;
 
+    // No validation for admin - just check if content exists
     if (!content) {
       return res.status(400).json({ message: 'Update content is required' });
     }
@@ -46,7 +47,7 @@ router.route('/:id/updates')
     // Call the airdrop service to add an update
     const airdropService = require('../services/airdropService');
 
-    airdropService.addAirdropUpdate(req.params.id, content)
+    airdropService.addAirdropUpdate(req.params.id, content, { skipTelegramNotification, sendTelegramNotification })
       .then(updatedAirdrop => {
         res.json(updatedAirdrop);
       })

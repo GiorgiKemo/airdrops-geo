@@ -13,6 +13,7 @@ import AllAirdropsPage from './pages/AllAirdropsPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import CookiePage from './pages/CookiePage';
+import TestPage from './pages/TestPage';
 import { DarkModeProvider } from './context/DarkModeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TrackingProvider } from './context/TrackingContext';
@@ -96,6 +97,14 @@ function App() {
                     element={
                       <AdminRoute>
                         <AdminPage />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/test"
+                    element={
+                      <AdminRoute>
+                        <TestPage />
                       </AdminRoute>
                     }
                   />

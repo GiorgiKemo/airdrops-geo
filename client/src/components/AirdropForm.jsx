@@ -9,7 +9,6 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
     description: '',
     token: '',
     criteria: '',
-    deadline: '',
     startDate: '',
     status: 'upcoming',
     costType: 'free', // 'free' or 'paid'
@@ -18,6 +17,7 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
     logoUrl: '',
     cardColor: '', // Custom hex color code
     predefinedColor: 'default', // Selected from predefined colors
+    skipTelegramNotification: false, // Skip Telegram notification
     socialLinks: {
       website: '',
       discord: '',
@@ -335,28 +335,13 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
 
       <div>
         <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Start Date
+          Start
         </label>
         <input
           type="date"
           id="startDate"
           name="startDate"
           value={formData.startDate}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full rounded-md border-2 border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="deadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Deadline
-        </label>
-        <input
-          type="date"
-          id="deadline"
-          name="deadline"
-          value={formData.deadline}
           onChange={handleChange}
           required
           className="mt-1 block w-full rounded-md border-2 border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base"
@@ -383,6 +368,20 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
         {formData.status === 'claim' && (
           <p className="mt-1 text-xs text-red-500">Note: "Claim" status requires a valid Claim URL below</p>
         )}
+      </div>
+
+      <div className="flex items-center mt-4">
+        <input
+          type="checkbox"
+          id="skipTelegramNotification"
+          name="skipTelegramNotification"
+          checked={formData.skipTelegramNotification}
+          onChange={(e) => setFormData({ ...formData, skipTelegramNotification: e.target.checked })}
+          className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        />
+        <label htmlFor="skipTelegramNotification" className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Skip Telegram Notification
+        </label>
       </div>
 
       <div>

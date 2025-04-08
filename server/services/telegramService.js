@@ -59,7 +59,7 @@ const formatAirdropMessage = (airdrop, isUpdate = false) => {
     if (airdrop.token) message += `💰 *Token*: ${airdrop.token}\n`;
     if (airdrop.description) message += `📝 *Description*: ${airdrop.description}\n`;
     if (airdrop.criteria) message += `✅ *Criteria*: ${airdrop.criteria}\n`;
-    if (airdrop.deadline) message += `⏰ *Deadline*: ${airdrop.deadline}\n`;
+    if (airdrop.startDate) message += `📅 *Start*: ${airdrop.startDate}\n`;
     if (airdrop.status) message += `🏷️ *Status*: ${airdrop.status}\n`;
     if (airdrop.costType) message += `💵 *Cost*: ${airdrop.costType}\n`;
 

@@ -78,27 +78,34 @@ const getAirdropById = async (req, res) => {
  */
 const createAirdrop = async (req, res) => {
   try {
+    // Check if we should skip Telegram notification
+    const skipTelegramNotification = req.body.skipTelegramNotification === true;
+
     // Create the airdrop
     const airdrop = await airdropService.createAirdrop(req.body);
 
-    // Send Telegram notification if enabled
-    try {
-      logger.info(`Sending Telegram notification for new airdrop: ${airdrop.title}`);
-      const telegramResult = await telegramService.sendAirdropToTelegram(airdrop);
+    // Send Telegram notification if enabled and not explicitly skipped
+    if (!skipTelegramNotification) {
+      try {
+        logger.info(`Sending Telegram notification for new airdrop: ${airdrop.title}`);
+        const telegramResult = await telegramService.sendAirdropToTelegram(airdrop);
 
-      // If successful, store the message ID in the airdrop document
-      if (telegramResult && telegramResult.success && telegramResult.messageId) {
-        await airdropService.updateAirdrop(airdrop._id, {
-          'telegram.messageId': telegramResult.messageId,
-          'telegram.chatId': telegramResult.chatId,
-          'telegram.lastUpdated': new Date()
-        });
+        // If successful, store the message ID in the airdrop document
+        if (telegramResult && telegramResult.success && telegramResult.messageId) {
+          await airdropService.updateAirdrop(airdrop._id, {
+            'telegram.messageId': telegramResult.messageId,
+            'telegram.chatId': telegramResult.chatId,
+            'telegram.lastUpdated': new Date()
+          });
 
-        logger.info(`Stored Telegram message ID ${telegramResult.messageId} for airdrop ${airdrop.airdropId}`);
+          logger.info(`Stored Telegram message ID ${telegramResult.messageId} for airdrop ${airdrop.airdropId}`);
+        }
+      } catch (telegramError) {
+        // Don't fail the request if Telegram notification fails
+        logger.error(`Error sending Telegram notification: ${telegramError.message}`);
       }
-    } catch (telegramError) {
-      // Don't fail the request if Telegram notification fails
-      logger.error(`Error sending Telegram notification: ${telegramError.message}`);
+    } else {
+      logger.info(`Skipping Telegram notification for new airdrop: ${airdrop.title} (skipTelegramNotification=true)`);
     }
 
     res.status(201).json(airdrop);
@@ -115,14 +122,23 @@ const createAirdrop = async (req, res) => {
  */
 const updateAirdrop = async (req, res) => {
   try {
+    // First get the current airdrop to check its existing flags
+    const existingAirdrop = await airdropService.getAirdropById(req.params.id);
+
     // Check if we should send a Telegram notification
+    // Only send notifications when explicitly requested with sendTelegramNotification=true
+    // Default to false for all other updates (including status changes)
     const sendTelegramNotification = req.body.sendTelegramNotification === true;
-    const skipTelegramNotification = req.body.skipTelegramNotification === true;
+    const skipTelegramNotification = req.body.skipTelegramNotification === true || existingAirdrop.skipTelegramNotification === true;
 
     // Remove these flags from the update data
     const updateData = { ...req.body };
     delete updateData.sendTelegramNotification;
-    delete updateData.skipTelegramNotification;
+
+    // Keep the skipTelegramNotification flag in the document if it was true
+    if (!skipTelegramNotification) {
+      delete updateData.skipTelegramNotification;
+    }
 
     // Update the airdrop
     const airdrop = await airdropService.updateAirdrop(req.params.id, updateData);

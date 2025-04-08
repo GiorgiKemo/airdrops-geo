@@ -3,27 +3,29 @@ import PropTypes from 'prop-types';
 
 const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
   const [updateContent, setUpdateContent] = useState('');
+  const [skipTelegramNotification, setSkipTelegramNotification] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate input
     if (!updateContent.trim()) {
       setError('Update content is required');
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
       setError('');
-      
-      // Call the onSubmit function passed from parent
-      await onSubmit(updateContent);
-      
+
+      // Call the onSubmit function passed from parent with skipTelegramNotification flag
+      await onSubmit(updateContent, skipTelegramNotification);
+
       // Reset form
       setUpdateContent('');
+      setSkipTelegramNotification(false);
     } catch (err) {
       setError(err.message || 'Failed to add update. Please try again.');
     } finally {
@@ -36,17 +38,17 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
       <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
         Add Update
       </h3>
-      
+
       {error && (
         <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-3 py-2 rounded mb-3 text-sm">
           {error}
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label 
-            htmlFor="updateContent" 
+          <label
+            htmlFor="updateContent"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             Update Content
@@ -61,7 +63,24 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
             disabled={isSubmitting}
           />
         </div>
-        
+
+        <div className="flex items-center mb-3">
+          <input
+            type="checkbox"
+            id="skipTelegramNotification"
+            checked={skipTelegramNotification}
+            onChange={(e) => setSkipTelegramNotification(e.target.checked)}
+            className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            disabled={isSubmitting}
+          />
+          <label
+            htmlFor="skipTelegramNotification"
+            className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            Skip Telegram Notification
+          </label>
+        </div>
+
         <div className="flex justify-end space-x-3">
           <button
             type="button"
