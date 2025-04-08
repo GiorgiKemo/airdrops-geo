@@ -33,14 +33,21 @@ const ProtectedRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
   const { user } = useAuth();
 
+  console.log('AdminRoute - Current user:', user);
+  console.log('AdminRoute - User role:', user?.role);
+  console.log('AdminRoute - Is admin?', user?.role === 'admin');
+
   if (!user) {
+    console.log('AdminRoute - No user, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   if (user.role !== 'admin') {
+    console.log('AdminRoute - Not admin, redirecting to home');
     return <Navigate to="/" replace />;
   }
 
+  console.log('AdminRoute - Admin access granted');
   return children;
 };
 

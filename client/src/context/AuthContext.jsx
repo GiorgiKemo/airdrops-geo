@@ -65,11 +65,16 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
+      console.log('Register - Sending request with data:', { username, email });
+
       const { data } = await axios.post(API_URL, {
         username,
         email,
         password
       });
+
+      console.log('Register - Response data:', data);
+      console.log('Register - User role from response:', data.role);
 
       // Set user with token
       setUser(data);
