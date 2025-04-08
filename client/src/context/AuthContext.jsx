@@ -126,9 +126,20 @@ export const AuthProvider = ({ children }) => {
 
   // Logout user
   const logout = () => {
+    // Clear user data from localStorage first
+    localStorage.removeItem('currentUser');
+
+    // Remove auth header
+    delete axios.defaults.headers.common['Authorization'];
+
+    // Set user state to null
     setUser(null);
+
     // Navigate to home page after logout
-    window.location.href = '/';
+    // Use a small timeout to ensure state updates have been processed
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 100);
   };
 
   return (
