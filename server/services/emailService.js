@@ -1,9 +1,15 @@
-const sgMail = require('@sendgrid/mail');
 const config = require('../config');
 const logger = require('../utils/logger');
 
-// Initialize SendGrid with API key
-sgMail.setApiKey(config.email.sendgridApiKey);
+// Initialize SendGrid only if API key is available
+let sgMail;
+if (config.email && config.email.sendgridApiKey) {
+  sgMail = require('@sendgrid/mail');
+  sgMail.setApiKey(config.email.sendgridApiKey);
+  logger.info('SendGrid initialized successfully');
+} else {
+  logger.warn('SendGrid API key not found. Email functionality will be disabled.');
+}
 
 /**
  * Service for sending emails
@@ -18,8 +24,14 @@ class EmailService {
    */
   async sendPasswordResetEmail(to, username, resetToken) {
     try {
+      // Check if email functionality is enabled
+      if (!sgMail || !config.email || !config.email.enabled) {
+        logger.warn(`Email functionality is disabled. Cannot send password reset email to: ${to}`);
+        return false;
+      }
+
       const resetUrl = `${config.client.url}/reset-password/${resetToken}`;
-      
+
       const msg = {
         to,
         from: config.email.fromEmail,
@@ -39,7 +51,7 @@ class EmailService {
           </div>
         `,
       };
-      
+
       await sgMail.send(msg);
       logger.info(`Password reset email sent to: ${to}`);
       return true;
