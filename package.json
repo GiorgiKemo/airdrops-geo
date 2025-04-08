@@ -4,10 +4,11 @@
   "description": "Cryptocurrency airdrops platform",
   "main": "server/index.js",
   "scripts": {
-    "start": "cd server && node index.js",
+    "start": "node server/server.js",
     "build": "./render-build.sh",
-    "dev": "cd server && npm run dev",
-    "postinstall": "./render-build.sh"
+    "dev": "nodemon server/server.js",
+    "postinstall": "./render-build.sh",
+    "test": "jest --watchAll --verbose"
   },
   "engines": {
     "node": ">=14.0.0"
@@ -17,5 +18,17 @@
     "url": "git+https://github.com/GiorgiKemo/airdrops-geo.git"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.7.4",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "morgan": "^1.10.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
 }

@@ -1,0 +1,76 @@
+const dotenv = require('dotenv');
+const path = require('path');
+const fs = require('fs');
+
+// Load environment variables from .env file
+// Try multiple possible locations for the .env file
+const envPaths = [
+  path.resolve(__dirname, '../../.env'),
+  path.resolve(__dirname, '../.env'),
+  path.resolve(__dirname, '../../server/.env')
+];
+
+for (const envPath of envPaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    console.log(`Loaded environment variables from ${envPath}`);
+    break;
+  }
+}
+
+// Define required environment variables
+const requiredEnvVars = [
+  'MONGODB_URI',
+  'JWT_SECRET',
+];
+
+// Check for missing required environment variables
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+if (missingEnvVars.length > 0) {
+  throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
+}
+
+// Configuration object
+const config = {
+  // Server configuration
+  server: {
+    port: process.env.PORT || 5000,
+    nodeEnv: process.env.NODE_ENV || 'development',
+    isProduction: process.env.NODE_ENV === 'production',
+    isDevelopment: process.env.NODE_ENV === 'development',
+  },
+
+  // Database configuration
+  db: {
+    uri: process.env.MONGODB_URI,
+    options: {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    },
+  },
+
+  // Authentication configuration
+  auth: {
+    jwtSecret: process.env.JWT_SECRET,
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
+  },
+
+  // CORS configuration
+  cors: {
+    origin: process.env.CORS_ORIGIN || '*',
+    environment: process.env.NODE_ENV || 'development',
+  },
+
+  // Telegram configuration
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+    chatId: process.env.TELEGRAM_CHAT_ID || '',
+    enabled: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
+  },
+};
+
+module.exports = config;
