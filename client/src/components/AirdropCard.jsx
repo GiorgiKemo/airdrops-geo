@@ -67,11 +67,12 @@ const AirdropCard = ({ airdrop }) => {
   } : {};
 
   return (
-    <div className="group h-full w-full">
+    <div className="group h-full w-full" role="article" aria-labelledby={`airdrop-title-${airdrop._id}`}>
       <Link
         to={`/airdrops/${airdrop._id}`}
         className="macos-card relative block overflow-hidden cursor-pointer h-full w-full z-10 flex flex-col backdrop-blur-md"
         style={{...cardStyle, height: '100%', minHeight: '100%'}}
+        aria-describedby={`airdrop-desc-${airdrop._id}`}
       >
         {airdrop.status === 'claim' && (
           <div className="absolute top-0 right-0 z-10 bg-[var(--macos-danger)] text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-md">
@@ -87,7 +88,7 @@ const AirdropCard = ({ airdrop }) => {
 
           <div className="flex-1 min-w-0"> {/* min-width: 0 prevents flex child from overflowing */}
             <div className="flex flex-wrap sm:flex-nowrap justify-center sm:justify-between items-center sm:items-start gap-1">
-              <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[var(--macos-text)] truncate">{airdrop.title}</h3>
+              <h3 id={`airdrop-title-${airdrop._id}`} className="text-lg sm:text-xl md:text-2xl font-bold text-[var(--macos-text)] truncate">{airdrop.title}</h3>
               {airdrop.status !== 'claim' && (
                 <span
                   className={`px-2 py-0.5 sm:py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getStatusClass(
@@ -101,7 +102,7 @@ const AirdropCard = ({ airdrop }) => {
           </div>
         </div>
         <p className="mb-1 text-xs sm:text-sm truncate">Token: {airdrop.token}</p>
-        <p className="mb-1 line-clamp-1 sm:line-clamp-2 text-xs sm:text-sm break-words overflow-hidden">{airdrop.description}</p>
+        <p id={`airdrop-desc-${airdrop._id}`} className="mb-1 line-clamp-1 sm:line-clamp-2 text-xs sm:text-sm break-words overflow-hidden">{airdrop.description}</p>
         <div className="flex justify-center sm:justify-between items-center mt-auto flex-wrap gap-2">
           <div className="flex flex-col items-center sm:items-start">
             <p className="text-xs sm:text-sm mb-1">

@@ -78,6 +78,36 @@ body {
   overflow-y: overlay; /* macOS-style overlay scrollbars */
 }
 
+/* Improved focus styles for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--macos-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip to content link - only visible when focused */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only.focus:not-sr-only {
+  position: fixed;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  z-index: 9999;
+}
+
 /* macOS Typography */
 h1 {
   font-size: 2.5rem;
