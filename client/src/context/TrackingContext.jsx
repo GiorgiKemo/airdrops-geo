@@ -22,10 +22,10 @@ export const TrackingProvider = ({ children }) => {
   // Fetch tracked airdrops
   const fetchTrackedAirdrops = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
-      const data = await trackingService.getTrackedAirdrops(user.id);
+      const data = await trackingService.getTrackedAirdrops(user._id);
       setTrackedAirdrops(data);
       setError(null);
     } catch (err) {
@@ -39,10 +39,10 @@ export const TrackingProvider = ({ children }) => {
   // Track an airdrop
   const trackAirdrop = async (airdropId) => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
-      await trackingService.trackAirdrop(user.id, airdropId);
+      await trackingService.trackAirdrop(user._id, airdropId);
       await fetchTrackedAirdrops(); // Refresh the list
       setError(null);
     } catch (err) {
@@ -56,10 +56,10 @@ export const TrackingProvider = ({ children }) => {
   // Untrack an airdrop
   const untrackAirdrop = async (airdropId) => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
-      await trackingService.untrackAirdrop(user.id, airdropId);
+      await trackingService.untrackAirdrop(user._id, airdropId);
       await fetchTrackedAirdrops(); // Refresh the list
       setError(null);
     } catch (err) {
@@ -76,13 +76,13 @@ export const TrackingProvider = ({ children }) => {
   };
 
   return (
-    <TrackingContext.Provider 
-      value={{ 
-        trackedAirdrops, 
-        loading, 
-        error, 
-        trackAirdrop, 
-        untrackAirdrop, 
+    <TrackingContext.Provider
+      value={{
+        trackedAirdrops,
+        loading,
+        error,
+        trackAirdrop,
+        untrackAirdrop,
         isTracked,
         refreshTracking: fetchTrackedAirdrops
       }}
