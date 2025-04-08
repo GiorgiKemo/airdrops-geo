@@ -103,9 +103,16 @@ export const airdropService = {
   addAirdropUpdate: async (id, updateContent) => {
     try {
       // Get auth token from localStorage
-      const token = localStorage.getItem('token');
-      if (!token) {
+      const currentUser = localStorage.getItem('currentUser');
+      if (!currentUser) {
         throw new Error('Authentication required');
+      }
+
+      const user = JSON.parse(currentUser);
+      const token = user.token;
+
+      if (!token) {
+        throw new Error('Authentication token not found');
       }
 
       // Set the Authorization header

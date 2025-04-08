@@ -21,7 +21,12 @@ router.route('/login')
   .post(authLimiter, loginValidation, loginUser);
 
 router.route('/verify-token')
-  .post(verifyToken);
+  .post(verifyToken)
+  .get(protect, verifyToken);
+
+// Alias for backward compatibility
+router.route('/verify')
+  .get(protect, verifyToken);
 
 // Protected routes
 router.route('/profile')

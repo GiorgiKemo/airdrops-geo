@@ -84,10 +84,10 @@ const createAirdrop = async (req, res) => {
     // Send Telegram notification if enabled
     try {
       logger.info(`Sending Telegram notification for new airdrop: ${airdrop.title}`);
-      const telegramResult = await telegramService.sendAirdropNotification(airdrop);
+      const telegramResult = await telegramService.sendAirdropToTelegram(airdrop);
 
       // If successful, store the message ID in the airdrop document
-      if (telegramResult.success && telegramResult.messageId) {
+      if (telegramResult && telegramResult.success && telegramResult.messageId) {
         await airdropService.updateAirdrop(airdrop._id, {
           'telegram.messageId': telegramResult.messageId,
           'telegram.chatId': telegramResult.chatId,
@@ -141,9 +141,9 @@ const updateAirdrop = async (req, res) => {
         }
 
         // Send the notification
-        const telegramResult = await telegramService.sendAirdropUpdateNotification(
+        const telegramResult = await telegramService.sendAirdropUpdateToTelegram(
           airdrop,
-          updateContent || `Status updated to: ${airdrop.status}`
+          { updateContent: updateContent || `Status updated to: ${airdrop.status}`, isExplicitUpdate: true }
         );
 
         // If successful and we have an update, store the message ID

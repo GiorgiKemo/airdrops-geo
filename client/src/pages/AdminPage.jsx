@@ -128,7 +128,7 @@ const AdminPage = () => {
     try {
       if (!updatingAirdrop) return;
 
-      await airdropService.addAirdropUpdate(updatingAirdrop.airdropId, updateContent);
+      await airdropService.addAirdropUpdate(updatingAirdrop._id, updateContent);
       setSuccessMessage('Update added successfully!');
       setUpdatingAirdrop(null);
       fetchAirdrops();
