@@ -359,11 +359,14 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
     }
 
     // Check if this is a bell update (which should trigger a notification)
+    // CRITICAL FIX: Also check for the edit button functionality
     const isBellUpdate = req.query.notifyTelegram === 'true';
+    const isEditButton = req.query.editButton === 'true';
 
-    console.log(`Update type: ${isBellUpdate ? 'Bell Update' : 'Regular Edit'}`);
+    console.log(`Update type: ${isBellUpdate ? 'Bell Update' : isEditButton ? 'Edit Button Update' : 'Regular Edit'}`);
     console.log(`Status: ${existingAirdrop.status} -> ${airdropData.status || existingAirdrop.status}`);
     console.log(`Notify Telegram: ${req.query.notifyTelegram}`);
+    console.log(`Edit Button: ${req.query.editButton}`);
     console.log(`Skip Telegram Notification flag from request:`, airdropData.skipTelegramNotification);
 
     // CRITICAL FIX: Check if skipTelegramNotification is explicitly set to true in the request
@@ -380,24 +383,24 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
     console.log(`Processed skipTelegramNotification:`, skipTelegramNotification);
 
     // CRITICAL FIX: Handle notification logic based on update type and skip flag
-    if (!isBellUpdate) {
-      // For regular edits and status changes, default to skipping notifications
-      console.log('Regular edit or status change - default to skipping notification');
-      airdropData.skipTelegramNotification = true;
-      airdropData.sendTelegramNotification = false;
-    } else {
-      // For bell updates, respect the skipTelegramNotification flag
+    if (isBellUpdate || isEditButton) {
+      // For bell updates and edit button updates, respect the skipTelegramNotification flag
       if (skipTelegramNotification) {
-        console.log('Bell update with skip flag - skipping notification');
+        console.log('Update with skip flag - skipping notification');
         airdropData.skipTelegramNotification = true;
         airdropData.sendTelegramNotification = false;
       } else {
-        console.log('Bell update without skip flag - sending notification');
+        console.log('Update without skip flag - sending notification');
         // Make sure we don't have the skip flag
         delete airdropData.skipTelegramNotification;
         // Explicitly send the notification after saving
         airdropData.sendTelegramNotification = true;
       }
+    } else {
+      // For regular edits and status changes, default to skipping notifications
+      console.log('Regular edit or status change - default to skipping notification');
+      airdropData.skipTelegramNotification = true;
+      airdropData.sendTelegramNotification = false;
     }
 
     // Update the airdrop using the _id field

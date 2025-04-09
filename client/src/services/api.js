@@ -198,7 +198,9 @@ export const airdropService = {
         airdropData.sendTelegramNotification = !airdropData.skipTelegramNotification;
       }
 
-      const response = await api.put(`/airdrops/${id}`, airdropData, { headers });
+      // CRITICAL FIX: Add editButton=true parameter to the URL to indicate this is an edit button update
+      // This will ensure the server respects the skipTelegramNotification flag
+      const response = await api.put(`/airdrops/${id}?editButton=true`, airdropData, { headers });
       return response.data;
     } catch (error) {
       console.error(`Error updating airdrop with ID ${id}:`, error);
