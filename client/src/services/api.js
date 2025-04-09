@@ -209,7 +209,16 @@ export const airdropService = {
         airdropData.sendTelegramNotification = true;
       }
 
-      const response = await api.put(`/airdrops/${id}?editButton=true`, airdropData, { headers });
+      // Add notifyTelegram=true parameter to force the server to send a notification when skipTelegramNotification is false
+      const queryParams = new URLSearchParams();
+      queryParams.append('editButton', 'true');
+
+      // If skipTelegramNotification is false, also add notifyTelegram=true to force a notification
+      if (airdropData.skipTelegramNotification === false) {
+        queryParams.append('notifyTelegram', 'true');
+      }
+
+      const response = await api.put(`/airdrops/${id}?${queryParams.toString()}`, airdropData, { headers });
       return response.data;
     } catch (error) {
       console.error(`Error updating airdrop with ID ${id}:`, error);

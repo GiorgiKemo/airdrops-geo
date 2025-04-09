@@ -395,6 +395,13 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
         delete airdropData.skipTelegramNotification;
         // Explicitly send the notification after saving
         airdropData.sendTelegramNotification = true;
+
+        // CRITICAL FIX: Force notifyTelegram to true for edit button updates when skipTelegramNotification is false
+        if (isEditButton) {
+          console.log('Edit button update without skip flag - forcing notifyTelegram=true');
+          req.query.notifyTelegram = 'true';
+          isBellUpdate = true; // Treat as bell update to ensure notification is sent
+        }
       }
     } else {
       // For regular edits and status changes, default to skipping notifications
@@ -418,12 +425,16 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
         console.log('Update type:', isBellUpdate ? 'Bell Update' : isEditButton ? 'Edit Button Update' : 'Regular Edit');
         console.log('skipTelegramNotification flag:', airdropData.skipTelegramNotification);
         console.log('sendTelegramNotification flag:', airdropData.sendTelegramNotification);
+        console.log('notifyTelegram query param:', req.query.notifyTelegram);
+        console.log('editButton query param:', req.query.editButton);
 
+        // CRITICAL FIX: Always send notification for edit button updates when skipTelegramNotification is false
         const telegramService = require('./services/telegramService');
         const result = await telegramService.sendAirdropUpdateToTelegram(updatedAirdrop, {
           isExplicitUpdate: true,
           updateType: isBellUpdate ? 'bell' : isEditButton ? 'edit' : 'regular',
-          skipTelegramNotification: false // We already checked this condition above
+          skipTelegramNotification: false, // We already checked this condition above
+          forceNotification: isEditButton && !airdropData.skipTelegramNotification // Force notification for edit button updates
         });
 
         if (result.success && result.messageId) {
