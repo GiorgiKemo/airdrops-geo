@@ -133,10 +133,12 @@ const AdminPage = () => {
     try {
       if (!updatingAirdrop) return;
 
-      console.log('Adding update with skipTelegramNotification:', skipTelegramNotification);
+      // Force to boolean with strict comparison
+      const skipTelegram = skipTelegramNotification === true ? true : false;
+      console.log('Adding update with skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
 
-      await airdropService.addAirdropUpdate(updatingAirdrop._id, updateContent, skipTelegramNotification);
-      setSuccessMessage(`Update added successfully! ${skipTelegramNotification ? '(Telegram notification skipped)' : ''}`);
+      await airdropService.addAirdropUpdate(updatingAirdrop._id, updateContent, skipTelegram);
+      setSuccessMessage(`Update added successfully! ${skipTelegram ? '(Telegram notification skipped)' : ''}`);
       setUpdatingAirdrop(null);
       fetchAirdrops();
 

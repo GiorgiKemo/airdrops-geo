@@ -44,18 +44,31 @@ router.route('/:id/updates')
       return res.status(400).json({ message: 'Update content is required' });
     }
 
-    // Log the received values
+    // Force skipTelegramNotification to be a boolean
+    const skipTelegram = (
+      skipTelegramNotification === true ||
+      skipTelegramNotification === 'true' ||
+      skipTelegramNotification === 1 ||
+      skipTelegramNotification === '1'
+    );
+
+    // Always set sendTelegramNotification to the opposite of skipTelegramNotification
+    const sendTelegram = !skipTelegram;
+
+    // Log the received and processed values
     console.log('Received update request with:');
     console.log('- content:', content);
-    console.log('- skipTelegramNotification:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
-    console.log('- sendTelegramNotification:', sendTelegramNotification, 'type:', typeof sendTelegramNotification);
+    console.log('- Original skipTelegramNotification:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
+    console.log('- Original sendTelegramNotification:', sendTelegramNotification, 'type:', typeof sendTelegramNotification);
+    console.log('- Processed skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
+    console.log('- Processed sendTelegramNotification:', sendTelegram, 'type:', typeof sendTelegram);
 
     // Call the airdrop service to add an update
     const airdropService = require('../services/airdropService');
 
     airdropService.addAirdropUpdate(req.params.id, content, {
-      skipTelegramNotification,
-      sendTelegramNotification
+      skipTelegramNotification: skipTelegram,
+      sendTelegramNotification: sendTelegram
     })
       .then(updatedAirdrop => {
         res.json(updatedAirdrop);

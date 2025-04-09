@@ -21,8 +21,10 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
       setError('');
 
       // Call the onSubmit function passed from parent with skipTelegramNotification flag
-      console.log('Submitting update with skipTelegramNotification:', skipTelegramNotification);
-      await onSubmit(updateContent, skipTelegramNotification);
+      // Force to boolean with strict comparison
+      const skipTelegram = skipTelegramNotification === true ? true : false;
+      console.log('Submitting update with skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
+      await onSubmit(updateContent, skipTelegram);
 
       // Reset form
       setUpdateContent('');
@@ -65,25 +67,31 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
           />
         </div>
 
-        <div className="flex items-center mb-3 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800">
+        <div className="flex items-center mb-3 p-3 border-2 border-blue-300 dark:border-blue-700 rounded bg-blue-50 dark:bg-blue-900 shadow-md">
           <input
             type="checkbox"
             id="skipTelegramNotification"
             checked={skipTelegramNotification}
             onChange={(e) => {
-              const isChecked = e.target.checked;
-              console.log('Checkbox changed to:', isChecked);
+              // Force to boolean with double negation
+              const isChecked = !!e.target.checked;
+              console.log('Checkbox changed to:', isChecked, 'type:', typeof isChecked);
               setSkipTelegramNotification(isChecked);
             }}
-            className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            className="h-6 w-6 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             disabled={isSubmitting}
           />
-          <label
-            htmlFor="skipTelegramNotification"
-            className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Skip Telegram Notification
-          </label>
+          <div className="ml-2">
+            <label
+              htmlFor="skipTelegramNotification"
+              className="block text-sm font-bold text-blue-700 dark:text-blue-300"
+            >
+              Skip Telegram Notification
+            </label>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              Check this box to prevent sending a notification to Telegram when adding this update.
+            </p>
+          </div>
         </div>
 
         <div className="flex justify-end space-x-3">
