@@ -364,11 +364,27 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
     console.log(`Update type: ${isBellUpdate ? 'Bell Update' : 'Regular Edit'}`);
     console.log(`Status: ${existingAirdrop.status} -> ${airdropData.status || existingAirdrop.status}`);
     console.log(`Notify Telegram: ${req.query.notifyTelegram}`);
+    console.log(`Skip Telegram Notification flag from request:`, airdropData.skipTelegramNotification);
 
-    // Only send Telegram notification for bell updates
-    if (!isBellUpdate) {
-      console.log('Skipping Telegram notification for regular edit or status change');
+    // CRITICAL FIX: Check if skipTelegramNotification is explicitly set to true in the request
+    // This handles the case when the checkbox is checked in the UI
+    const skipTelegramNotification = (
+      airdropData.skipTelegramNotification === true ||
+      airdropData.skipTelegramNotification === 'true' ||
+      airdropData.skipTelegramNotification === 1 ||
+      airdropData.skipTelegramNotification === '1' ||
+      airdropData.skipTelegramNotification === 'on' ||
+      String(airdropData.skipTelegramNotification).toLowerCase() === 'true'
+    );
+
+    console.log(`Processed skipTelegramNotification:`, skipTelegramNotification);
+
+    // Only send Telegram notification for bell updates and when not explicitly skipped
+    if (!isBellUpdate || skipTelegramNotification) {
+      console.log('Skipping Telegram notification for regular edit, status change, or by explicit request');
       airdropData.skipTelegramNotification = true;
+      // Make sure we don't send a notification
+      airdropData.sendTelegramNotification = false;
     } else {
       console.log('Will send Telegram notification for bell update');
       // Make sure we don't have the skip flag
@@ -385,13 +401,14 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
       { new: true }
     );
 
-    // For bell updates, explicitly send the notification
-    if (airdropData.sendTelegramNotification) {
+    // For bell updates, explicitly send the notification if not skipped
+    if (airdropData.sendTelegramNotification && !airdropData.skipTelegramNotification) {
       try {
         console.log('Explicitly sending bell update to Telegram');
         const telegramService = require('./services/telegramService');
         const result = await telegramService.sendAirdropUpdateToTelegram(updatedAirdrop, {
-          isExplicitUpdate: true
+          isExplicitUpdate: true,
+          skipTelegramNotification: airdropData.skipTelegramNotification === true
         });
 
         if (result.success && result.messageId) {
@@ -488,7 +505,11 @@ app.delete('/api/airdrops/:id', async (req, res) => {
 app.post('/api/airdrops/:id/updates', async (req, res) => {
   try {
     console.log(`Adding update to airdrop with ID: ${req.params.id}`);
-    const { content } = req.body;
+    const { content, skipTelegramNotification } = req.body;
+
+    console.log('Received update request with:');
+    console.log('- content:', content);
+    console.log('- skipTelegramNotification:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
 
     if (!content) {
       return res.status(400).json({ message: 'Update content is required' });
@@ -532,12 +553,26 @@ app.post('/api/airdrops/:id/updates', async (req, res) => {
     // Save the airdrop
     const updatedAirdrop = await airdrop.save();
 
-    // Explicitly send the update to Telegram
+    // CRITICAL FIX: Check if we should skip the Telegram notification
+    // Handle all possible truthy values for skipTelegramNotification
+    const shouldSkip = (
+      skipTelegramNotification === true ||
+      skipTelegramNotification === 'true' ||
+      skipTelegramNotification === 1 ||
+      skipTelegramNotification === '1' ||
+      skipTelegramNotification === 'on' ||
+      String(skipTelegramNotification).toLowerCase() === 'true'
+    );
+
+    console.log('Should skip Telegram notification?', shouldSkip);
+
+    // Explicitly send the update to Telegram if not skipped
     try {
       const telegramService = require('./services/telegramService');
       const result = await telegramService.sendAirdropUpdateToTelegram(updatedAirdrop, {
         updateContent: content,
-        isExplicitUpdate: true  // Flag to indicate this is from the update button
+        isExplicitUpdate: true,  // Flag to indicate this is from the update button
+        skipTelegramNotification: shouldSkip  // Pass the skip flag to the Telegram service
       });
 
       // If successful, store the Telegram message ID with the update
