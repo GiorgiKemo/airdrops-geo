@@ -360,7 +360,7 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
 
     // Check if this is a bell update (which should trigger a notification)
     // CRITICAL FIX: Also check for the edit button functionality
-    const isBellUpdate = req.query.notifyTelegram === 'true';
+    let isBellUpdate = req.query.notifyTelegram === 'true';
     const isEditButton = req.query.editButton === 'true';
 
     console.log(`Update type: ${isBellUpdate ? 'Bell Update' : isEditButton ? 'Edit Button Update' : 'Regular Edit'}`);
