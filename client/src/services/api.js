@@ -200,6 +200,15 @@ export const airdropService = {
 
       // CRITICAL FIX: Add editButton=true parameter to the URL to indicate this is an edit button update
       // This will ensure the server respects the skipTelegramNotification flag
+      console.log('Sending editButton=true parameter to server');
+      console.log('skipTelegramNotification:', airdropData.skipTelegramNotification);
+      console.log('sendTelegramNotification:', airdropData.sendTelegramNotification);
+
+      // Make sure we're sending the correct notification flags
+      if (airdropData.skipTelegramNotification === false) {
+        airdropData.sendTelegramNotification = true;
+      }
+
       const response = await api.put(`/airdrops/${id}?editButton=true`, airdropData, { headers });
       return response.data;
     } catch (error) {
