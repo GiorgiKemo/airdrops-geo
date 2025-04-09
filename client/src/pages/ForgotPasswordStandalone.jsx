@@ -21,26 +21,26 @@ const ForgotPasswordStandalone = () => {
     try {
       setIsLoading(true);
       console.log('Sending password reset request for email:', email);
-      
+
       // Get the API URL from environment variables
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
       const fullUrl = `${apiUrl}/api/users/forgot-password`;
       console.log('Full request URL:', fullUrl);
-      
+
       // Make a direct axios call
       const response = await axios.post(fullUrl, { email }, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
-      
+
       console.log('Password reset API call successful');
       console.log('Response:', response.data);
-      
+
       setIsSubmitted(true);
     } catch (err) {
       console.error('Error requesting password reset:', err);
-      
+
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
       } else {
