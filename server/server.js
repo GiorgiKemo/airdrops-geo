@@ -90,8 +90,13 @@ const upload = multer({
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Set up API routes with rate limiting and CSRF protection
+// Set up API routes with rate limiting
 app.use('/api', apiLimiter); // Apply rate limiting to all API routes
+
+// Endpoint to get a new CSRF token - must be defined BEFORE CSRF middleware
+app.get('/api/csrf-token', setCsrfToken, (req, res) => {
+  res.json({ csrfToken: res.locals.csrfToken });
+});
 
 // Set CSRF token for all routes
 app.use(setCsrfToken);
@@ -104,9 +109,15 @@ app.use('/api/airdrops', airdropRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/tracking', trackingRoutes);
 
-// Endpoint to get a new CSRF token
-app.get('/api/csrf-token', (req, res) => {
-  res.json({ csrfToken: res.locals.csrfToken });
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Test endpoint working!' });
+});
+
+// Test login endpoint
+app.post('/api/test-login', (req, res) => {
+  console.log('Test login endpoint called with body:', req.body);
+  res.json({ success: true, message: 'Test login successful', user: { email: req.body.email, role: 'user' } });
 });
 
 // Serve React app in production

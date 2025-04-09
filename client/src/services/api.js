@@ -58,20 +58,25 @@ api.interceptors.request.use(async config => {
 
   // Skip CSRF for GET requests and the CSRF token endpoint itself
   if (config.method !== 'get' && !config.url.includes('/csrf-token')) {
-    console.log('Non-GET request detected, adding CSRF token');
-    // Add CSRF token to headers if available
-    if (csrfToken) {
-      console.log('Using existing CSRF token:', csrfToken);
-      config.headers['X-CSRF-Token'] = csrfToken;
+    // Skip CSRF for forgot password and reset password endpoints
+    if (config.url.includes('/forgot-password') || config.url.includes('/reset-password')) {
+      console.log('Skipping CSRF token for password reset functionality');
     } else {
-      console.log('No CSRF token found, fetching a new one');
-      // Try to fetch a new token
-      const token = await fetchCsrfToken();
-      if (token) {
-        console.log('New CSRF token fetched:', token);
-        config.headers['X-CSRF-Token'] = token;
+      console.log('Non-GET request detected, adding CSRF token');
+      // Add CSRF token to headers if available
+      if (csrfToken) {
+        console.log('Using existing CSRF token:', csrfToken);
+        config.headers['X-CSRF-Token'] = csrfToken;
       } else {
-        console.log('Failed to fetch CSRF token');
+        console.log('No CSRF token found, fetching a new one');
+        // Try to fetch a new token
+        const token = await fetchCsrfToken();
+        if (token) {
+          console.log('New CSRF token fetched:', token);
+          config.headers['X-CSRF-Token'] = token;
+        } else {
+          console.log('Failed to fetch CSRF token');
+        }
       }
     }
   } else {
