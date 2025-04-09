@@ -66,6 +66,26 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Remove default underline from links */
+a {
+  text-decoration: none;
+}
+
+/* Add underline on hover if needed */
+a:hover:not(.no-hover-underline) {
+  text-decoration: underline;
+}
+
+/* Style links in FAQ answers */
+.faq-answer a {
+  color: var(--macos-primary);
+  text-decoration: none;
+}
+
+.faq-answer a:hover {
+  text-decoration: underline;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif;

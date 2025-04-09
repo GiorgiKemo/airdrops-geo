@@ -10,11 +10,11 @@ import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
  * @param {boolean} props.showMoreLink - Whether to show a link to the full FAQ page
  * @param {string} props.className - Additional CSS classes
  */
-const PageFAQ = ({ 
-  questions = [], 
-  title = "Frequently Asked Questions", 
+const PageFAQ = ({
+  questions = [],
+  title = "Frequently Asked Questions",
   showMoreLink = true,
-  className = "" 
+  className = ""
 }) => {
   const [openIndex, setOpenIndex] = useState(null);
 
@@ -29,11 +29,11 @@ const PageFAQ = ({
   return (
     <div className={`mt-8 mb-6 ${className}`}>
       <h2 className="text-xl sm:text-2xl font-bold text-[var(--macos-text)] mb-4">{title}</h2>
-      
+
       <div className="space-y-3">
         {questions.map((item, index) => (
-          <div 
-            key={index} 
+          <div
+            key={index}
             className="macos-card overflow-hidden transition-all duration-200"
           >
             <button
@@ -47,11 +47,11 @@ const PageFAQ = ({
                 {openIndex === index ? <FaChevronUp /> : <FaChevronDown />}
               </span>
             </button>
-            
+
             {openIndex === index && (
-              <div 
+              <div
                 id={`faq-answer-${index}`}
-                className="p-4 pt-0 text-[var(--macos-text-secondary)]"
+                className="p-4 pt-0 text-[var(--macos-text-secondary)] faq-answer"
               >
                 {typeof item.answer === 'string' ? (
                   <p>{item.answer}</p>
@@ -63,12 +63,12 @@ const PageFAQ = ({
           </div>
         ))}
       </div>
-      
+
       {showMoreLink && (
         <div className="mt-4 text-center">
-          <Link 
-            to="/faq" 
-            className="text-[var(--macos-primary)] hover:underline text-sm font-medium"
+          <Link
+            to="/faq"
+            className="text-[var(--macos-primary)] no-underline hover:underline text-sm font-medium"
           >
             View all frequently asked questions
           </Link>
