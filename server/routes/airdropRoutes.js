@@ -9,7 +9,7 @@ const {
   getAirdropsByStatus,
 } = require('../controllers/airdropController');
 const { protect, admin, optionalAuth } = require('../middleware/authMiddleware');
-const { apiLimiter } = require('../middleware/rateLimitMiddleware');
+const { apiLimiter, adminLimiter } = require('../middleware/rateLimitMiddleware');
 const {
   createAirdropValidation,
   updateAirdropValidation,
@@ -28,15 +28,15 @@ router.route('/:id')
 
 // Protected admin routes - No validation for admin operations
 router.route('/')
-  .post(protect, admin, createAirdrop);
+  .post(protect, admin, adminLimiter, createAirdrop);
 
 router.route('/:id')
-  .put(protect, admin, updateAirdrop)
-  .delete(protect, admin, deleteAirdrop);
+  .put(protect, admin, adminLimiter, updateAirdrop)
+  .delete(protect, admin, adminLimiter, deleteAirdrop);
 
 // Airdrop updates route
 router.route('/:id/updates')
-  .post(protect, admin, (req, res) => {
+  .post(protect, admin, adminLimiter, (req, res) => {
     const { content, skipTelegramNotification, sendTelegramNotification } = req.body;
 
     // No validation for admin - just check if content exists

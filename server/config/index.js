@@ -90,6 +90,13 @@ const config = {
     chatId: process.env.TELEGRAM_CHAT_ID || '',
     enabled: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
   },
+
+  // Redis configuration for caching
+  redis: {
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    enabled: Boolean(process.env.REDIS_URL) || process.env.NODE_ENV === 'production',
+    defaultTTL: 60 * 15, // 15 minutes in seconds
+  },
 };
 
 module.exports = config;

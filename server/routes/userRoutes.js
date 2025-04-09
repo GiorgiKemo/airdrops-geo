@@ -11,7 +11,12 @@ const {
   resetPassword,
 } = require('../controllers/passwordResetController');
 const { protect } = require('../middleware/authMiddleware');
-const { authLimiter } = require('../middleware/rateLimitMiddleware');
+const {
+  authLimiter,
+  passwordResetLimiter,
+  passwordResetConfirmLimiter,
+  profileUpdateLimiter
+} = require('../middleware/rateLimitMiddleware');
 const {
   registerValidation,
   loginValidation,
@@ -34,10 +39,10 @@ router.route('/verify')
 
 // Password reset routes
 router.route('/forgot-password')
-  .post(authLimiter, requestPasswordReset);
+  .post(passwordResetLimiter, requestPasswordReset);
 
 router.route('/reset-password')
-  .post(authLimiter, resetPassword);
+  .post(passwordResetConfirmLimiter, resetPassword);
 
 // Protected routes
 router.route('/profile')

@@ -86,6 +86,22 @@ const airdropSchema = mongoose.Schema(
   }
 );
 
+// Add indexes for frequently queried fields to improve performance
+// Index for status queries (used in filtering airdrops by status)
+airdropSchema.index({ status: 1 });
+
+// Index for sorting by creation date (newest first)
+airdropSchema.index({ createdAt: -1 });
+
+// Index for token searches
+airdropSchema.index({ token: 1 });
+
+// Compound index for status and creation date (common query pattern)
+airdropSchema.index({ status: 1, createdAt: -1 });
+
+// Index for views (for sorting by popularity)
+airdropSchema.index({ views: -1 });
+
 const Airdrop = mongoose.model('Airdrop', airdropSchema);
 
 module.exports = Airdrop;
