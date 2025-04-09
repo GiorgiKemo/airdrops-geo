@@ -81,6 +81,9 @@ const upload = multer({ storage });
 // Create Express app
 const app = express();
 
+// Trust proxy - needed for rate limiting behind a proxy (like Render)
+app.set('trust proxy', 1);
+
 // CORS configuration
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production'
