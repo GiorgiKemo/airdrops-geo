@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { memo } from 'react';
 import AirdropLogo from './AirdropLogo';
 import { FaGlobe, FaDiscord, FaTelegram, FaGithub, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
@@ -26,15 +27,8 @@ const AirdropCard = ({ airdrop }) => {
 
   // Get card color based on airdrop settings
   const getCardColor = () => {
-    // Debug airdrop data
-    console.log('Airdrop data:', airdrop);
-    console.log('Card color:', airdrop.cardColor);
-    console.log('Predefined color:', airdrop.predefinedColor);
-    console.log('Social Links:', airdrop.socialLinks);
-
     // If custom color is provided, use it
     if (airdrop.cardColor && airdrop.cardColor.trim() !== '') {
-      console.log('Using custom color:', airdrop.cardColor);
       return airdrop.cardColor;
     }
 
@@ -50,12 +44,10 @@ const AirdropCard = ({ airdrop }) => {
         indigo: '#6366f1',
         gray: '#6b7280'
       };
-      console.log('Using predefined color:', airdrop.predefinedColor, colorMap[airdrop.predefinedColor]);
       return colorMap[airdrop.predefinedColor] || null;
     }
 
     // Default: return null to use default styling
-    console.log('Using default color');
     return null;
   };
 
@@ -113,7 +105,6 @@ const AirdropCard = ({ airdrop }) => {
             {/* Social Media Links */}
             {airdrop.socialLinks && typeof airdrop.socialLinks === 'object' && Object.values(airdrop.socialLinks).some(link => link && link.trim() !== '') && (
               <div className="flex gap-1 sm:gap-2">
-                {console.log('Rendering social links:', airdrop.socialLinks)}
                 {airdrop.socialLinks.website && typeof airdrop.socialLinks.website === 'string' && airdrop.socialLinks.website.trim() !== '' && (
                   <a
                     href={airdrop.socialLinks.website}
@@ -214,4 +205,5 @@ const AirdropCard = ({ airdrop }) => {
   );
 };
 
-export default AirdropCard;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(AirdropCard);
