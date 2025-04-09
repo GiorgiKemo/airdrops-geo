@@ -34,13 +34,19 @@ const PageFAQ = ({
         {questions.map((item, index) => (
           <div
             key={index}
-            className="macos-card overflow-hidden transition-all duration-200 faq-item"
+            className="macos-card overflow-hidden transition-all duration-200 faq-item no-border"
+            style={{
+              borderTop: 'none',
+              borderBottom: 'none',
+              borderColor: 'transparent'
+            }}
           >
             <button
               onClick={() => toggleQuestion(index)}
-              className="w-full flex justify-between items-center p-4 text-left focus:outline-none focus:ring-2 focus:ring-[var(--macos-primary)] focus:ring-opacity-50"
+              className="w-full flex justify-between items-center p-4 text-left focus:outline-none focus:ring-2 focus:ring-[var(--macos-primary)] focus:ring-opacity-50 border-none"
               aria-expanded={openIndex === index}
               aria-controls={`faq-answer-${index}`}
+              style={{ border: 'none', borderBottom: 'none', borderTop: 'none' }}
             >
               <span className="font-medium text-[var(--macos-text)]">{item.question}</span>
               <span className="text-[var(--macos-text-secondary)] ml-2">
@@ -51,8 +57,16 @@ const PageFAQ = ({
             {openIndex === index && (
               <div
                 id={`faq-answer-${index}`}
-                className="p-4 pt-0 text-[var(--macos-text-secondary)] faq-answer border-none"
-                style={{ borderTop: 'none', borderColor: 'transparent' }}
+                className="p-4 pt-0 text-[var(--macos-text-secondary)] faq-answer border-none no-border"
+                style={{
+                  border: 'none',
+                  borderTop: 'none',
+                  borderBottom: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  borderColor: 'transparent',
+                  boxShadow: 'none'
+                }}
               >
                 {typeof item.answer === 'string' ? (
                   <p>{item.answer}</p>
