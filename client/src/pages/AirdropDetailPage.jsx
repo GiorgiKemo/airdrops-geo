@@ -48,11 +48,17 @@ const AirdropDetailPage = () => {
 
       setLoading(true);
       // Explicitly set skipTelegramNotification to true to prevent Telegram notifications for status changes
-      await airdropService.updateAirdrop(id, {
-        status: newStatus,
-        skipTelegramNotification: true,
-        sendTelegramNotification: false
-      });
+      // Use editButton=true parameter to ensure the server treats this as an edit button update
+      await airdropService.updateAirdrop(
+        id,
+        {
+          status: newStatus,
+          skipTelegramNotification: true,
+          sendTelegramNotification: false
+        },
+        {}, // No special headers
+        true // Use editButton=true query parameter
+      );
       // Refresh the airdrop data
       await fetchAirdrop();
     } catch (err) {
@@ -478,6 +484,7 @@ const AirdropDetailPage = () => {
                 </div>
                 <AirdropUpdateForm
                   onSubmit={handleAddUpdate}
+                  onCancel={() => setIsAddingUpdate(false)}
                   loading={loading}
                 />
               </div>
