@@ -26,6 +26,7 @@ const TermsPage = lazy(() => import('./pages/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const CookiePage = lazy(() => import('./pages/CookiePage'));
 const FAQPage = lazy(() => import('./pages/FAQPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const TestPage = lazy(() => import('./pages/TestPage'));
 import { DarkModeProvider } from './context/DarkModeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -107,6 +108,11 @@ function App() {
                     <Route path="/forgot-password" element={<ForgotPasswordStandalone />} />
                     <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/profile" element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/terms" element={<TermsPage />} />
                     <Route path="/privacy" element={<PrivacyPage />} />
                     <Route path="/cookies" element={<CookiePage />} />

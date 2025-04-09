@@ -22,6 +22,31 @@ const userSchema = mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    // Profile fields
+    displayName: {
+      type: String,
+      trim: true,
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+    avatar: {
+      type: String, // URL to avatar image
+    },
+    // Social accounts
+    socialAccounts: {
+      twitter: { type: String, trim: true },
+      discord: { type: String, trim: true },
+      telegram: { type: String, trim: true },
+      github: { type: String, trim: true },
+    },
+    // User preferences
+    preferences: {
+      emailNotifications: { type: Boolean, default: true },
+      darkMode: { type: Boolean, default: false },
+    },
   },
   {
     timestamps: true,

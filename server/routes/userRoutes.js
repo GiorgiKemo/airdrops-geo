@@ -5,6 +5,8 @@ const {
   loginUser,
   getUserProfile,
   verifyToken,
+  updateUserProfile,
+  updatePassword,
 } = require('../controllers/userController');
 const {
   requestPasswordReset,
@@ -46,6 +48,10 @@ router.route('/reset-password')
 
 // Protected routes
 router.route('/profile')
-  .get(protect, getUserProfile);
+  .get(protect, getUserProfile)
+  .put(protect, profileUpdateLimiter, updateUserProfile);
+
+router.route('/password')
+  .put(protect, profileUpdateLimiter, updatePassword);
 
 module.exports = router;
