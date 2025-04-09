@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTracking } from '../context/TrackingContext';
 import { useToast } from '../context/ToastContext';
 
 const LoginPage = () => {
@@ -11,6 +12,7 @@ const LoginPage = () => {
   const [formError, setFormError] = useState('');
 
   const { login, loading, error } = useAuth();
+  const { refreshTracking } = useTracking();
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -39,7 +41,13 @@ const LoginPage = () => {
       // Call the login function directly
       console.log('Calling login function...');
       await login(formData.email, formData.password);
-      console.log('Login successful, navigating to home page');
+      console.log('Login successful');
+
+      // Refresh tracked airdrops
+      console.log('Refreshing tracked airdrops after login');
+      setTimeout(() => {
+        refreshTracking();
+      }, 500);
 
       // Show success toast notification
       toast.success('Login successful! Welcome back.');
