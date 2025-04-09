@@ -20,6 +20,7 @@ import { DarkModeProvider } from './context/DarkModeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TrackingProvider } from './context/TrackingContext';
 import { DisplayProvider } from './context/DisplayContext';
+import { ToastProvider } from './context/ToastContext';
 import './index.css';
 
 // Protected route component for any authenticated user
@@ -72,6 +73,7 @@ function App() {
         <AuthProvider>
           <TrackingProvider>
             <DisplayProvider>
+              <ToastProvider>
             <BrowserRouter>
             <ScrollToTop />
             <div className="min-h-screen transition-colors duration-200 flex flex-col">
@@ -119,6 +121,7 @@ function App() {
               <Footer />
             </div>
           </BrowserRouter>
+              </ToastProvider>
             </DisplayProvider>
           </TrackingProvider>
         </AuthProvider>
