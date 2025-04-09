@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout user
-  const logout = () => {
+  const logout = (redirectToHome = true) => {
     // Clear user data from localStorage first
     localStorage.removeItem('currentUser');
 
@@ -142,11 +142,13 @@ export const AuthProvider = ({ children }) => {
     // Set user state to null
     setUser(null);
 
-    // Navigate to home page after logout
-    // Use a small timeout to ensure state updates have been processed
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 100);
+    // Navigate to home page after logout only if redirectToHome is true
+    if (redirectToHome) {
+      // Use a small timeout to ensure state updates have been processed
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+    }
   };
 
   return (
