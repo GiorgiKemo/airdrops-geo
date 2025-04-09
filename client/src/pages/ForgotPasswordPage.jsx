@@ -1,24 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
-import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
 
 const ForgotPasswordPage = () => {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // We don't need to call logout here as it might cause issues
-  useEffect(() => {
-    console.log('ForgotPasswordPage mounted');
-    // Just log that we're on the forgot password page
-    // No need to call logout as it might interfere with other functionality
-    console.log('On forgot password page - no redirection should occur');
-  }, []);
+  // No useEffect needed - this component is completely standalone
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,17 +26,18 @@ const ForgotPasswordPage = () => {
       setIsLoading(true);
       console.log('Sending password reset request for email:', email);
 
-      // Make the API call with detailed logging
-      console.log('API URL being used:', api.defaults.baseURL);
-      console.log('Full request URL:', `${api.defaults.baseURL}/users/forgot-password`);
+      // Get the API URL from environment variables
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const fullUrl = `${apiUrl}/api/users/forgot-password`;
+      console.log('Full request URL:', fullUrl);
       console.log('Request payload:', { email });
 
-      let response;
-
-      // Use the regular API service
-      console.log('Using regular API service for forgot password request');
-      response = await api.post('/users/forgot-password', { email });
-      console.log('API call successful');
+      // Make a direct axios call without using the API service
+      const response = await axios.post(fullUrl, { email }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
       console.log('Password reset API call successful');
       console.log('Response status:', response.status);

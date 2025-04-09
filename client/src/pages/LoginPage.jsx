@@ -104,9 +104,16 @@ const LoginPage = () => {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password
                   </label>
-                  <Link to="/forgot-password" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors">
+                  <a
+                    href="/forgot-password"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = '/forgot-password';
+                    }}
+                  >
                     Forgot password?
-                  </Link>
+                  </a>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
