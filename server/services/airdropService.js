@@ -157,6 +157,9 @@ class AirdropService {
       const skipTelegramNotification = options.skipTelegramNotification === true;
       const sendTelegramNotification = options.sendTelegramNotification !== false; // Default to true if not specified
 
+      console.log(`Airdrop update options: skipTelegramNotification=${skipTelegramNotification}, sendTelegramNotification=${sendTelegramNotification}`);
+      console.log('Full options:', options);
+
       // Send Telegram notification for the update if not skipped
       if (!skipTelegramNotification && sendTelegramNotification) {
         try {
