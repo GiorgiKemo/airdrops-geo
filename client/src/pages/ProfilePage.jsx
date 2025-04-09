@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { FaTwitter, FaDiscord, FaTelegram, FaGithub, FaUser, FaLock, FaCog } from 'react-icons/fa';
+import { FaTwitter, FaDiscord, FaTelegram, FaGithub, FaUser, FaLock, FaCog, FaCamera } from 'react-icons/fa';
+import FileUpload from '../components/FileUpload';
 import SEO from '../components/SEO';
 
 const ProfilePage = () => {
@@ -10,7 +11,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState('profile');
-  
+
   // Profile form state
   const [profileForm, setProfileForm] = useState({
     displayName: user?.displayName || '',
@@ -27,18 +28,18 @@ const ProfilePage = () => {
       darkMode: user?.preferences?.darkMode || false,
     },
   });
-  
+
   // Password form state
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
-  
+
   const [profileSubmitting, setProfileSubmitting] = useState(false);
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-  
+
   // Update form when user data changes
   useEffect(() => {
     if (user) {
@@ -59,11 +60,11 @@ const ProfilePage = () => {
       });
     }
   }, [user]);
-  
+
   // Handle profile form changes
   const handleProfileChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     if (name.includes('.')) {
       // Handle nested properties (socialAccounts, preferences)
       const [parent, child] = name.split('.');
@@ -82,7 +83,7 @@ const ProfilePage = () => {
       }));
     }
   };
-  
+
   // Handle password form changes
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
@@ -91,82 +92,66 @@ const ProfilePage = () => {
       [name]: value,
     }));
   };
-  
+
   // Handle profile form submission
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
     setProfileSubmitting(true);
-    
+
     try {
       await updateProfile(profileForm);
-      toast.show({
-        title: 'Success',
-        message: 'Profile updated successfully',
-        type: 'success',
-      });
+      toast.success('Profile updated successfully');
     } catch (err) {
       setFormError(err.message);
-      toast.show({
-        title: 'Error',
-        message: err.message,
-        type: 'error',
-      });
+      toast.error(err.message);
     } finally {
       setProfileSubmitting(false);
     }
   };
-  
+
   // Handle password form submission
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
-    
+
     // Validate passwords
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       setFormError('Passwords do not match');
       return;
     }
-    
+
     if (passwordForm.newPassword.length < 6) {
       setFormError('Password must be at least 6 characters');
       return;
     }
-    
+
     setPasswordSubmitting(true);
-    
+
     try {
       await updatePassword(passwordForm.currentPassword, passwordForm.newPassword);
-      
+
       // Reset form
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
-      
-      toast.show({
-        title: 'Success',
-        message: 'Password updated successfully',
-        type: 'success',
-      });
+
+      toast.success('Password updated successfully');
     } catch (err) {
       setFormError(err.message);
-      toast.show({
-        title: 'Error',
-        message: err.message,
-        type: 'error',
-      });
+      toast.error(err.message);
     } finally {
       setPasswordSubmitting(false);
     }
   };
-  
+
   // Redirect if not logged in
   if (!user) {
     return navigate('/login');
   }
-  
+
   return (
     <>
       <SEO
@@ -174,10 +159,10 @@ const ProfilePage = () => {
         description="Manage your profile settings, connect social accounts, and customize your experience on Airdrops.geo."
         canonicalUrl="/profile"
       />
-      
+
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-[var(--macos-text)] mb-6">My Profile</h1>
-        
+
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
           <button
@@ -211,14 +196,14 @@ const ProfilePage = () => {
             <FaCog /> Preferences
           </button>
         </div>
-        
+
         {/* Error message */}
         {formError && (
           <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">
             {formError}
           </div>
         )}
-        
+
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
@@ -227,46 +212,64 @@ const ProfilePage = () => {
                 {/* Left column */}
                 <div>
                   <h2 className="text-xl font-semibold mb-4 text-[var(--macos-text)]">Basic Information</h2>
-                  
+
                   {/* Avatar */}
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
                       Profile Picture
                     </label>
-                    <div className="flex items-center">
-                      <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 mr-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 relative group">
                         {profileForm.avatar ? (
-                          <img
-                            src={profileForm.avatar}
-                            alt="Avatar"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = 'https://via.placeholder.com/80?text=Avatar';
-                            }}
-                          />
+                          <>
+                            <img
+                              src={profileForm.avatar}
+                              alt="Avatar"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = 'https://via.placeholder.com/80?text=Avatar';
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                              <FaCamera className="text-white text-xl" />
+                            </div>
+                          </>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <FaUser size={32} />
                           </div>
                         )}
                       </div>
-                      <div>
-                        <input
-                          type="text"
-                          name="avatar"
-                          value={profileForm.avatar}
-                          onChange={handleProfileChange}
-                          placeholder="Enter image URL"
-                          className="macos-input w-full text-sm"
-                        />
-                        <p className="text-xs text-[var(--macos-text-secondary)] mt-1">
-                          Enter a URL to your profile picture
-                        </p>
+                      <div className="flex-1 w-full">
+                        <div className="mb-2">
+                          <FileUpload
+                            onFileSelect={(base64) => {
+                              setProfileForm(prev => ({
+                                ...prev,
+                                avatar: base64
+                              }));
+                            }}
+                            maxSizeMB={2}
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-xs text-[var(--macos-text-secondary)]">
+                            Or enter image URL:
+                          </span>
+                          <input
+                            type="text"
+                            name="avatar"
+                            value={profileForm.avatar}
+                            onChange={handleProfileChange}
+                            placeholder="https://..."
+                            className="macos-input ml-2 text-xs flex-1"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Display Name */}
                   <div className="mb-4">
                     <label htmlFor="displayName" className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
@@ -282,7 +285,7 @@ const ProfilePage = () => {
                       className="macos-input w-full text-sm"
                     />
                   </div>
-                  
+
                   {/* Bio */}
                   <div className="mb-4">
                     <label htmlFor="bio" className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
@@ -303,11 +306,11 @@ const ProfilePage = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Right column */}
                 <div>
                   <h2 className="text-xl font-semibold mb-4 text-[var(--macos-text)]">Social Accounts</h2>
-                  
+
                   {/* Twitter */}
                   <div className="mb-4">
                     <label htmlFor="twitter" className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
@@ -326,7 +329,7 @@ const ProfilePage = () => {
                       className="macos-input w-full text-sm"
                     />
                   </div>
-                  
+
                   {/* Discord */}
                   <div className="mb-4">
                     <label htmlFor="discord" className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
@@ -345,7 +348,7 @@ const ProfilePage = () => {
                       className="macos-input w-full text-sm"
                     />
                   </div>
-                  
+
                   {/* Telegram */}
                   <div className="mb-4">
                     <label htmlFor="telegram" className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
@@ -364,7 +367,7 @@ const ProfilePage = () => {
                       className="macos-input w-full text-sm"
                     />
                   </div>
-                  
+
                   {/* GitHub */}
                   <div className="mb-4">
                     <label htmlFor="github" className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
@@ -385,7 +388,7 @@ const ProfilePage = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-6 flex justify-end">
                 <button
                   type="submit"
@@ -398,12 +401,12 @@ const ProfilePage = () => {
             </form>
           </div>
         )}
-        
+
         {/* Security Tab */}
         {activeTab === 'security' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-[var(--macos-text)]">Change Password</h2>
-            
+
             <form onSubmit={handlePasswordSubmit}>
               <div className="max-w-md">
                 {/* Current Password */}
@@ -421,7 +424,7 @@ const ProfilePage = () => {
                     className="macos-input w-full text-sm"
                   />
                 </div>
-                
+
                 {/* New Password */}
                 <div className="mb-4">
                   <label htmlFor="newPassword" className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
@@ -441,7 +444,7 @@ const ProfilePage = () => {
                     Password must be at least 6 characters
                   </p>
                 </div>
-                
+
                 {/* Confirm Password */}
                 <div className="mb-4">
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--macos-text-secondary)] mb-1">
@@ -458,7 +461,7 @@ const ProfilePage = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="mt-6">
                 <button
                   type="submit"
@@ -471,12 +474,12 @@ const ProfilePage = () => {
             </form>
           </div>
         )}
-        
+
         {/* Preferences Tab */}
         {activeTab === 'preferences' && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-[var(--macos-text)]">Preferences</h2>
-            
+
             <form onSubmit={handleProfileSubmit}>
               <div className="max-w-md">
                 {/* Email Notifications */}
@@ -497,7 +500,7 @@ const ProfilePage = () => {
                     Get notified about important updates and new airdrops
                   </p>
                 </div>
-                
+
                 {/* Dark Mode */}
                 <div className="mb-4">
                   <label className="flex items-center">
@@ -517,7 +520,7 @@ const ProfilePage = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="mt-6">
                 <button
                   type="submit"
