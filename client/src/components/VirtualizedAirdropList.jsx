@@ -16,6 +16,9 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
   const bufferSize = 10; // Increased buffer size for smoother scrolling
   const overscan = 5; // Additional items to render for smoother scrolling
 
+  // Fixed number of cards per row
+  const cardsPerRow = 3;
+
   // Calculate which rows should be visible based on scroll position
   const calculateVisibleRange = useCallback(() => {
     if (!containerRef.current) return;
@@ -124,28 +127,45 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
     };
   }, []);
 
-  // Calculate rows for grid layout (3 cards per row)
-  const cardsPerRow = 3;
-
-  // Create placeholder items for the full list height based on rows
-  const totalRows = Math.ceil(airdrops.length / cardsPerRow);
-  const totalHeight = totalRows * itemHeight;
+  // Calculate total rows based on cards per row and create placeholder height
+  const totalRows = airdrops && airdrops.length > 0 ? Math.ceil(airdrops.length / cardsPerRow) : 0;
+  const totalHeight = Math.max(totalRows * itemHeight, 100); // Minimum height of 100px
 
   // Adjust visible range to ensure complete rows (multiples of 3)
   const adjustedVisibleRange = useMemo(() => {
+    // Safety check for empty airdrops array
+    if (!airdrops || airdrops.length === 0) {
+      return { start: 0, end: 0 };
+    }
+
     // Round down start to nearest multiple of cardsPerRow
     const adjustedStart = Math.floor(visibleRange.start / cardsPerRow) * cardsPerRow;
     // Round up end to nearest multiple of cardsPerRow
     const adjustedEnd = Math.ceil((visibleRange.end + 1) / cardsPerRow) * cardsPerRow - 1;
+
     return {
-      start: adjustedStart,
+      start: Math.min(Math.max(0, adjustedStart), airdrops.length - 1),
       end: Math.min(adjustedEnd, airdrops.length - 1)
     };
   }, [visibleRange.start, visibleRange.end, airdrops.length, cardsPerRow]);
 
   // Get the subset of airdrops to render - memoize to prevent unnecessary re-renders
   const visibleAirdrops = useMemo(() => {
-    return airdrops.slice(adjustedVisibleRange.start, adjustedVisibleRange.end + 1);
+    // Safety check for empty airdrops array
+    if (!airdrops || airdrops.length === 0) {
+      return [];
+    }
+
+    // Ensure valid range
+    const start = Math.min(adjustedVisibleRange.start, airdrops.length - 1);
+    const end = Math.min(adjustedVisibleRange.end, airdrops.length - 1);
+
+    // Only slice if we have a valid range
+    if (start <= end && start >= 0) {
+      return airdrops.slice(start, end + 1);
+    }
+
+    return [];
   }, [airdrops, adjustedVisibleRange.start, adjustedVisibleRange.end]);
 
   // Calculate the offset for the visible items based on rows
@@ -175,29 +195,49 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
     position: 'relative',
   }), [totalHeight]);
 
+  // Check if we have any airdrops to display
+  const hasAirdrops = airdrops && airdrops.length > 0;
+
+  // Log for debugging
+  console.log('VirtualizedAirdropList rendering:', {
+    airdropsCount: airdrops?.length || 0,
+    visibleRange,
+    adjustedVisibleRange,
+    visibleAirdropsCount: visibleAirdrops.length,
+    totalRows,
+    totalHeight
+  });
+
   return (
     <div
       ref={containerRef}
       className={`scrollable-hidden overflow-y-auto custom-scrollbar ${className} ${isScrolling ? 'is-scrolling' : ''}`}
       style={containerStyle}
     >
-      {/* Spacer div to maintain scroll height */}
-      <div style={spacerStyle}>
-        {/* Visible items container */}
-        <div style={gridStyle}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-3 md:gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
-            {visibleAirdrops.map((airdrop) => (
-              <div
-                key={airdrop._id}
-                className="transform-gpu p-1 h-[12rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem] airdrop-card-item will-change-transform"
-                style={{ contain: 'layout paint size' }} // CSS containment for better performance
-              >
-                <AirdropCard airdrop={airdrop} />
-              </div>
-            ))}
+      {hasAirdrops ? (
+        // Spacer div to maintain scroll height
+        <div style={spacerStyle}>
+          {/* Visible items container */}
+          <div style={gridStyle}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-3 md:gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              {visibleAirdrops.map((airdrop) => (
+                <div
+                  key={airdrop._id}
+                  className="transform-gpu p-1 h-[12rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem] airdrop-card-item will-change-transform"
+                  style={{ contain: 'layout paint size' }} // CSS containment for better performance
+                >
+                  <AirdropCard airdrop={airdrop} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        // Fallback when no airdrops are available
+        <div className="flex items-center justify-center h-full">
+          <p className="text-gray-500">Loading airdrops...</p>
+        </div>
+      )}
     </div>
   );
 };
