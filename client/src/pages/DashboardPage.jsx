@@ -3,6 +3,8 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTracking } from '../context/TrackingContext';
 import AirdropCard from '../components/AirdropCard';
+import PageFAQ from '../components/PageFAQ';
+import { faqData } from '../data/faqData';
 import { FaSearch } from 'react-icons/fa';
 
 const DashboardPage = () => {
@@ -162,6 +164,15 @@ const DashboardPage = () => {
           ))}
         </div>
       )}
+
+      {/* FAQ Section */}
+      <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <PageFAQ
+          questions={faqData.dashboard}
+          title="Frequently Asked Questions About My Airdrops"
+          showMoreLink={true}
+        />
+      </div>
     </div>
   );
 };

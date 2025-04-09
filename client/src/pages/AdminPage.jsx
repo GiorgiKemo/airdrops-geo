@@ -3,6 +3,8 @@ import { airdropService } from '../services/api';
 import AirdropForm from '../components/AirdropForm';
 import AirdropUpdateForm from '../components/AirdropUpdateForm';
 import AirdropUpdates from '../components/AirdropUpdates';
+import PageFAQ from '../components/PageFAQ';
+import { faqData } from '../data/faqData';
 import { FaSearch, FaBell } from 'react-icons/fa';
 
 const AdminPage = () => {
@@ -411,6 +413,17 @@ const AdminPage = () => {
                   ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* FAQ Section - Only show when not editing or adding */}
+        {!isAdding && !editingAirdrop && !updatingAirdrop && (
+          <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <PageFAQ
+              questions={faqData.admin}
+              title="Admin FAQ: Managing Airdrops"
+              showMoreLink={false}
+            />
           </div>
         )}
       </div>
