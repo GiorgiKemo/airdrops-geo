@@ -21,6 +21,7 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
       setError('');
 
       // Call the onSubmit function passed from parent with skipTelegramNotification flag
+      console.log('Submitting update with skipTelegramNotification:', skipTelegramNotification);
       await onSubmit(updateContent, skipTelegramNotification);
 
       // Reset form
@@ -64,12 +65,16 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
           />
         </div>
 
-        <div className="flex items-center mb-3">
+        <div className="flex items-center mb-3 p-2 border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-800">
           <input
             type="checkbox"
             id="skipTelegramNotification"
             checked={skipTelegramNotification}
-            onChange={(e) => setSkipTelegramNotification(e.target.checked)}
+            onChange={(e) => {
+              const isChecked = e.target.checked;
+              console.log('Checkbox changed to:', isChecked);
+              setSkipTelegramNotification(isChecked);
+            }}
             className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             disabled={isSubmitting}
           />

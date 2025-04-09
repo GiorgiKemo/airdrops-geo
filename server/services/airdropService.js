@@ -154,8 +154,13 @@ class AirdropService {
       await airdrop.save();
 
       // Check if we should skip Telegram notification
-      const skipTelegramNotification = options.skipTelegramNotification === true;
-      const sendTelegramNotification = options.sendTelegramNotification !== false; // Default to true if not specified
+      // Convert to boolean explicitly to handle string values from form submissions
+      const skipTelegramNotification = options.skipTelegramNotification === true || options.skipTelegramNotification === 'true';
+
+      // If sendTelegramNotification is explicitly set, use it; otherwise, it's the opposite of skipTelegramNotification
+      const sendTelegramNotification = options.sendTelegramNotification !== undefined ?
+        (options.sendTelegramNotification === true || options.sendTelegramNotification === 'true') :
+        !skipTelegramNotification;
 
       console.log(`Airdrop update options: skipTelegramNotification=${skipTelegramNotification}, sendTelegramNotification=${sendTelegramNotification}`);
       console.log('Full options:', options);
