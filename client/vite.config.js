@@ -29,11 +29,11 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: {
           // Split React and related libraries into a separate vendor chunk
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom', 'react-helmet-async'],
           // UI components and styling libraries
-          'vendor-ui': ['react-bootstrap', 'bootstrap', '@mui/material', '@emotion/react', '@emotion/styled'],
+          'vendor-ui': ['react-icons', 'react-textarea-autosize', 'emoji-picker-react'],
           // Utility libraries
-          'vendor-utils': ['axios', 'moment', 'lodash']
+          'vendor-utils': ['axios', 'prop-types']
         }
       }
     },
