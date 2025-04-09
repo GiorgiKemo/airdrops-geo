@@ -16,7 +16,7 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
   const bufferSize = 10; // Increased buffer size for smoother scrolling
   const overscan = 5; // Additional items to render for smoother scrolling
 
-  // Calculate which items should be visible based on scroll position
+  // Calculate which rows should be visible based on scroll position
   const calculateVisibleRange = useCallback(() => {
     if (!containerRef.current) return;
 
@@ -24,19 +24,24 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
     const scrollTop = container.scrollTop;
     const viewportHeight = container.clientHeight;
 
-    // Calculate visible range with buffer and overscan
-    const visibleStartIndex = Math.floor(scrollTop / itemHeight);
-    const visibleEndIndex = Math.ceil((scrollTop + viewportHeight) / itemHeight);
+    // Calculate visible rows with buffer and overscan
+    const rowHeight = itemHeight;
+    const visibleStartRow = Math.floor(scrollTop / rowHeight);
+    const visibleEndRow = Math.ceil((scrollTop + viewportHeight) / rowHeight);
 
     // Add buffer and overscan for smoother scrolling
-    const startIndex = Math.max(0, visibleStartIndex - bufferSize - (isScrolling ? overscan : 0));
-    const endIndex = Math.min(
-      airdrops.length - 1,
-      visibleEndIndex + bufferSize + (isScrolling ? overscan : 0)
+    const startRow = Math.max(0, visibleStartRow - bufferSize - (isScrolling ? overscan : 0));
+    const endRow = Math.min(
+      Math.ceil(airdrops.length / cardsPerRow) - 1, // Total rows
+      visibleEndRow + bufferSize + (isScrolling ? overscan : 0)
     );
 
+    // Convert rows to item indices
+    const startIndex = startRow * cardsPerRow;
+    const endIndex = Math.min(airdrops.length - 1, (endRow + 1) * cardsPerRow - 1);
+
     setVisibleRange({ start: startIndex, end: endIndex });
-  }, [airdrops.length, itemHeight, bufferSize, overscan, isScrolling]);
+  }, [airdrops.length, itemHeight, bufferSize, overscan, isScrolling, cardsPerRow]);
 
   // Handle scroll events with debouncing for better performance
   const handleScroll = useCallback(() => {
@@ -119,16 +124,33 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
     };
   }, []);
 
-  // Create placeholder items for the full list height
-  const totalHeight = airdrops.length * itemHeight;
+  // Calculate rows for grid layout (3 cards per row)
+  const cardsPerRow = 3;
+
+  // Create placeholder items for the full list height based on rows
+  const totalRows = Math.ceil(airdrops.length / cardsPerRow);
+  const totalHeight = totalRows * itemHeight;
+
+  // Adjust visible range to ensure complete rows (multiples of 3)
+  const adjustedVisibleRange = useMemo(() => {
+    // Round down start to nearest multiple of cardsPerRow
+    const adjustedStart = Math.floor(visibleRange.start / cardsPerRow) * cardsPerRow;
+    // Round up end to nearest multiple of cardsPerRow
+    const adjustedEnd = Math.ceil((visibleRange.end + 1) / cardsPerRow) * cardsPerRow - 1;
+    return {
+      start: adjustedStart,
+      end: Math.min(adjustedEnd, airdrops.length - 1)
+    };
+  }, [visibleRange.start, visibleRange.end, airdrops.length, cardsPerRow]);
 
   // Get the subset of airdrops to render - memoize to prevent unnecessary re-renders
   const visibleAirdrops = useMemo(() => {
-    return airdrops.slice(visibleRange.start, visibleRange.end + 1);
-  }, [airdrops, visibleRange.start, visibleRange.end]);
+    return airdrops.slice(adjustedVisibleRange.start, adjustedVisibleRange.end + 1);
+  }, [airdrops, adjustedVisibleRange.start, adjustedVisibleRange.end]);
 
-  // Calculate the offset for the visible items
-  const offsetY = visibleRange.start * itemHeight;
+  // Calculate the offset for the visible items based on rows
+  const startRow = Math.floor(adjustedVisibleRange.start / cardsPerRow);
+  const offsetY = startRow * itemHeight;
 
   // Memoize the grid style for better performance
   const gridStyle = useMemo(() => ({
@@ -163,7 +185,7 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
       <div style={spacerStyle}>
         {/* Visible items container */}
         <div style={gridStyle}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-3 md:gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
             {visibleAirdrops.map((airdrop) => (
               <div
                 key={airdrop._id}
