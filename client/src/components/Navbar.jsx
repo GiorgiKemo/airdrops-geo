@@ -51,11 +51,11 @@ const Navbar = () => {
 
   return (
     <nav className="macos-toolbar fixed top-0 left-0 right-0 w-full z-[1000] shadow-md transition-colors duration-200">
-      <div className="container mx-auto px-4 sm:px-6 py-2">
+      <div className="container mx-auto px-4 sm:px-6 py-4">
         <div className="flex justify-between items-center">
           <Link
             to="/"
-            className="text-xl font-bold text-[var(--macos-text)] tracking-tight"
+            className="text-2xl md:text-3xl font-bold text-[var(--macos-primary)] tracking-tight"
             onClick={(e) => {
               if (pathname === '/') {
                 e.preventDefault();
@@ -91,12 +91,12 @@ const Navbar = () => {
           </button>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-6">
             <Link
               to="/"
-              className={`px-2 py-1 rounded-md transition-colors text-sm ${pathname === '/'
-                ? 'bg-[var(--macos-hover)] text-[var(--macos-primary)] font-medium'
-                : 'text-[var(--macos-text)] hover:text-[var(--macos-primary)] hover:bg-[var(--macos-hover)]'}`}
+              className={`px-4 py-2 rounded-md transition-colors text-base font-medium ${pathname === '/'
+                ? 'bg-[var(--macos-primary)] text-white'
+                : 'text-[var(--macos-text)] hover:text-white hover:bg-[var(--macos-primary-hover)]'}`}
               onClick={() => {
                 if (pathname === '/') {
                   // Scroll to top of page when clicking Home on home page
@@ -110,9 +110,9 @@ const Navbar = () => {
               <>
                 <Link
                   to="/dashboard"
-                  className={`px-2 py-1 rounded-md transition-colors text-sm ${pathname === '/dashboard'
-                    ? 'bg-[var(--macos-hover)] text-[var(--macos-primary)] font-medium'
-                    : 'text-[var(--macos-text)] hover:text-[var(--macos-primary)] hover:bg-[var(--macos-hover)]'}`}
+                  className={`px-4 py-2 rounded-md transition-colors text-base font-medium ${pathname === '/dashboard'
+                    ? 'bg-[var(--macos-primary)] text-white'
+                    : 'text-[var(--macos-text)] hover:text-white hover:bg-[var(--macos-primary-hover)]'}`}
                 >
                   My Airdrops
                 </Link>
@@ -120,9 +120,9 @@ const Navbar = () => {
                 {isAdmin() && (
                   <Link
                     to="/admin"
-                    className={`px-2 py-1 rounded-md transition-colors text-sm ${pathname === '/admin'
-                      ? 'bg-[var(--macos-hover)] text-[var(--macos-primary)] font-medium'
-                      : 'text-[var(--macos-text)] hover:text-[var(--macos-primary)] hover:bg-[var(--macos-hover)]'}`}
+                    className={`px-4 py-2 rounded-md transition-colors text-base font-medium ${pathname === '/admin'
+                      ? 'bg-[var(--macos-primary)] text-white'
+                      : 'text-[var(--macos-text)] hover:text-white hover:bg-[var(--macos-primary-hover)]'}`}
                   >
                     Admin
                   </Link>
@@ -200,16 +200,16 @@ const Navbar = () => {
                   )}
                 </div>
               ) : (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Link
                     to="/login"
-                    className="macos-button text-sm secondary"
+                    className="macos-button text-base px-5 py-2 secondary"
                   >
                     Login
                   </Link>
                   <Link
                     to="/register"
-                    className="macos-button text-sm bg-[var(--macos-success)]"
+                    className="macos-button text-base px-5 py-2 bg-[var(--macos-success)]"
                   >
                     Register
                   </Link>
