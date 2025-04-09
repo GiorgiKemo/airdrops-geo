@@ -153,25 +153,30 @@ class AirdropService {
       // Save the airdrop
       await airdrop.save();
 
-      // Check if we should skip Telegram notification
+      // CRITICAL FIX: Check if we should skip Telegram notification
       // Handle all possible truthy values for skipTelegramNotification
-      console.log('Raw options received in airdropService.addAirdropUpdate:', options);
-      console.log('skipTelegramNotification raw value:', options.skipTelegramNotification);
-      console.log('skipTelegramNotification type:', typeof options.skipTelegramNotification);
+      console.log('AIRDROP SERVICE - Raw options received:', options);
+      console.log('AIRDROP SERVICE - skipTelegramNotification raw value:', options.skipTelegramNotification);
+      console.log('AIRDROP SERVICE - skipTelegramNotification type:', typeof options.skipTelegramNotification);
 
+      // Check for all possible truthy values
       const skipTelegramNotification = (
         options.skipTelegramNotification === true ||
         options.skipTelegramNotification === 'true' ||
         options.skipTelegramNotification === 1 ||
-        options.skipTelegramNotification === '1'
+        options.skipTelegramNotification === '1' ||
+        options.skipTelegramNotification === 'on' || // HTML checkbox can send 'on'
+        options.skipTelegramNotification === 'yes' ||
+        String(options.skipTelegramNotification).toLowerCase() === 'true'
       );
 
       // Force sendTelegramNotification to be the opposite of skipTelegramNotification
       // This ensures that if skipTelegramNotification is true, we never send a notification
       const sendTelegramNotification = !skipTelegramNotification;
 
-      console.log(`FINAL DECISION: skipTelegramNotification=${skipTelegramNotification}, sendTelegramNotification=${sendTelegramNotification}`);
-      console.log('After processing - skipTelegramNotification:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
+      console.log('AIRDROP SERVICE - FINAL DECISION:');
+      console.log('AIRDROP SERVICE - skipTelegramNotification:', skipTelegramNotification);
+      console.log('AIRDROP SERVICE - sendTelegramNotification:', sendTelegramNotification);
 
       // Always call the telegramService, but pass the skipTelegramNotification flag
       // This way, the telegramService can decide whether to send the notification

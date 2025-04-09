@@ -228,19 +228,19 @@ export const airdropService = {
       };
 
       // Set sendTelegramNotification based on skipTelegramNotification flag
-      console.log('Adding airdrop update with skipTelegramNotification:', skipTelegramNotification);
+      console.log('API Service - Adding airdrop update with skipTelegramNotification:', skipTelegramNotification);
+      console.log('API Service - skipTelegramNotification type:', typeof skipTelegramNotification);
 
-      // Force skipTelegramNotification to be a boolean true/false
-      // Using strict comparison to ensure it's a true boolean
-      const skipTelegram = skipTelegramNotification === true ? true : false;
+      // IMPORTANT: Use double negation to ensure it's a true boolean
+      // This is more reliable than strict comparison for boolean conversion
+      const skipTelegram = !!skipTelegramNotification;
 
       // Always set sendTelegramNotification to the opposite of skipTelegramNotification
       const sendTelegram = !skipTelegram;
 
-      console.log('Final values being sent to server:');
-      console.log('- Original skipTelegramNotification:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
-      console.log('- Processed skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
-      console.log('- sendTelegramNotification:', sendTelegram, 'type:', typeof sendTelegram);
+      console.log('API Service - Final values being sent to server:');
+      console.log('API Service - skipTelegramNotification (processed):', skipTelegram, 'type:', typeof skipTelegram);
+      console.log('API Service - sendTelegramNotification:', sendTelegram, 'type:', typeof sendTelegram);
 
       const response = await api.post(`/airdrops/${id}/updates`, {
         content: updateContent,

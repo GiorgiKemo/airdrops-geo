@@ -133,12 +133,20 @@ const AdminPage = () => {
     try {
       if (!updatingAirdrop) return;
 
-      // Force to boolean with strict comparison
-      const skipTelegram = skipTelegramNotification === true ? true : false;
-      console.log('AdminPage - Original skipTelegramNotification:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
-      console.log('AdminPage - Processed skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
+      console.log('AdminPage - Received skipTelegramNotification:', skipTelegramNotification);
+      console.log('AdminPage - skipTelegramNotification type:', typeof skipTelegramNotification);
 
+      // IMPORTANT: Use double negation to ensure it's a true boolean
+      // This is more reliable than strict comparison for boolean conversion
+      const skipTelegram = !!skipTelegramNotification;
+
+      console.log('AdminPage - Processed skipTelegramNotification:', skipTelegram);
+      console.log('AdminPage - Processed skipTelegramNotification type:', typeof skipTelegram);
+
+      // Pass the boolean value to the API service
       await airdropService.addAirdropUpdate(updatingAirdrop._id, updateContent, skipTelegram);
+
+      // Show a success message with indication if notification was skipped
       setSuccessMessage(`Update added successfully! ${skipTelegram ? '(Telegram notification skipped)' : ''}`);
       setUpdatingAirdrop(null);
       fetchAirdrops();
