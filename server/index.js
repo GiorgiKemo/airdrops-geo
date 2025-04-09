@@ -148,8 +148,14 @@ mongoose.connect(process.env.MONGODB_URI)
 // Import routes
 const userRoutes = require('./routes/userRoutes');
 const trackingRoutes = require('./routes/trackingRoutes');
+const { setCsrfToken } = require('./middleware/csrfMiddleware');
 
 // API Routes
+
+// CSRF token endpoint - must be defined before mounting other routes
+app.get('/api/csrf-token', setCsrfToken, (req, res) => {
+  res.json({ csrfToken: res.locals.csrfToken });
+});
 
 // Mount user routes
 app.use('/api/users', userRoutes);
