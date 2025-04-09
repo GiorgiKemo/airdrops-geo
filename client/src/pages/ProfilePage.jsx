@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useDarkMode } from '../context/DarkModeContext';
 import { FaTwitter, FaDiscord, FaTelegram, FaGithub, FaUser, FaLock, FaCog, FaCamera } from 'react-icons/fa';
-import FileUpload from '../components/FileUpload';
 import SEO from '../components/SEO';
 
 const ProfilePage = () => {
   const { user, loading, error, updateProfile, updatePassword } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
+  const { darkMode, toggleDarkMode } = useDarkMode();
   const [activeTab, setActiveTab] = useState('profile');
+  const fileInputRef = useRef(null);
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -55,11 +57,11 @@ const ProfilePage = () => {
         },
         preferences: {
           emailNotifications: user.preferences?.emailNotifications !== false, // Default to true
-          darkMode: user.preferences?.darkMode || false,
+          darkMode: darkMode, // Sync with current dark mode state
         },
       });
     }
-  }, [user]);
+  }, [user, darkMode]);
 
   // Handle profile form changes
   const handleProfileChange = (e) => {
@@ -91,6 +93,42 @@ const ProfilePage = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  // Handle profile picture upload
+  const handleProfilePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size must be less than 2MB');
+      return;
+    }
+
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProfileForm(prev => ({
+        ...prev,
+        avatar: reader.result
+      }));
+    };
+    reader.onerror = () => {
+      toast.error('Error reading file');
+    };
+    reader.readAsDataURL(file);
   };
 
   // Handle profile form submission
@@ -219,7 +257,20 @@ const ProfilePage = () => {
                       Profile Picture
                     </label>
                     <div className="flex flex-col sm:flex-row items-center gap-4">
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 relative group">
+                      {/* Hidden file input */}
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept="image/*"
+                        className="hidden"
+                      />
+
+                      {/* Clickable avatar */}
+                      <div
+                        className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 relative group cursor-pointer"
+                        onClick={handleProfilePictureClick}
+                      >
                         {profileForm.avatar ? (
                           <>
                             <img
@@ -231,7 +282,7 @@ const ProfilePage = () => {
                                 e.target.src = 'https://via.placeholder.com/80?text=Avatar';
                               }}
                             />
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                               <FaCamera className="text-white text-xl" />
                             </div>
                           </>
@@ -241,21 +292,14 @@ const ProfilePage = () => {
                           </div>
                         )}
                       </div>
+
                       <div className="flex-1 w-full">
-                        <div className="mb-2">
-                          <FileUpload
-                            onFileSelect={(base64) => {
-                              setProfileForm(prev => ({
-                                ...prev,
-                                avatar: base64
-                              }));
-                            }}
-                            maxSizeMB={2}
-                          />
-                        </div>
+                        <p className="text-sm text-[var(--macos-text-secondary)] mb-2">
+                          Click on the profile picture to upload a new image, or enter a URL below.
+                        </p>
                         <div className="flex items-center">
                           <span className="text-xs text-[var(--macos-text-secondary)]">
-                            Or enter image URL:
+                            Image URL:
                           </span>
                           <input
                             type="text"
@@ -263,7 +307,7 @@ const ProfilePage = () => {
                             value={profileForm.avatar}
                             onChange={handleProfileChange}
                             placeholder="https://..."
-                            className="macos-input ml-2 text-xs flex-1"
+                            className="macos-input ml-2 text-sm flex-1"
                           />
                         </div>
                       </div>
@@ -508,7 +552,12 @@ const ProfilePage = () => {
                       type="checkbox"
                       name="preferences.darkMode"
                       checked={profileForm.preferences.darkMode}
-                      onChange={handleProfileChange}
+                      onChange={(e) => {
+                        // Update form state
+                        handleProfileChange(e);
+                        // Also toggle dark mode immediately
+                        toggleDarkMode();
+                      }}
                       className="form-checkbox h-5 w-5 text-blue-600 rounded"
                     />
                     <span className="ml-2 text-sm text-[var(--macos-text)]">

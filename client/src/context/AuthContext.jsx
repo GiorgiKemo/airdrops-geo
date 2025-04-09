@@ -90,11 +90,18 @@ export const AuthProvider = ({ children }) => {
       // Immediately verify token to get full profile data
       try {
         console.log('Verifying token to get full profile data after registration');
+
+        // Set auth header for the verification request
+        api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+
         const verifyResponse = await api.get('/users/verify-token');
         console.log('Token verification response after registration:', verifyResponse.data);
 
         // Update user with complete profile data
         setUser(verifyResponse.data);
+
+        // Save the complete user data to localStorage
+        localStorage.setItem('currentUser', JSON.stringify(verifyResponse.data));
       } catch (verifyError) {
         console.error('Error verifying token after registration:', verifyError);
         // Continue with basic user data if verification fails
@@ -135,11 +142,18 @@ export const AuthProvider = ({ children }) => {
       // Immediately verify token to get full profile data
       try {
         console.log('Verifying token to get full profile data');
+
+        // Set auth header for the verification request
+        api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+
         const verifyResponse = await api.get('/users/verify-token');
         console.log('Token verification response:', verifyResponse.data);
 
         // Update user with complete profile data
         setUser(verifyResponse.data);
+
+        // Save the complete user data to localStorage
+        localStorage.setItem('currentUser', JSON.stringify(verifyResponse.data));
       } catch (verifyError) {
         console.error('Error verifying token after login:', verifyError);
         // Continue with basic user data if verification fails
