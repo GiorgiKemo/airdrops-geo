@@ -59,11 +59,11 @@ const AirdropCard = ({ airdrop }) => {
   } : {};
 
   return (
-    <div className="group h-full w-full" role="article" aria-labelledby={`airdrop-title-${airdrop._id}`}>
+    <div className="group h-full w-full will-change-transform" role="article" aria-labelledby={`airdrop-title-${airdrop._id}`}>
       <Link
         to={`/airdrops/${airdrop._id}`}
-        className="macos-card relative block overflow-hidden cursor-pointer h-full w-full z-10 flex flex-col backdrop-blur-md"
-        style={{...cardStyle, height: '100%', minHeight: '100%'}}
+        className="macos-card relative block overflow-hidden cursor-pointer h-full w-full z-10 flex flex-col backdrop-blur-md transform-gpu"
+        style={{...cardStyle, height: '100%', minHeight: '100%', contain: 'content'}}
         aria-describedby={`airdrop-desc-${airdrop._id}`}
       >
         {airdrop.status === 'claim' && (
