@@ -150,33 +150,46 @@ class UserService {
    * @returns {Promise<boolean>} - Success status
    */
   async requestPasswordReset(email) {
-    // Find user by email
-    const user = await User.findOne({ email });
+    try {
+      // Find user by email
+      const user = await User.findOne({ email });
 
-    if (!user) {
-      throw new Error('User not found');
+      if (!user) {
+        logger.info(`No user found with email: ${email.substring(0, 3)}***`);
+        return false;
+      }
+
+      logger.info(`User found for password reset: ${user.username}`);
+
+      // Delete any existing reset tokens for this user
+      await PasswordResetToken.deleteMany({ userId: user._id });
+      logger.info(`Deleted existing reset tokens for user: ${user.username}`);
+
+      // Generate a random token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      logger.info(`Generated reset token for user: ${user.username}`);
+
+      // Save the token
+      await PasswordResetToken.create({
+        userId: user._id,
+        token: resetToken,
+      });
+      logger.info(`Saved reset token for user: ${user.username}`);
+
+      // Send reset email
+      const emailSent = await emailService.sendPasswordResetEmail(
+        user.email,
+        user.username,
+        resetToken
+      );
+
+      logger.info(`Email sending result for ${user.username}: ${emailSent ? 'Success' : 'Failed'}`);
+      return emailSent;
+    } catch (error) {
+      logger.error(`Error in requestPasswordReset: ${error.message}`);
+      logger.error(`Error stack: ${error.stack}`);
+      return false;
     }
-
-    // Delete any existing reset tokens for this user
-    await PasswordResetToken.deleteMany({ userId: user._id });
-
-    // Generate a random token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-
-    // Save the token
-    await PasswordResetToken.create({
-      userId: user._id,
-      token: resetToken,
-    });
-
-    // Send reset email
-    const emailSent = await emailService.sendPasswordResetEmail(
-      user.email,
-      user.username,
-      resetToken
-    );
-
-    return emailSent;
   }
 
   /**

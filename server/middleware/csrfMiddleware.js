@@ -41,9 +41,12 @@ const csrfProtection = (req, res, next) => {
     '/api/users/login'
   ];
 
-  if (publicEndpoints.some(endpoint => req.path.includes(endpoint))) {
-    logger.info(`Skipping CSRF check for public endpoint: ${req.method} ${req.path}`);
-    return next();
+  // Check if the current path matches any of the public endpoints
+  for (const endpoint of publicEndpoints) {
+    if (req.path.includes(endpoint)) {
+      logger.info(`Skipping CSRF check for public endpoint: ${req.method} ${req.path}`);
+      return next();
+    }
   }
 
   // Skip CSRF check for all routes during development

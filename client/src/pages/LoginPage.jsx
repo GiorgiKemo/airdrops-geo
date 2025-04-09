@@ -107,10 +107,6 @@ const LoginPage = () => {
                   <a
                     href="/forgot-password"
                     className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = '/forgot-password';
-                    }}
                   >
                     Forgot password?
                   </a>
