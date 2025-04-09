@@ -26,11 +26,13 @@ const Navbar = () => {
     };
   }, []);
 
-  // Debug user role
+  // Debug user role and profile data
   console.log('Navbar - Current user:', user);
   console.log('Navbar - User role:', user?.role);
   console.log('Navbar - User role type:', user?.role ? typeof user.role : 'undefined');
   console.log('Navbar - Is admin?', user?.role === 'admin');
+  console.log('Navbar - User avatar:', user?.avatar);
+  console.log('Navbar - User displayName:', user?.displayName);
 
   // Function to check if user is admin
   const isAdmin = () => {
