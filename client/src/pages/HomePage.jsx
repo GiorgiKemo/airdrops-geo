@@ -254,12 +254,12 @@ const HomePage = () => {
       </div>
 
       {/* Filter buttons and search */}
-      <div className="mb-4">
-        <div className="flex flex-wrap justify-center sm:justify-between items-center gap-2">
-          <div className="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-3">
+          <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 w-full sm:w-auto text-xs sm:text-sm overflow-x-auto pb-2 sm:pb-0 scrollable-hidden">
           <button
             onClick={() => updateFilter('all')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'all'
                 ? 'bg-blue-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -269,7 +269,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('active')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'active'
                 ? 'bg-green-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -279,7 +279,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('popular')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'popular'
                 ? 'bg-purple-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -289,7 +289,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('recent')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'recent'
                 ? 'bg-teal-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -299,7 +299,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('upcoming')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'upcoming'
                 ? 'bg-blue-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -309,7 +309,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('ended')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'ended'
                 ? 'bg-gray-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -319,7 +319,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('claim')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'claim'
                 ? 'bg-red-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -329,10 +329,10 @@ const HomePage = () => {
           </button>
           </div>
 
-          <div className="flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+          <div className="flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto">
             {/* Search input */}
-            <div className="relative">
-              <div className="flex items-center macos-input py-1 px-2">
+            <div className="relative flex-grow max-w-xs">
+              <div className="flex items-center macos-input py-1.5 px-3">
                 <FaSearch className="text-[var(--macos-text-secondary)] mr-2" />
                 <input
                   type="text"

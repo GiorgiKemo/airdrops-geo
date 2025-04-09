@@ -16,8 +16,17 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
   const bufferSize = 10; // Increased buffer size for smoother scrolling
   const overscan = 5; // Additional items to render for smoother scrolling
 
-  // Fixed number of cards per row
-  const cardsPerRow = 3;
+  // Responsive number of cards per row based on screen size
+  const [cardsPerRow, setCardsPerRow] = useState(getCardsPerRow());
+
+  // Function to determine cards per row based on screen width
+  function getCardsPerRow() {
+    if (typeof window === 'undefined') return 3; // Default for SSR
+    const width = window.innerWidth;
+    if (width < 640) return 1;      // Mobile: 1 card per row
+    if (width < 1024) return 2;     // Tablet: 2 cards per row
+    return 3;                       // Desktop: 3 cards per row
+  }
 
   // Calculate which rows should be visible based on scroll position
   const calculateVisibleRange = useCallback(() => {
@@ -118,14 +127,24 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
     calculateVisibleRange();
   }, [airdrops, calculateVisibleRange]);
 
-  // Clean up on unmount
+  // Handle window resize to update cards per row
   useEffect(() => {
+    function handleResize() {
+      const newCardsPerRow = getCardsPerRow();
+      if (newCardsPerRow !== cardsPerRow) {
+        setCardsPerRow(newCardsPerRow);
+      }
+    }
+
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
       if (scrollingTimeoutRef.current) {
         clearTimeout(scrollingTimeoutRef.current);
       }
     };
-  }, []);
+  }, [cardsPerRow]);
 
   // Calculate total rows based on cards per row and create placeholder height
   const totalRows = airdrops && airdrops.length > 0 ? Math.ceil(airdrops.length / cardsPerRow) : 0;
@@ -219,11 +238,14 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
         <div style={spacerStyle}>
           {/* Visible items container */}
           <div style={gridStyle}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-2 sm:gap-3 md:gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            <div className="grid gap-2 sm:gap-3 md:gap-4" style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${cardsPerRow}, 1fr)`
+            }}>
               {visibleAirdrops.map((airdrop) => (
                 <div
                   key={airdrop._id}
-                  className="transform-gpu p-1 h-[12rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem] airdrop-card-item will-change-transform"
+                  className="transform-gpu p-1 h-[14rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem] airdrop-card-item will-change-transform"
                   style={{ contain: 'layout paint size' }} // CSS containment for better performance
                 >
                   <AirdropCard airdrop={airdrop} />
