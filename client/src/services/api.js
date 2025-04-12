@@ -14,18 +14,50 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: false, // Set to true if you need cookies to be sent
+  withCredentials: true, // Set to true to allow cookies to be sent (needed for CSRF)
   timeout: 10000, // 10 seconds timeout
 });
 
-// Add request interceptor for authentication and debugging
-api.interceptors.request.use(config => {
+// Store CSRF token
+let csrfToken = null;
+
+// Function to fetch CSRF token
+const fetchCsrfToken = async () => {
+  if (csrfToken) return csrfToken;
+
+  try {
+    const response = await axios.get(`${API_URL}/csrf-token`, { withCredentials: true });
+    csrfToken = response.data.csrfToken;
+    console.log('CSRF token fetched:', csrfToken);
+    return csrfToken;
+  } catch (error) {
+    console.error('Error fetching CSRF token:', error);
+    return null;
+  }
+};
+
+// Add request interceptor for authentication, CSRF, and debugging
+api.interceptors.request.use(async config => {
   // Get token from localStorage
   const user = JSON.parse(localStorage.getItem('currentUser'));
 
   // If token exists, add to headers
   if (user && user.token) {
     config.headers.Authorization = `Bearer ${user.token}`;
+  }
+
+  // Skip CSRF for GET requests and the CSRF token endpoint itself
+  if (config.method !== 'get' && !config.url.includes('/csrf-token')) {
+    // Add CSRF token to headers if available
+    if (csrfToken) {
+      config.headers['X-CSRF-Token'] = csrfToken;
+    } else {
+      // Try to fetch a new token
+      const token = await fetchCsrfToken();
+      if (token) {
+        config.headers['X-CSRF-Token'] = token;
+      }
+    }
   }
 
   console.log('Making request to:', config.url);
@@ -36,12 +68,41 @@ api.interceptors.request.use(config => {
   return Promise.reject(error);
 });
 
-// Add response interceptor for debugging
+// Add response interceptor for debugging and CSRF token handling
 api.interceptors.response.use(response => {
   console.log('Response received:', response);
+
+  // Update CSRF token if it's in the response headers
+  const newCsrfToken = response.headers['x-csrf-token'];
+  if (newCsrfToken) {
+    csrfToken = newCsrfToken;
+    console.log('CSRF token updated from response headers');
+  }
+
   return response;
-}, error => {
+}, async error => {
   console.error('Response error:', error);
+
+  // If we get a 403 Forbidden error and it mentions CSRF, try to refresh the token
+  if (error.response && error.response.status === 403 &&
+      error.response.data && error.response.data.message &&
+      error.response.data.message.includes('CSRF')) {
+    console.log('CSRF validation failed, refreshing token...');
+
+    // Clear the current token
+    csrfToken = null;
+
+    // Try to get a new token
+    await fetchCsrfToken();
+
+    // If we have a new token and the original request config is available, retry the request
+    if (csrfToken && error.config) {
+      console.log('Retrying request with new CSRF token');
+      error.config.headers['X-CSRF-Token'] = csrfToken;
+      return axios(error.config);
+    }
+  }
+
   return Promise.reject(error);
 });
 
@@ -148,5 +209,8 @@ export const airdropService = {
     }
   },
 };
+
+// Initialize CSRF token when the module is imported
+fetchCsrfToken();
 
 export default api;
