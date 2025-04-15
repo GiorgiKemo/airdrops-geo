@@ -22,6 +22,31 @@ const userSchema = mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    // Profile fields
+    displayName: {
+      type: String,
+      trim: true,
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+    avatar: {
+      type: String, // URL to avatar image
+    },
+    // Social accounts
+    socialAccounts: {
+      twitter: { type: String, trim: true },
+      discord: { type: String, trim: true },
+      telegram: { type: String, trim: true },
+      github: { type: String, trim: true },
+    },
+    // User preferences
+    preferences: {
+      emailNotifications: { type: Boolean, default: true },
+      darkMode: { type: Boolean, default: false },
+    },
   },
   {
     timestamps: true,
@@ -46,6 +71,14 @@ userSchema.pre('save', async function (next) {
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
+
+// Add indexes for frequently queried fields
+// Username and email already have implicit indexes due to 'unique: true'
+// Add index for role to optimize queries that filter by role
+userSchema.index({ role: 1 });
+
+// Add compound index for username and role (for admin user searches)
+userSchema.index({ username: 1, role: 1 });
 
 const User = mongoose.model('User', userSchema);
 

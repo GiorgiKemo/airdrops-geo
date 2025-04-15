@@ -8,10 +8,15 @@ const compression = require('compression');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
+const swaggerUi = require('swagger-ui-express');
 
 // Import configuration
 const config = require('./config');
 const logger = require('./utils/logger');
+const swaggerSpec = require('./config/swagger');
+
+// Import services
+const cacheService = require('./services/cacheService');
 
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
@@ -22,6 +27,7 @@ const { csrfProtection, setCsrfToken } = require('./middleware/csrfMiddleware');
 const airdropRoutes = require('./routes/airdropRoutes');
 const userRoutes = require('./routes/userRoutes');
 const trackingRoutes = require('./routes/trackingRoutes');
+const healthRoutes = require('./routes/healthRoutes');
 
 // Import database connections
 const connectDB = require('./config/db');
@@ -32,6 +38,9 @@ const { User, Airdrop } = require('./models');
 
 // Initialize Express app
 const app = express();
+
+// Trust proxy - needed for rate limiting behind a proxy (like Render)
+app.set('trust proxy', 1);
 
 // Set up middleware
 app.use(express.json());
@@ -99,6 +108,18 @@ app.use('/api', apiLimiter); // Apply rate limiting to all API routes
 app.get('/api/csrf-token', setCsrfToken, (req, res) => {
   res.json({ csrfToken: res.locals.csrfToken });
 });
+
+// Health check endpoint - exempt from CSRF protection
+app.use('/api/health', healthRoutes);
+
+// API Documentation - exempt from CSRF protection
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  swaggerOptions: {
+    persistAuthorization: true,
+  },
+}));
 
 // Set CSRF token for all routes
 app.use(setCsrfToken);
@@ -238,6 +259,15 @@ const startServer = async () => {
         
         logger.info('Index fix completed successfully');
       }
+    }
+
+    // Log Redis configuration
+    logger.info(`Redis caching: ${config.redis.enabled ? 'enabled' : 'disabled'}`);
+    if (config.redis.enabled) {
+      logger.info(`Redis URL: ${config.redis.url.replace(/:[^:]*@/, ':****@')}`);
+      logger.info(`Redis default TTL: ${config.redis.defaultTTL} seconds`);
+    } else {
+      logger.info('Using in-memory cache fallback');
     }
 
     // Create initial admin user

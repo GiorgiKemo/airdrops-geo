@@ -1,6 +1,8 @@
 const airdropService = require('../services/airdropService');
 const telegramService = require('../services/telegramService');
+const cacheService = require('../services/cacheService');
 const logger = require('../utils/logger');
+const config = require('../config');
 
 /**
  * @desc    Get all airdrops with filtering and pagination
@@ -36,13 +38,30 @@ const getAirdrops = async (req, res) => {
       ];
     }
 
-    // Get airdrops with filters and pagination
-    const airdrops = await airdropService.getAllAirdrops(filters, {
+    // Create a cache key based on the request parameters
+    const cacheKey = `airdrops:${JSON.stringify({
+      filters,
       page: parseInt(page),
       limit: parseInt(limit),
       sortBy,
       sortOrder: parseInt(sortOrder)
-    });
+    })}`;
+
+    // Get data from cache or database
+    const airdrops = await cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        logger.debug(`Cache miss for ${cacheKey}, fetching from database`);
+        return airdropService.getAllAirdrops(filters, {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          sortBy,
+          sortOrder: parseInt(sortOrder)
+        });
+      },
+      // Cache for 5 minutes for most queries, but longer for common queries like all active airdrops
+      status === 'active' && !search ? 60 * 15 : 60 * 5
+    );
 
     res.json(airdrops);
   } catch (error) {
@@ -58,7 +77,20 @@ const getAirdrops = async (req, res) => {
  */
 const getAirdropById = async (req, res) => {
   try {
-    const airdrop = await airdropService.getAirdropById(req.params.id);
+    const airdropId = req.params.id;
+    const cacheKey = `airdrop:${airdropId}`;
+
+    // Get airdrop from cache or database
+    const airdrop = await cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        logger.debug(`Cache miss for ${cacheKey}, fetching from database`);
+        return airdropService.getAirdropById(airdropId);
+      },
+      // Cache individual airdrops for 30 minutes
+      60 * 30
+    );
+
     res.json(airdrop);
   } catch (error) {
     logger.error(`Error getting airdrop by ID: ${error.message}`);
@@ -108,6 +140,9 @@ const createAirdrop = async (req, res) => {
       logger.info(`Skipping Telegram notification for new airdrop: ${airdrop.title} (skipTelegramNotification=true)`);
     }
 
+    // Invalidate airdrops list cache after creating a new airdrop
+    await cacheService.invalidate('airdrops:*');
+
     res.status(201).json(airdrop);
   } catch (error) {
     logger.error(`Error creating airdrop: ${error.message}`);
@@ -130,6 +165,11 @@ const updateAirdrop = async (req, res) => {
     // Default to false for all other updates (including status changes)
     const sendTelegramNotification = req.body.sendTelegramNotification === true;
     const skipTelegramNotification = req.body.skipTelegramNotification === true || existingAirdrop.skipTelegramNotification === true;
+
+    logger.info(`Updating airdrop ${req.params.id} with sendTelegramNotification=${sendTelegramNotification}, skipTelegramNotification=${skipTelegramNotification}`);
+    logger.info(`Request body: ${JSON.stringify(req.body)}`);
+    logger.info(`Existing airdrop skipTelegramNotification: ${existingAirdrop.skipTelegramNotification}`);
+
 
     // Remove these flags from the update data
     const updateData = { ...req.body };
@@ -180,6 +220,12 @@ const updateAirdrop = async (req, res) => {
       }
     }
 
+    // Invalidate both the specific airdrop cache and the airdrops list cache
+    await Promise.all([
+      cacheService.del(`airdrop:${req.params.id}`),
+      cacheService.invalidate('airdrops:*')
+    ]);
+
     res.json(airdrop);
   } catch (error) {
     logger.error(`Error updating airdrop: ${error.message}`);
@@ -199,7 +245,15 @@ const updateAirdrop = async (req, res) => {
  */
 const deleteAirdrop = async (req, res) => {
   try {
-    await airdropService.deleteAirdrop(req.params.id);
+    const airdropId = req.params.id;
+    await airdropService.deleteAirdrop(airdropId);
+
+    // Invalidate both the specific airdrop cache and the airdrops list cache
+    await Promise.all([
+      cacheService.del(`airdrop:${airdropId}`),
+      cacheService.invalidate('airdrops:*')
+    ]);
+
     res.json({ message: 'Airdrop removed successfully' });
   } catch (error) {
     logger.error(`Error deleting airdrop: ${error.message}`);
@@ -222,10 +276,22 @@ const getAirdropsByStatus = async (req, res) => {
     const { status } = req.params;
     const { page = 1, limit = 50 } = req.query;
 
-    const airdrops = await airdropService.getAirdropsByStatus(status, {
-      page: parseInt(page),
-      limit: parseInt(limit)
-    });
+    // Create a cache key based on the request parameters
+    const cacheKey = `airdrops:status:${status}:${page}:${limit}`;
+
+    // Get data from cache or database
+    const airdrops = await cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        logger.debug(`Cache miss for ${cacheKey}, fetching from database`);
+        return airdropService.getAirdropsByStatus(status, {
+          page: parseInt(page),
+          limit: parseInt(limit)
+        });
+      },
+      // Cache for 10 minutes
+      60 * 10
+    );
 
     res.json(airdrops);
   } catch (error) {

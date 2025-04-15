@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { airdropService } from '../services/api';
 import AirdropCard from '../components/AirdropCard';
+import AirdropsGridSkeleton from '../components/skeletons/AirdropsGridSkeleton';
 
 const AllAirdropsPage = () => {
   const navigate = useNavigate();
@@ -167,8 +168,8 @@ const AllAirdropsPage = () => {
 
       {/* Airdrops grid */}
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
+        <div className="py-4">
+          <AirdropsGridSkeleton count={12} />
         </div>
       ) : error ? (
         <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">

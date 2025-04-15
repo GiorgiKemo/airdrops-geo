@@ -21,6 +21,31 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    emptyOutDir: true
+    emptyOutDir: true,
+    // Increase the warning limit to avoid unnecessary warnings
+    chunkSizeWarningLimit: 1000,
+    // Optimize chunk splitting
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split React and related libraries into a separate vendor chunk
+          'vendor-react': ['react', 'react-dom', 'react-router-dom', 'react-helmet-async'],
+          // UI components and styling libraries
+          'vendor-ui': ['react-icons', 'react-textarea-autosize', 'emoji-picker-react'],
+          // Utility libraries
+          'vendor-utils': ['axios', 'prop-types']
+        }
+      }
+    },
+    // Enable source map for better debugging in production
+    sourcemap: true,
+    // Use Terser for minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
+    }
   }
 }))

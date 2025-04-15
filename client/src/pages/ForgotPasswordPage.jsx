@@ -27,7 +27,7 @@ const ForgotPasswordPage = () => {
       console.log('Sending password reset request for email:', email);
 
       // Get the API URL from environment variables
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
       const fullUrl = `${apiUrl}/api/users/forgot-password`;
       console.log('Full request URL:', fullUrl);
       console.log('Request payload:', { email });

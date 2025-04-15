@@ -1,25 +1,38 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
+import { lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
-import HomePage from './pages/HomePage';
-import AirdropDetailPage from './pages/AirdropDetailPage';
-import AdminPage from './pages/AdminPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordStandalone from './pages/ForgotPasswordStandalone';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import DashboardPage from './pages/DashboardPage';
-import AllAirdropsPage from './pages/AllAirdropsPage';
-import TermsPage from './pages/TermsPage';
-import PrivacyPage from './pages/PrivacyPage';
-import CookiePage from './pages/CookiePage';
-import TestPage from './pages/TestPage';
+
+// Core components loaded immediately
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+);
+
+// Lazy-loaded components
+const HomePage = lazy(() => import('./pages/HomePage'));
+const AirdropDetailPage = lazy(() => import('./pages/AirdropDetailPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const ForgotPasswordStandalone = lazy(() => import('./pages/ForgotPasswordStandalone'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const AllAirdropsPage = lazy(() => import('./pages/AllAirdropsPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const CookiePage = lazy(() => import('./pages/CookiePage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const TestPage = lazy(() => import('./pages/TestPage'));
 import { DarkModeProvider } from './context/DarkModeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TrackingProvider } from './context/TrackingContext';
 import { DisplayProvider } from './context/DisplayContext';
+import { ToastProvider } from './context/ToastContext';
 import './index.css';
 
 // Protected route component for any authenticated user
@@ -72,6 +85,7 @@ function App() {
         <AuthProvider>
           <TrackingProvider>
             <DisplayProvider>
+              <ToastProvider>
             <BrowserRouter>
             <ScrollToTop />
             <div className="min-h-screen transition-colors duration-200 flex flex-col">
@@ -82,43 +96,52 @@ function App() {
                 Skip to main content
               </a>
               <Navbar />
-              <main id="main-content" className="flex-1 overflow-hidden">
+              <main id="main-content" className="flex-1 overflow-hidden pt-24">
 
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/all" element={<AllAirdropsPage />} />
-                  <Route path="/airdrops/:id" element={<AirdropDetailPage />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordStandalone />} />
-                  <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/terms" element={<TermsPage />} />
-                  <Route path="/privacy" element={<PrivacyPage />} />
-                  <Route path="/cookies" element={<CookiePage />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminPage />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/test"
-                    element={
-                      <AdminRoute>
-                        <TestPage />
-                      </AdminRoute>
-                    }
-                  />
-                  {/* Catch-all route to handle 404s */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/all" element={<AllAirdropsPage />} />
+                    <Route path="/airdrops/:id" element={<AirdropDetailPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordStandalone />} />
+                    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/profile" element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/privacy" element={<PrivacyPage />} />
+                    <Route path="/cookies" element={<CookiePage />} />
+                    <Route path="/faq" element={<FAQPage />} />
+                    <Route
+                      path="/admin"
+                      element={
+                        <AdminRoute>
+                          <AdminPage />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/test"
+                      element={
+                        <AdminRoute>
+                          <TestPage />
+                        </AdminRoute>
+                      }
+                    />
+                    {/* Catch-all route to handle 404s */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Suspense>
               </main>
               <Footer />
             </div>
           </BrowserRouter>
+              </ToastProvider>
             </DisplayProvider>
           </TrackingProvider>
         </AuthProvider>

@@ -153,36 +153,68 @@ class AirdropService {
       // Save the airdrop
       await airdrop.save();
 
-      // Check if we should skip Telegram notification
-      const skipTelegramNotification = options.skipTelegramNotification === true;
-      const sendTelegramNotification = options.sendTelegramNotification !== false; // Default to true if not specified
+      // CRITICAL FIX: Check if we should skip Telegram notification
+      // Handle all possible truthy values for skipTelegramNotification
+      console.log('AIRDROP SERVICE - Raw options received:', options);
+      console.log('AIRDROP SERVICE - skipTelegramNotification raw value:', options.skipTelegramNotification);
+      console.log('AIRDROP SERVICE - skipTelegramNotification type:', typeof options.skipTelegramNotification);
 
-      // Send Telegram notification for the update if not skipped
-      if (!skipTelegramNotification && sendTelegramNotification) {
-        try {
-          const telegramService = require('./telegramService');
-          const telegramResult = await telegramService.sendAirdropUpdateToTelegram(
-            airdrop,
-            { updateContent: content, isExplicitUpdate: true }
-          );
+      // Check for all possible truthy values
+      const skipTelegramNotification = (
+        options.skipTelegramNotification === true ||
+        options.skipTelegramNotification === 'true' ||
+        options.skipTelegramNotification === 1 ||
+        options.skipTelegramNotification === '1' ||
+        options.skipTelegramNotification === 'on' || // HTML checkbox can send 'on'
+        options.skipTelegramNotification === 'yes' ||
+        String(options.skipTelegramNotification).toLowerCase() === 'true'
+      );
 
-          // If successful, update the airdrop with the message ID
-          if (telegramResult.success && telegramResult.messageId) {
-            // Get the index of the last update
-            const updateIndex = airdrop.updates.length - 1;
+      // Force sendTelegramNotification to be the opposite of skipTelegramNotification
+      // This ensures that if skipTelegramNotification is true, we never send a notification
+      const sendTelegramNotification = !skipTelegramNotification;
 
-            // Add the Telegram message ID to the update
-            airdrop.updates[updateIndex].telegramMessageId = telegramResult.messageId;
+      console.log('AIRDROP SERVICE - FINAL DECISION:');
+      console.log('AIRDROP SERVICE - skipTelegramNotification:', skipTelegramNotification);
+      console.log('AIRDROP SERVICE - sendTelegramNotification:', sendTelegramNotification);
 
-            // Save the airdrop again with the updated Telegram info
-            await airdrop.save();
+      // Always call the telegramService, but pass the skipTelegramNotification flag
+      // This way, the telegramService can decide whether to send the notification
+      try {
+        const telegramService = require('./telegramService');
+        const telegramResult = await telegramService.sendAirdropUpdateToTelegram(
+          airdrop,
+          {
+            updateContent: content,
+            isExplicitUpdate: true,
+            skipTelegramNotification: skipTelegramNotification
           }
-        } catch (telegramError) {
-          // Don't fail if Telegram notification fails
-          console.error(`Error sending Telegram update notification: ${telegramError.message}`);
+        );
+
+        // If successful and a message was sent (not skipped), update the airdrop with the message ID
+        if (telegramResult.success && telegramResult.messageId) {
+          // Get the index of the last update
+          const updateIndex = airdrop.updates.length - 1;
+
+          // Add the Telegram message ID to the update
+          airdrop.updates[updateIndex].telegramMessageId = telegramResult.messageId;
+
+          // Save the airdrop again with the updated Telegram info
+          await airdrop.save();
+        } else if (telegramResult.skipped) {
+          console.log('Telegram notification was skipped as requested');
+          // Get the index of the last update
+          const updateIndex = airdrop.updates.length - 1;
+
+          // Mark the update as skipped
+          airdrop.updates[updateIndex].telegramSkipped = true;
+
+          // Save the airdrop again with the updated info
+          await airdrop.save();
         }
-      } else {
-        console.log(`Skipping Telegram notification for airdrop update: ${airdrop.title} (skipTelegramNotification=${skipTelegramNotification})`);
+      } catch (telegramError) {
+        // Don't fail if Telegram notification fails
+        console.error(`Error sending Telegram update notification: ${telegramError.message}`);
       }
 
       return airdrop;
