@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
@@ -24,9 +23,12 @@ const airdropRoutes = require('./routes/airdropRoutes');
 const userRoutes = require('./routes/userRoutes');
 const trackingRoutes = require('./routes/trackingRoutes');
 
+// Import database connections
+const connectDB = require('./config/db');
+const { testConnection: testSupabaseConnection } = require('./config/supabase');
+
 // Import models
-const User = require('./models/userModel');
-const Airdrop = require('./models/airdropModel');
+const { User, Airdrop } = require('./models');
 
 // Initialize Express app
 const app = express();
@@ -140,7 +142,7 @@ if (config.server.isProduction) {
   }
 
   if (clientBuildDir) {
-    logger.info(`Using client build directory: ${clientBuildDir}`);
+    logger.info(`Serving static files from: ${clientBuildDir}`);
     app.use(express.static(clientBuildDir));
 
     // Serve index.html for all routes not handled by the API
@@ -160,7 +162,7 @@ app.use(errorHandler);
 const createInitialAdminUser = async () => {
   try {
     // Check if admin user already exists
-    const adminExists = await User.findOne({ role: 'admin' });
+    const adminExists = await User.findOne({ email: process.env.ADMIN_EMAIL || 'admin@example.com' });
 
     if (adminExists) {
       logger.info('Admin user already exists. Skipping creation.');
@@ -181,57 +183,65 @@ const createInitialAdminUser = async () => {
   }
 };
 
-// Fix MongoDB indexes
-const fixMongoDBIndexes = async () => {
-  try {
-    logger.info('Running index fix on startup...');
-
-    // Get the MongoDB connection
-    const db = mongoose.connection.db;
-
-    // Get the views collection
-    const collection = db.collection('views');
-
-    // List all indexes before changes
-    logger.info('Current indexes on views collection:');
-    const indexes = await collection.indexes();
-    logger.info(JSON.stringify(indexes));
-
-    // Try to drop the unique index on airdropId if it exists
-    try {
-      await collection.dropIndex('airdropId_1');
-      logger.info('Successfully dropped the unique index on airdropId');
-    } catch (indexError) {
-      logger.info(`No index named airdropId_1 found or error dropping index: ${indexError.message}`);
-    }
-
-    // Create a new non-unique index
-    await collection.createIndex({ airdropId: 1 }, { unique: false });
-    logger.info('Created new non-unique index on airdropId');
-
-    // List indexes after changes
-    logger.info('Updated indexes on views collection:');
-    const updatedIndexes = await collection.indexes();
-    logger.info(JSON.stringify(updatedIndexes));
-
-    logger.info('Index fix completed successfully');
-  } catch (error) {
-    logger.error(`Error fixing MongoDB indexes: ${error.message}`);
-  }
-};
-
-// Connect to MongoDB and start server
+// Start server
 const startServer = async () => {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(config.db.uri, config.db.options);
-    logger.info('Connected to MongoDB');
+    // Determine which database to use
+    const useSupabase = process.env.USE_SUPABASE === 'true';
+    
+    if (useSupabase) {
+      // Test Supabase connection
+      const supabaseConnected = await testSupabaseConnection();
+      
+      if (!supabaseConnected) {
+        throw new Error('Failed to connect to Supabase');
+      }
+      
+      logger.info('Connected to Supabase');
+    } else {
+      // Connect to MongoDB
+      await connectDB();
+      logger.info('Connected to MongoDB');
+      
+      // Fix MongoDB indexes if using MongoDB
+      if (process.env.FIX_INDEXES === 'true') {
+        const mongoose = require('mongoose');
+        logger.info('Running index fix on startup...');
+        
+        // Get the MongoDB connection
+        const db = mongoose.connection.db;
+        
+        // Get the views collection
+        const collection = db.collection('views');
+        
+        // List all indexes before changes
+        logger.info('Current indexes on views collection:');
+        const indexes = await collection.indexes();
+        logger.info(JSON.stringify(indexes));
+        
+        // Try to drop the unique index on airdropId if it exists
+        try {
+          await collection.dropIndex('airdropId_1');
+          logger.info('Successfully dropped the unique index on airdropId');
+        } catch (indexError) {
+          logger.info(`No index named airdropId_1 found or error dropping index: ${indexError.message}`);
+        }
+        
+        // Create a new non-unique index
+        await collection.createIndex({ airdropId: 1 }, { unique: false });
+        logger.info('Created new non-unique index on airdropId');
+        
+        // List indexes after changes
+        logger.info('Updated indexes on views collection:');
+        const updatedIndexes = await collection.indexes();
+        logger.info(JSON.stringify(updatedIndexes));
+        
+        logger.info('Index fix completed successfully');
+      }
+    }
 
     // Create initial admin user
     await createInitialAdminUser();
-
-    // Fix MongoDB indexes
-    await fixMongoDBIndexes();
 
     // Initialize Telegram integration if enabled
     if (config.telegram.enabled) {
@@ -244,6 +254,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${config.server.nodeEnv}`);
+      logger.info(`Database: ${useSupabase ? 'Supabase' : 'MongoDB'}`);
     });
   } catch (error) {
     logger.error(`Error starting server: ${error.message}`);
