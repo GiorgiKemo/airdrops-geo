@@ -86,6 +86,27 @@ export const AuthProvider = ({ children }) => {
 
       // Set user with token
       setUser(data);
+
+      // Immediately verify token to get full profile data
+      try {
+        console.log('Verifying token to get full profile data after registration');
+
+        // Set auth header for the verification request
+        api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+
+        const verifyResponse = await api.get('/users/verify-token');
+        console.log('Token verification response after registration:', verifyResponse.data);
+
+        // Update user with complete profile data
+        setUser(verifyResponse.data);
+
+        // Save the complete user data to localStorage
+        localStorage.setItem('currentUser', JSON.stringify(verifyResponse.data));
+      } catch (verifyError) {
+        console.error('Error verifying token after registration:', verifyError);
+        // Continue with basic user data if verification fails
+      }
+
       setLoading(false);
       return data;
     } catch (err) {
@@ -117,6 +138,27 @@ export const AuthProvider = ({ children }) => {
 
       // Set user with token
       setUser(data);
+
+      // Immediately verify token to get full profile data
+      try {
+        console.log('Verifying token to get full profile data');
+
+        // Set auth header for the verification request
+        api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+
+        const verifyResponse = await api.get('/users/verify-token');
+        console.log('Token verification response:', verifyResponse.data);
+
+        // Update user with complete profile data
+        setUser(verifyResponse.data);
+
+        // Save the complete user data to localStorage
+        localStorage.setItem('currentUser', JSON.stringify(verifyResponse.data));
+      } catch (verifyError) {
+        console.error('Error verifying token after login:', verifyError);
+        // Continue with basic user data if verification fails
+      }
+
       setLoading(false);
       return data;
     } catch (err) {
@@ -125,6 +167,67 @@ export const AuthProvider = ({ children }) => {
         ? err.response.data.message
         : 'Login failed';
       console.error('Setting error message:', message);
+      setError(message);
+      setLoading(false);
+      throw new Error(message);
+    }
+  };
+
+  // Update user profile
+  const updateProfile = async (profileData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('Updating user profile with data:', profileData);
+
+      // Use our API service which includes CSRF token handling
+      const { data } = await api.put('/users/profile', profileData);
+
+      console.log('Profile update response:', data);
+
+      // Update user state with new profile data
+      setUser(prev => ({
+        ...prev,
+        ...data
+      }));
+
+      setLoading(false);
+      return data;
+    } catch (err) {
+      console.error('Profile update error:', err);
+      const message = err.response && err.response.data.message
+        ? err.response.data.message
+        : 'Profile update failed';
+      setError(message);
+      setLoading(false);
+      throw new Error(message);
+    }
+  };
+
+  // Update user password
+  const updatePassword = async (currentPassword, newPassword) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('Updating user password');
+
+      // Use our API service which includes CSRF token handling
+      const { data } = await api.put('/users/password', {
+        currentPassword,
+        newPassword
+      });
+
+      console.log('Password update response:', data);
+
+      setLoading(false);
+      return data;
+    } catch (err) {
+      console.error('Password update error:', err);
+      const message = err.response && err.response.data.message
+        ? err.response.data.message
+        : 'Password update failed';
       setError(message);
       setLoading(false);
       throw new Error(message);
@@ -171,7 +274,9 @@ export const AuthProvider = ({ children }) => {
       error,
       register,
       login,
-      logout
+      logout,
+      updateProfile,
+      updatePassword
     }}>
       {children}
     </AuthContext.Provider>

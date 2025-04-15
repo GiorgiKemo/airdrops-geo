@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useDisplay } from '../context/DisplayContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { airdropService } from '../services/api';
-import AirdropCard from '../components/AirdropCard';
+import VirtualizedAirdropList from '../components/VirtualizedAirdropList';
+import AirdropsGridSkeleton from '../components/skeletons/AirdropsGridSkeleton';
+import PageFAQ from '../components/PageFAQ';
 import SEO from '../components/SEO';
 import { FaSearch, FaFilter } from 'react-icons/fa';
+import { faqData } from '../data/faqData';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -38,13 +41,15 @@ const HomePage = () => {
   useEffect(() => {
     const fetchAirdrops = async () => {
       try {
+        console.log('Fetching airdrops...');
         setLoading(true);
         const data = await airdropService.getAirdrops();
+        console.log('Airdrops fetched successfully:', { count: data?.length || 0 });
         setAirdrops(data);
         setError(null);
       } catch (err) {
+        console.error('Error fetching airdrops:', err);
         setError('Failed to fetch airdrops. Please try again later.');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -96,75 +101,89 @@ const HomePage = () => {
   }, []);
 
   // Filter airdrops based on status, search term, and cost filter
-  let filteredAirdrops = [];
+  // Use useMemo to optimize filtering and sorting
+  const filteredAirdrops = useMemo(() => {
+    // Safety check for empty or undefined airdrops
+    if (!airdrops || !Array.isArray(airdrops) || airdrops.length === 0) {
+      console.log('No airdrops available for filtering');
+      return [];
+    }
 
-  if (filter === 'all') {
-    // For 'all' filter, get all airdrops but sort active ones with most views first
-    filteredAirdrops = [...airdrops].sort((a, b) => {
-      // First prioritize active status
-      if (a.status === 'active' && b.status !== 'active') return -1;
-      if (b.status === 'active' && a.status !== 'active') return 1;
+    console.log('Filtering airdrops:', { count: airdrops.length, filter });
+    let result = [];
 
-      // If both are active or both are not active, sort by views
-      if (a.status === 'active' && b.status === 'active') {
-        return (b.views || 0) - (a.views || 0); // Sort by views (highest first)
-      }
+    // Step 1: Apply status filter
+    if (filter === 'all') {
+      // For 'all' filter, get all airdrops but sort active ones with most views first
+      result = [...airdrops].sort((a, b) => {
+        // First prioritize active status
+        if (a.status === 'active' && b.status !== 'active') return -1;
+        if (b.status === 'active' && a.status !== 'active') return 1;
 
-      // For non-active airdrops, maintain default order
-      return 0;
-    });
-  } else if (filter === 'claim') {
-    // For 'claim' filter, show airdrops with 'claim' status
-    filteredAirdrops = airdrops.filter(airdrop => airdrop.status === 'claim');
-  } else if (filter === 'popular') {
-    // For 'popular' filter, show all airdrops sorted by views (highest first)
-    filteredAirdrops = [...airdrops].sort((a, b) => (b.views || 0) - (a.views || 0));
-  } else if (filter === 'recent') {
-    // For 'recent' filter, show all airdrops sorted by creation date (newest first)
-    filteredAirdrops = [...airdrops].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  } else {
-    // For other filters (active, upcoming, ended), filter by status
-    filteredAirdrops = airdrops.filter(airdrop => airdrop.status === filter);
-  }
+        // If both are active or both are not active, sort by views
+        if (a.status === 'active' && b.status === 'active') {
+          return (b.views || 0) - (a.views || 0); // Sort by views (highest first)
+        }
 
-  // If we're filtering for upcoming airdrops, sort them by start date (soonest first)
-  if (filter === 'upcoming') {
-    filteredAirdrops = [...filteredAirdrops].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-  }
+        // For non-active airdrops, maintain default order
+        return 0;
+      });
+    } else if (filter === 'claim') {
+      // For 'claim' filter, show airdrops with 'claim' status
+      result = airdrops.filter(airdrop => airdrop.status === 'claim');
+    } else if (filter === 'popular') {
+      // For 'popular' filter, show all airdrops sorted by views (highest first)
+      result = [...airdrops].sort((a, b) => (b.views || 0) - (a.views || 0));
+    } else if (filter === 'recent') {
+      // For 'recent' filter, show all airdrops sorted by creation date (newest first)
+      result = [...airdrops].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else {
+      // For other filters (active, upcoming, ended), filter by status
+      result = airdrops.filter(airdrop => airdrop.status === filter);
+    }
 
-  // Apply search filter if search term exists
-  if (searchTerm.trim() !== '') {
-    filteredAirdrops = filteredAirdrops.filter(airdrop =>
-      airdrop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      airdrop.token.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      airdrop.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
+    // Step 2: Apply additional sorting for upcoming airdrops
+    if (filter === 'upcoming') {
+      result = [...result].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    }
 
-  // Apply cost filter
-  if (costFilter !== 'all') {
-    filteredAirdrops = filteredAirdrops.filter(airdrop => {
-      // If the airdrop has no costType field (for backward compatibility), assume it's free
-      if (!airdrop.costType && costFilter === 'free') {
-        return true;
-      }
+    // Step 3: Apply search filter if search term exists
+    if (searchTerm.trim() !== '') {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      result = result.filter(airdrop =>
+        airdrop.title.toLowerCase().includes(lowerSearchTerm) ||
+        airdrop.token.toLowerCase().includes(lowerSearchTerm) ||
+        airdrop.description.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
 
-      // Match the exact costType
-      return airdrop.costType === costFilter;
-    });
-  }
+    // Step 4: Apply cost filter
+    if (costFilter !== 'all') {
+      result = result.filter(airdrop => {
+        // If the airdrop has no costType field (for backward compatibility), assume it's free
+        if (!airdrop.costType && costFilter === 'free') {
+          return true;
+        }
 
-  // For all filters except 'ended', rank ended airdrops at the bottom
-  if (filter !== 'ended') {
-    filteredAirdrops = [...filteredAirdrops].sort((a, b) => {
-      // If a is ended and b is not, a should come after b
-      if (a.status === 'ended' && b.status !== 'ended') return 1;
-      // If b is ended and a is not, b should come after a
-      if (b.status === 'ended' && a.status !== 'ended') return -1;
-      // Otherwise maintain the current order
-      return 0;
-    });
-  }
+        // Match the exact costType
+        return airdrop.costType === costFilter;
+      });
+    }
+
+    // Step 5: For all filters except 'ended', rank ended airdrops at the bottom
+    if (filter !== 'ended') {
+      result = [...result].sort((a, b) => {
+        // If a is ended and b is not, a should come after b
+        if (a.status === 'ended' && b.status !== 'ended') return 1;
+        // If b is ended and a is not, b should come after a
+        if (b.status === 'ended' && a.status !== 'ended') return -1;
+        // Otherwise maintain the current order
+        return 0;
+      });
+    }
+
+    return result;
+  }, [airdrops, filter, searchTerm, costFilter]); // Dependencies for useMemo
 
   return (
     <>
@@ -235,12 +254,12 @@ const HomePage = () => {
       </div>
 
       {/* Filter buttons and search */}
-      <div className="mb-4">
-        <div className="flex flex-wrap justify-center sm:justify-between items-center gap-2">
-          <div className="flex flex-wrap justify-center gap-2 text-xs sm:text-sm">
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-3">
+          <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 w-full sm:w-auto text-xs sm:text-sm overflow-x-auto pb-2 sm:pb-0 scrollable-hidden">
           <button
             onClick={() => updateFilter('all')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'all'
                 ? 'bg-blue-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -250,7 +269,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('active')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'active'
                 ? 'bg-green-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -260,7 +279,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('popular')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'popular'
                 ? 'bg-purple-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -270,7 +289,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('recent')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'recent'
                 ? 'bg-teal-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -280,7 +299,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('upcoming')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'upcoming'
                 ? 'bg-blue-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -290,7 +309,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('ended')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'ended'
                 ? 'bg-gray-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -300,7 +319,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('claim')}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
               filter === 'claim'
                 ? 'bg-red-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -310,10 +329,10 @@ const HomePage = () => {
           </button>
           </div>
 
-          <div className="flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto mt-3 sm:mt-0">
+          <div className="flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto">
             {/* Search input */}
-            <div className="relative">
-              <div className="flex items-center macos-input py-1 px-2">
+            <div className="relative flex-grow max-w-xs">
+              <div className="flex items-center macos-input py-1.5 px-3">
                 <FaSearch className="text-[var(--macos-text-secondary)] mr-2" />
                 <input
                   type="text"
@@ -384,8 +403,8 @@ const HomePage = () => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
+        <div className="py-4">
+          <AirdropsGridSkeleton count={9} />
         </div>
       ) : error ? (
         <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
@@ -398,110 +417,30 @@ const HomePage = () => {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col h-auto max-h-[calc(100vh-14rem)]">
-          <div ref={cardContainerRef} className="scrollable-hidden px-0 py-1 overflow-y-auto custom-scrollbar h-full">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-              {filteredAirdrops.slice(0, displayCount).map((airdrop, index) => (
-                <div key={airdrop._id} className="transform-gpu p-1 h-[12rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem] airdrop-card" ref={index === displayCount - 6 ? newCardsRef : null}>
-                  <AirdropCard airdrop={airdrop} />
-                </div>
-              ))}
-            </div>
+        <div className="flex flex-col h-auto" style={{ height: 'calc(100vh - 14rem)' }}>
+          {/* Debug info */}
+          <div className="text-xs text-gray-500 mb-2">
+            Filtered airdrops: {filteredAirdrops.length}
           </div>
 
-          <div className="flex justify-center py-4 gap-4 flex-wrap text-center w-full overflow-visible">
-            {displayCount > initialDisplayCount && (
-              <button
-                onClick={() => {
-                  // First scroll the whole page to the top with macOS-like smooth scrolling
-                  window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                  });
+          {/* Use the virtualized list component for better performance */}
+          <VirtualizedAirdropList
+            airdrops={filteredAirdrops}
+            className="h-full"
+          />
 
-                  // Also scroll the card container to the top with macOS-like smooth scrolling
-                  if (cardContainerRef.current) {
-                    cardContainerRef.current.scrollTo({
-                      top: 0,
-                      behavior: 'smooth'
-                    });
-                  }
-
-                  // Then reset the display count after a small delay
-                  // This ensures the scroll happens before the cards disappear
-                  setTimeout(() => {
-                    setDisplayCount(initialDisplayCount);
-                  }, 300);
-                }}
-                className="macos-button bg-[var(--macos-secondary)] text-xs sm:text-sm py-2 px-6 sm:py-2.5 sm:px-8 w-auto min-w-[120px] font-bold whitespace-nowrap overflow-visible"
-              >
-                View Less ↑
-              </button>
-            )}
-            {filteredAirdrops.length > displayCount && (
-              <button
-                onClick={() => {
-                  // First increase the display count
-                  setDisplayCount(displayCount + 6);
-
-                  // Then scroll to show the new cards
-                  setTimeout(() => {
-                    // Find the last card of the previous set
-                    const lastPreviousCard = document.querySelector(`.airdrop-card:nth-child(${displayCount})`);
-
-                    if (lastPreviousCard && cardContainerRef.current) {
-                      // Get the position of the last previous card
-                      const containerRect = cardContainerRef.current.getBoundingClientRect();
-                      const cardRect = lastPreviousCard.getBoundingClientRect();
-                      const scrollTop = cardRect.top - containerRect.top + cardContainerRef.current.scrollTop;
-
-                      // Scroll to position the last previous card at the top
-                      cardContainerRef.current.scrollTo({
-                        top: scrollTop,
-                        behavior: 'smooth'
-                      });
-                    }
-                  }, 50);
-                }}
-                className="macos-button text-xs sm:text-sm py-2 px-6 sm:py-2.5 sm:px-8 w-auto min-w-[120px] font-bold whitespace-nowrap overflow-visible"
-              >
-                View More ↓
-              </button>
-            )}
-          </div>
+          {/* No pagination buttons needed with virtualization */}
         </div>
       )}
 
-      {/* FAQ Section for SEO */}
+      {/* FAQ Section using the reusable component */}
       <div className="mt-12 mb-8 macos-card p-6">
-        <h2 className="text-2xl font-bold text-[var(--macos-text)] mb-6">Frequently Asked Questions About Crypto Airdrops</h2>
-
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">What are crypto airdrops?</h3>
-            <p className="text-[var(--macos-text-secondary)]">Crypto airdrops are free distributions of cryptocurrency tokens or coins to wallet addresses. Projects use airdrops as a marketing strategy to create awareness, reward loyal users, or distribute tokens widely. They're essentially free cryptocurrency that you can claim by meeting certain criteria.</p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">How do I claim crypto airdrops?</h3>
-            <p className="text-[var(--macos-text-secondary)]">To claim crypto airdrops, you typically need to complete specific tasks like joining a Discord server, following social media accounts, or interacting with a protocol. Some airdrops require you to hold certain tokens, while others might need you to connect your wallet to a platform. Always check the airdrop's requirements and follow the instructions carefully.</p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">Are crypto airdrops safe?</h3>
-            <p className="text-[var(--macos-text-secondary)]">While many crypto airdrops are legitimate, you should always exercise caution. Never share your private keys or seed phrases, and be wary of connecting your wallet to unknown platforms. At Airdrops.geo, we verify airdrops before listing them, but always do your own research before participating in any airdrop.</p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">Why do projects give away free tokens?</h3>
-            <p className="text-[var(--macos-text-secondary)]">Blockchain projects distribute free tokens through airdrops for several reasons: to create awareness about their project, build a community, reward early adopters, distribute governance rights, or ensure a wide distribution of tokens. It's a marketing strategy that helps projects gain users and visibility in the competitive crypto space.</p>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-semibold text-[var(--macos-text)] mb-2">How can I find the best crypto airdrops in 2025?</h3>
-            <p className="text-[var(--macos-text-secondary)]">Airdrops.geo is your best resource for finding legitimate and valuable crypto airdrops in 2025. We regularly update our platform with new opportunities, verify their authenticity, and provide all the information you need to participate. Create an account to track your favorite airdrops and get notified about new opportunities.</p>
-          </div>
-        </div>
+        <PageFAQ
+          questions={faqData.home}
+          title="Frequently Asked Questions About Crypto Airdrops"
+          showMoreLink={false}
+          className="mt-0"
+        />
       </div>
     </div>
     </>

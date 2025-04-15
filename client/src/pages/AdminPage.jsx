@@ -3,6 +3,8 @@ import { airdropService } from '../services/api';
 import AirdropForm from '../components/AirdropForm';
 import AirdropUpdateForm from '../components/AirdropUpdateForm';
 import AirdropUpdates from '../components/AirdropUpdates';
+import PageFAQ from '../components/PageFAQ';
+import { faqData } from '../data/faqData';
 import { FaSearch, FaBell } from 'react-icons/fa';
 
 const AdminPage = () => {
@@ -133,8 +135,21 @@ const AdminPage = () => {
     try {
       if (!updatingAirdrop) return;
 
-      await airdropService.addAirdropUpdate(updatingAirdrop._id, updateContent, skipTelegramNotification);
-      setSuccessMessage('Update added successfully!');
+      console.log('AdminPage - Received skipTelegramNotification:', skipTelegramNotification);
+      console.log('AdminPage - skipTelegramNotification type:', typeof skipTelegramNotification);
+
+      // IMPORTANT: Use double negation to ensure it's a true boolean
+      // This is more reliable than strict comparison for boolean conversion
+      const skipTelegram = !!skipTelegramNotification;
+
+      console.log('AdminPage - Processed skipTelegramNotification:', skipTelegram);
+      console.log('AdminPage - Processed skipTelegramNotification type:', typeof skipTelegram);
+
+      // Pass the boolean value to the API service
+      await airdropService.addAirdropUpdate(updatingAirdrop._id, updateContent, skipTelegram);
+
+      // Show a success message with indication if notification was skipped
+      setSuccessMessage(`Update added successfully! ${skipTelegram ? '(Telegram notification skipped)' : ''}`);
       setUpdatingAirdrop(null);
       fetchAirdrops();
 
@@ -398,6 +413,17 @@ const AdminPage = () => {
                   ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* FAQ Section - Only show when not editing or adding */}
+        {!isAdding && !editingAirdrop && !updatingAirdrop && (
+          <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+            <PageFAQ
+              questions={faqData.admin}
+              title="Admin FAQ: Managing Airdrops"
+              showMoreLink={false}
+            />
           </div>
         )}
       </div>

@@ -41,8 +41,44 @@ const authLimiter = createRateLimiter({
   statusCode: 429, // Too Many Requests
 });
 
+// Password reset request limiter (very strict)
+const passwordResetLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // Limit each IP to 3 password reset requests per hour
+  message: 'Too many password reset attempts, please try again after 1 hour.',
+  statusCode: 429, // Too Many Requests
+});
+
+// Password reset confirmation limiter (very strict)
+const passwordResetConfirmLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // Limit each IP to 3 password reset confirmations per hour
+  message: 'Too many password reset attempts, please try again after 1 hour.',
+  statusCode: 429, // Too Many Requests
+});
+
+// Admin operations limiter
+const adminLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit each IP to 30 admin operations per 15 minutes
+  message: 'Too many admin operations, please try again after 15 minutes.',
+  statusCode: 429, // Too Many Requests
+});
+
+// User profile update limiter
+const profileUpdateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 profile updates per 15 minutes
+  message: 'Too many profile update attempts, please try again after 15 minutes.',
+  statusCode: 429, // Too Many Requests
+});
+
 module.exports = {
   apiLimiter,
   authLimiter,
+  passwordResetLimiter,
+  passwordResetConfirmLimiter,
+  adminLimiter,
+  profileUpdateLimiter,
   createRateLimiter,
 };

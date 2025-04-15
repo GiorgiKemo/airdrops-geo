@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 
-const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
+const AirdropUpdateForm = ({ onSubmit, onCancel, loading }) => {
   const [updateContent, setUpdateContent] = useState('');
   const [skipTelegramNotification, setSkipTelegramNotification] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,8 +20,18 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
       setIsSubmitting(true);
       setError('');
 
+      // IMPORTANT: Log the current state of the checkbox before processing
+      console.log('FORM SUBMISSION - Current checkbox state:', skipTelegramNotification);
+      console.log('FORM SUBMISSION - Checkbox state type:', typeof skipTelegramNotification);
+
       // Call the onSubmit function passed from parent with skipTelegramNotification flag
-      await onSubmit(updateContent, skipTelegramNotification);
+      // Force to boolean with strict comparison
+      // IMPORTANT: Use double negation to ensure it's a true boolean
+      const skipTelegram = !!skipTelegramNotification;
+      console.log('FORM SUBMISSION - Processed skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
+
+      // Make sure we're passing a true boolean value
+      await onSubmit(updateContent, skipTelegram);
 
       // Reset form
       setUpdateContent('');
@@ -60,25 +70,36 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
             placeholder="Enter update details, new tasks, or important information..."
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
             rows={4}
-            disabled={isSubmitting}
+            disabled={isSubmitting || loading}
           />
         </div>
 
-        <div className="flex items-center mb-3">
+        <div className="flex items-center mb-3 p-3 border-2 border-blue-300 dark:border-blue-700 rounded bg-blue-50 dark:bg-blue-900 shadow-md">
           <input
             type="checkbox"
             id="skipTelegramNotification"
             checked={skipTelegramNotification}
-            onChange={(e) => setSkipTelegramNotification(e.target.checked)}
-            className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            disabled={isSubmitting}
+            onChange={(e) => {
+              // Force to boolean with double negation
+              const isChecked = !!e.target.checked;
+              console.log('Checkbox changed to:', isChecked, 'type:', typeof isChecked);
+              console.log('Original e.target.checked:', e.target.checked, 'type:', typeof e.target.checked);
+              setSkipTelegramNotification(isChecked);
+            }}
+            className="h-6 w-6 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            disabled={isSubmitting || loading}
           />
-          <label
-            htmlFor="skipTelegramNotification"
-            className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Skip Telegram Notification
-          </label>
+          <div className="ml-2">
+            <label
+              htmlFor="skipTelegramNotification"
+              className="block text-sm font-bold text-blue-700 dark:text-blue-300"
+            >
+              Skip Telegram Notification
+            </label>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              Check this box to prevent sending a notification to Telegram when adding this update.
+            </p>
+          </div>
         </div>
 
         <div className="flex justify-end space-x-3">
@@ -86,16 +107,16 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
             type="button"
             onClick={onCancel}
             className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loading}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-700 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loading}
           >
-            {isSubmitting ? 'Submitting...' : 'Add Update'}
+            {isSubmitting || loading ? 'Submitting...' : 'Add Update'}
           </button>
         </div>
       </form>
@@ -105,7 +126,13 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
 
 AirdropUpdateForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired
+  onCancel: PropTypes.func,
+  loading: PropTypes.bool
+};
+
+AirdropUpdateForm.defaultProps = {
+  onCancel: () => {},
+  loading: false
 };
 
 export default AirdropUpdateForm;

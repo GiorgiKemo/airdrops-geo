@@ -48,9 +48,18 @@ const registerValidation = [
 const loginValidation = [
   body('email')
     .trim()
-    .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .custom(value => {
+      // Allow either email or username
+      // Simple email validation (contains @ symbol)
+      const isEmail = value.includes('@');
+      if (isEmail) {
+        // If it looks like an email, validate it as an email
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          throw new Error('Please provide a valid email');
+        }
+      }
+      return true;
+    }),
 
   body('password')
     .notEmpty()

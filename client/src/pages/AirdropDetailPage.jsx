@@ -1,12 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { airdropService } from '../services/api';
 import AirdropLogo from '../components/AirdropLogo';
 import LogoUpdater from '../components/LogoUpdater';
 import AirdropUpdates from '../components/AirdropUpdates';
+import AirdropDetailSkeleton from '../components/skeletons/AirdropDetailSkeleton';
+import AirdropForm from '../components/AirdropForm';
+import AirdropUpdateForm from '../components/AirdropUpdateForm';
+import PageFAQ from '../components/PageFAQ';
 import SEO from '../components/SEO';
 import { useAuth } from '../context/AuthContext';
-import { FaGlobe, FaDiscord, FaTwitter, FaTelegram, FaGithub, FaInstagram } from 'react-icons/fa';
+import { faqData } from '../data/faqData';
+import { FaGlobe, FaDiscord, FaTwitter, FaTelegram, FaGithub, FaInstagram, FaEdit, FaPen } from 'react-icons/fa';
 
 const AirdropDetailPage = () => {
   const { id } = useParams();
@@ -14,6 +19,10 @@ const AirdropDetailPage = () => {
   const [airdrop, setAirdrop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isAddingUpdate, setIsAddingUpdate] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const formRef = useRef(null);
 
   // Function to fetch airdrop details
   const fetchAirdrop = async () => {
@@ -40,13 +49,72 @@ const AirdropDetailPage = () => {
       }
 
       setLoading(true);
-      await airdropService.updateAirdrop(id, { status: newStatus });
+      // Explicitly set skipTelegramNotification to true to prevent Telegram notifications for status changes
+      // Use editButton=true parameter to ensure the server treats this as an edit button update
+      await airdropService.updateAirdrop(
+        id,
+        {
+          status: newStatus,
+          skipTelegramNotification: true,
+          sendTelegramNotification: false
+        },
+        {}, // No special headers
+        true // Use editButton=true query parameter
+      );
       // Refresh the airdrop data
       await fetchAirdrop();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update airdrop status. Please try again later.');
       console.error('Status update error:', err);
       console.error('Error response:', err.response?.data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to handle airdrop update form submission
+  const handleUpdateAirdrop = async (updatedData) => {
+    try {
+      setLoading(true);
+      // Ensure skipTelegramNotification is set to true to prevent Telegram notifications
+      updatedData.skipTelegramNotification = true;
+      updatedData.sendTelegramNotification = false;
+
+      await airdropService.updateAirdrop(id, updatedData);
+      setSuccessMessage('Airdrop updated successfully!');
+      setIsEditing(false);
+      // Refresh the airdrop data
+      await fetchAirdrop();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update airdrop. Please try again later.');
+      console.error('Update error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to handle adding an update
+  const handleAddUpdate = async (updateContent, skipTelegram) => {
+    try {
+      setLoading(true);
+      await airdropService.addAirdropUpdate(id, updateContent, skipTelegram);
+      setSuccessMessage(`Update added successfully! ${skipTelegram ? '(Telegram notification skipped)' : ''}`);
+      setIsAddingUpdate(false);
+      // Refresh the airdrop data
+      await fetchAirdrop();
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to add update. Please try again later.');
+      console.error('Update error:', err);
     } finally {
       setLoading(false);
     }
@@ -124,8 +192,8 @@ const AirdropDetailPage = () => {
       </Link>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 dark:border-blue-400"></div>
+        <div className="mt-4">
+          <AirdropDetailSkeleton />
         </div>
       ) : error ? (
         <div className="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
@@ -289,9 +357,38 @@ const AirdropDetailPage = () => {
               </div>
             )}
 
+            {/* Success Message */}
+            {successMessage && (
+              <div className="mt-4 p-3 bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 rounded-md">
+                {successMessage}
+              </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <div className="mt-4 p-3 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100 rounded-md">
+                {error}
+              </div>
+            )}
+
             {/* Admin Tools - Only visible to the admin (you) */}
-            {user && user.username === 'admin' && (
+            {user && user.username === 'admin' && !isEditing && !isAddingUpdate && (
               <div className="space-y-4 mt-6">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <FaEdit /> Edit Airdrop
+                  </button>
+                  <button
+                    onClick={() => setIsAddingUpdate(true)}
+                    className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    <FaPen /> Add Update
+                  </button>
+                </div>
+
                 <LogoUpdater
                   airdropId={airdrop._id}
                   onUpdate={() => {
@@ -350,6 +447,59 @@ const AirdropDetailPage = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Edit Airdrop Form */}
+            {isEditing && (
+              <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Edit Airdrop</h3>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <AirdropForm
+                  ref={formRef}
+                  initialValues={airdrop}
+                  onSubmit={handleUpdateAirdrop}
+                  isEdit={true}
+                  loading={loading}
+                />
+              </div>
+            )}
+
+            {/* Add Update Form */}
+            {isAddingUpdate && (
+              <div className="mt-6 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Add Update</h3>
+                  <button
+                    onClick={() => setIsAddingUpdate(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <AirdropUpdateForm
+                  onSubmit={handleAddUpdate}
+                  onCancel={() => setIsAddingUpdate(false)}
+                  loading={loading}
+                />
+              </div>
+            )}
+
+            {/* FAQ Section */}
+            {!isEditing && !isAddingUpdate && (
+              <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <PageFAQ
+                  questions={faqData.airdropDetail}
+                  title="Frequently Asked Questions About This Airdrop"
+                  showMoreLink={true}
+                />
               </div>
             )}
           </div>

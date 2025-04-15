@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { validateField, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/validation';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -9,16 +11,76 @@ const RegisterPage = () => {
     password: '',
     confirmPassword: '',
   });
+  const [formErrors, setFormErrors] = useState({
+    username: null,
+    email: null,
+    password: null,
+    confirmPassword: null,
+  });
   const [formError, setFormError] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState(0);
 
   const { register, loading, error } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
+
+  // Update password strength when password changes
+  useEffect(() => {
+    if (formData.password) {
+      setPasswordStrength(getPasswordStrength(formData.password));
+    } else {
+      setPasswordStrength(0);
+    }
+  }, [formData.password]);
+
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // Validate each field
+    Object.keys(formData).forEach(field => {
+      const error = validateField(field, formData[field]);
+      errors[field] = error;
+      if (error) isValid = false;
+    });
+
+    // Special case for confirm password
+    if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+
+    setFormData(prev => ({
       ...prev,
       [name]: value,
+    }));
+
+    // Clear form error when user types
+    if (formError) setFormError('');
+
+    // Validate the field that changed
+    const fieldError = validateField(name, value);
+
+    // Special case for confirm password
+    let confirmPasswordError = null;
+    if (name === 'password' && formData.confirmPassword) {
+      confirmPasswordError = value !== formData.confirmPassword ? 'Passwords do not match' : null;
+    } else if (name === 'confirmPassword') {
+      confirmPasswordError = value !== formData.password ? 'Passwords do not match' : null;
+    }
+
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: fieldError,
+      ...(confirmPasswordError !== null && name === 'password' ? { confirmPassword: confirmPasswordError } : {}),
+      ...(name === 'confirmPassword' ? { confirmPassword: confirmPasswordError } : {}),
     }));
   };
 
@@ -26,28 +88,37 @@ const RegisterPage = () => {
     e.preventDefault();
     setFormError('');
 
-    // Basic validation
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
-      setFormError('Please fill in all fields');
-      return;
-    }
+    // Validate all fields
+    const isValid = validateForm();
 
-    if (formData.password !== formData.confirmPassword) {
-      setFormError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setFormError('Password must be at least 6 characters');
+    if (!isValid) {
+      // Find the first error to display as the main form error
+      const firstError = Object.values(formErrors).find(error => error !== null);
+      setFormError(firstError || 'Please fix the errors in the form');
       return;
     }
 
     try {
       await register(formData.username, formData.email, formData.password);
-      navigate('/'); // Redirect to homepage after registration
+
+      // Show success toast notification
+      toast.success('Registration successful! Welcome to Airdrops.geo.');
+
+      // Redirect to homepage after registration
+      navigate('/');
     } catch (err) {
       const message = err.message || 'Registration failed';
       setFormError(message);
+
+      // Show error toast notification
+      toast.error(message);
+
+      // Check for specific error types and update field errors
+      if (message.includes('Email already in use')) {
+        setFormErrors(prev => ({ ...prev, email: 'Email already in use' }));
+      } else if (message.includes('Username already taken')) {
+        setFormErrors(prev => ({ ...prev, username: 'Username already taken' }));
+      }
     }
   };
 
@@ -90,10 +161,15 @@ const RegisterPage = () => {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Choose a username"
-                    className="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
-                    required
+                    className={`pl-10 w-full h-12 rounded-lg border ${formErrors.username ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
+                    aria-invalid={formErrors.username ? 'true' : 'false'}
+                    aria-describedby={formErrors.username ? 'username-error' : undefined}
                   />
                 </div>
+                {formErrors.username && (
+                  <p id="username-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.username}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Username must be 3-30 characters and can only contain letters, numbers, and underscores.</p>
               </div>
 
               {/* Email field */}
@@ -115,10 +191,14 @@ const RegisterPage = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="your.email@example.com"
-                    className="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
-                    required
+                    className={`pl-10 w-full h-12 rounded-lg border ${formErrors.email ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
+                    aria-invalid={formErrors.email ? 'true' : 'false'}
+                    aria-describedby={formErrors.email ? 'email-error' : undefined}
                   />
                 </div>
+                {formErrors.email && (
+                  <p id="email-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.email}</p>
+                )}
               </div>
 
               {/* Password field */}
@@ -139,11 +219,38 @@ const RegisterPage = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
-                    required
+                    className={`pl-10 w-full h-12 rounded-lg border ${formErrors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
+                    aria-invalid={formErrors.password ? 'true' : 'false'}
+                    aria-describedby={formErrors.password ? 'password-error' : 'password-requirements'}
                   />
                 </div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Must be at least 6 characters</p>
+
+                {/* Password strength indicator */}
+                {formData.password && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-300"
+                          style={{
+                            width: `${(passwordStrength / 5) * 100}%`,
+                            backgroundColor: getPasswordStrengthColor(passwordStrength)
+                          }}
+                        ></div>
+                      </div>
+                      <span className="ml-2 text-xs font-medium" style={{ color: getPasswordStrengthColor(passwordStrength) }}>
+                        {getPasswordStrengthLabel(passwordStrength)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {formErrors.password && (
+                  <p id="password-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.password}</p>
+                )}
+                <p id="password-requirements" className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Password must be at least 6 characters and include uppercase, lowercase, and numbers.
+                </p>
               </div>
 
               {/* Confirm Password field */}
@@ -164,10 +271,14 @@ const RegisterPage = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
-                    required
+                    className={`pl-10 w-full h-12 rounded-lg border ${formErrors.confirmPassword ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
+                    aria-invalid={formErrors.confirmPassword ? 'true' : 'false'}
+                    aria-describedby={formErrors.confirmPassword ? 'confirm-password-error' : undefined}
                   />
                 </div>
+                {formErrors.confirmPassword && (
+                  <p id="confirm-password-error" className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.confirmPassword}</p>
+                )}
               </div>
 
               {/* Submit button */}

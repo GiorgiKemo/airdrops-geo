@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTracking } from '../context/TrackingContext';
 import { useNavigate } from 'react-router-dom';
@@ -105,4 +105,5 @@ const AirdropLogo = ({ airdrop, size = 'medium' }) => {
   );
 };
 
-export default AirdropLogo;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(AirdropLogo);

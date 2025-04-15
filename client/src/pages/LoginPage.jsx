@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTracking } from '../context/TrackingContext';
+import { useToast } from '../context/ToastContext';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -10,7 +12,9 @@ const LoginPage = () => {
   const [formError, setFormError] = useState('');
 
   const { login, loading, error } = useAuth();
+  const { refreshTracking } = useTracking();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -37,18 +41,38 @@ const LoginPage = () => {
       // Call the login function directly
       console.log('Calling login function...');
       await login(formData.email, formData.password);
-      console.log('Login successful, navigating to home page');
-      navigate('/'); // Redirect to homepage after login
+      console.log('Login successful');
+
+      // Refresh tracked airdrops
+      console.log('Refreshing tracked airdrops after login');
+      setTimeout(() => {
+        refreshTracking();
+      }, 500);
+
+      // Show success toast notification
+      toast.success('Login successful! Welcome back.');
+
+      // Redirect to homepage after login
+      navigate('/');
     } catch (err) {
       console.error('Login error:', err);
+
       // Display specific error message
+      let errorMessage = 'Login failed. Please try again.';
+
       if (err.message === 'User not found') {
-        setFormError('No account found with this email or username. Please register first.');
+        errorMessage = 'No account found with this email or username. Please register first.';
       } else if (err.message === 'Invalid password') {
-        setFormError('Incorrect password. Please try again.');
-      } else {
-        setFormError(err.message || 'Login failed');
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (err.message) {
+        errorMessage = err.message;
       }
+
+      // Set form error for display in the form
+      setFormError(errorMessage);
+
+      // Show error toast notification
+      toast.error(errorMessage);
     }
   };
 

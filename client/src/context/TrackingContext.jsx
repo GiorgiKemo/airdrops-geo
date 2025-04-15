@@ -13,7 +13,12 @@ export const TrackingProvider = ({ children }) => {
   // Fetch tracked airdrops when user changes
   useEffect(() => {
     if (user) {
-      fetchTrackedAirdrops();
+      // Small delay to ensure auth token is properly set up
+      const timer = setTimeout(() => {
+        fetchTrackedAirdrops();
+      }, 300);
+
+      return () => clearTimeout(timer);
     } else {
       setTrackedAirdrops([]);
     }

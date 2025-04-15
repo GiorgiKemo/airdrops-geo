@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 const ResetPasswordPage = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const ResetPasswordPage = () => {
   const [error, setError] = useState('');
   const { token } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
 
   useEffect(() => {
     // Redirect if no token is provided
@@ -31,7 +33,7 @@ const ResetPasswordPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     // Basic validation
     if (!formData.password || !formData.confirmPassword) {
       setError('Please fill in all fields');
@@ -50,15 +52,24 @@ const ResetPasswordPage = () => {
 
     try {
       setIsLoading(true);
-      await api.post('/users/reset-password', { 
+      await api.post('/users/reset-password', {
         token,
-        password: formData.password 
+        password: formData.password
       });
+
+      // Show success toast notification
+      toast.success('Password reset successful! You can now log in with your new password.');
+
       setIsSubmitted(true);
     } catch (err) {
       console.error('Error resetting password:', err);
       const message = err.response?.data?.message || 'An error occurred. Please try again.';
+
+      // Set error state for form display
       setError(message);
+
+      // Show error toast notification
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

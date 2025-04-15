@@ -182,9 +182,50 @@ export const airdropService = {
   },
 
   // Update existing airdrop
-  updateAirdrop: async (id, airdropData, headers = {}) => {
+  updateAirdrop: async (id, airdropData, headers = {}, useEditButton = false) => {
     try {
-      const response = await api.put(`/airdrops/${id}`, airdropData, { headers });
+      console.log('Updating airdrop with data:', airdropData);
+      console.log('skipTelegramNotification:', airdropData.skipTelegramNotification);
+
+      // Make sure skipTelegramNotification is properly set
+      if (airdropData.skipTelegramNotification === undefined) {
+        airdropData.skipTelegramNotification = false;
+      }
+
+      // Set sendTelegramNotification to the opposite of skipTelegramNotification
+      // unless it's explicitly set
+      if (airdropData.sendTelegramNotification === undefined) {
+        airdropData.sendTelegramNotification = !airdropData.skipTelegramNotification;
+      }
+
+      // CRITICAL FIX: Add editButton=true parameter to the URL to indicate this is an edit button update
+      // This will ensure the server respects the skipTelegramNotification flag
+      console.log('useEditButton parameter:', useEditButton);
+      console.log('skipTelegramNotification:', airdropData.skipTelegramNotification);
+      console.log('sendTelegramNotification:', airdropData.sendTelegramNotification);
+
+      // Make sure we're sending the correct notification flags
+      if (airdropData.skipTelegramNotification === false) {
+        airdropData.sendTelegramNotification = true;
+      }
+
+      // Add query parameters
+      const queryParams = new URLSearchParams();
+
+      // Always add editButton=true if useEditButton is true or for status changes
+      if (useEditButton || airdropData.status) {
+        console.log('Adding editButton=true parameter');
+        queryParams.append('editButton', 'true');
+      }
+
+      // If skipTelegramNotification is false, also add notifyTelegram=true to force a notification
+      // But only if we're not doing a status change from the detail page
+      if (airdropData.skipTelegramNotification === false && !airdropData.status) {
+        console.log('Adding notifyTelegram=true parameter');
+        queryParams.append('notifyTelegram', 'true');
+      }
+
+      const response = await api.put(`/airdrops/${id}?${queryParams.toString()}`, airdropData, { headers });
       return response.data;
     } catch (error) {
       console.error(`Error updating airdrop with ID ${id}:`, error);
@@ -214,11 +255,27 @@ export const airdropService = {
       };
 
       // Set sendTelegramNotification based on skipTelegramNotification flag
+      console.log('API Service - Adding airdrop update with skipTelegramNotification:', skipTelegramNotification);
+      console.log('API Service - skipTelegramNotification type:', typeof skipTelegramNotification);
+
+      // IMPORTANT: Use double negation to ensure it's a true boolean
+      // This is more reliable than strict comparison for boolean conversion
+      const skipTelegram = !!skipTelegramNotification;
+
+      // Always set sendTelegramNotification to the opposite of skipTelegramNotification
+      const sendTelegram = !skipTelegram;
+
+      console.log('API Service - Final values being sent to server:');
+      console.log('API Service - skipTelegramNotification (processed):', skipTelegram, 'type:', typeof skipTelegram);
+      console.log('API Service - sendTelegramNotification:', sendTelegram, 'type:', typeof sendTelegram);
+
       const response = await api.post(`/airdrops/${id}/updates`, {
         content: updateContent,
-        sendTelegramNotification: !skipTelegramNotification,
-        skipTelegramNotification: skipTelegramNotification
+        sendTelegramNotification: sendTelegram,
+        skipTelegramNotification: skipTelegram
       }, { headers });
+
+      console.log('Airdrop update response:', response.data);
       return response.data;
     } catch (error) {
       console.error(`Error adding update to airdrop with ID ${id}:`, error);
