@@ -83,9 +83,10 @@ const app = express();
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token', 'x-xsrf-token', 'xsrf-token'],
+  exposedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token', 'x-xsrf-token', 'xsrf-token'],
   credentials: true
 };
 
@@ -96,7 +97,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Log CORS configuration
 console.log('CORS configuration:', {
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   environment: process.env.NODE_ENV
 });
 
@@ -133,7 +134,17 @@ mongoose.connect(process.env.MONGODB_URI)
     console.error('MongoDB connection error:', error);
   });
 
+// Import routes
+const userRoutes = require('./routes/userRoutes');
+const trackingRoutes = require('./routes/trackingRoutes');
+
 // API Routes
+
+// Mount user routes
+app.use('/api/users', userRoutes);
+
+// Mount tracking routes
+app.use('/api/tracking', trackingRoutes);
 
 // Get all airdrops
 app.get('/api/airdrops', async (req, res) => {
@@ -459,13 +470,30 @@ app.delete('/api/airdrops/:id', async (req, res) => {
 // Add an update to an airdrop
 app.post('/api/airdrops/:id/updates', async (req, res) => {
   try {
+    console.log(`Adding update to airdrop with ID: ${req.params.id}`);
     const { content } = req.body;
 
     if (!content) {
       return res.status(400).json({ message: 'Update content is required' });
     }
 
-    const airdrop = await Airdrop.findOne({ airdropId: req.params.id });
+    // Try to find by MongoDB _id first
+    let airdrop;
+    try {
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        console.log(`Searching for airdrop by _id: ${req.params.id}`);
+        airdrop = await Airdrop.findById(req.params.id);
+        if (airdrop) {
+          console.log(`Found airdrop by _id: ${airdrop.title}`);
+        } else {
+          console.log('Airdrop not found by _id');
+        }
+      } else {
+        console.log(`ID ${req.params.id} is not a valid MongoDB ObjectID`);
+      }
+    } catch (err) {
+      console.error('Error finding airdrop:', err);
+    }
 
     if (!airdrop) {
       return res.status(404).json({ message: 'Airdrop not found' });
@@ -805,6 +833,9 @@ const clientRoutes = [
   '/airdrops/*',
   '/login',
   '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/reset-password/*',
   '/dashboard',
   '/dashboard/*',
   '/terms',

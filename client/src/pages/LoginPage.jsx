@@ -23,6 +23,7 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError('');
+    console.log('Login form submitted');
 
     // Basic validation
     if (!formData.email || !formData.password) {
@@ -30,10 +31,16 @@ const LoginPage = () => {
       return;
     }
 
+    console.log('Attempting to login with:', { email: formData.email });
+
     try {
+      // Call the login function directly
+      console.log('Calling login function...');
       await login(formData.email, formData.password);
+      console.log('Login successful, navigating to home page');
       navigate('/'); // Redirect to homepage after login
     } catch (err) {
+      console.error('Login error:', err);
       // Display specific error message
       if (err.message === 'User not found') {
         setFormError('No account found with this email or username. Please register first.');
@@ -66,10 +73,10 @@ const LoginPage = () => {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email field */}
+              {/* Email/Username field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email
+                  Email or Username
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -79,12 +86,12 @@ const LoginPage = () => {
                     </svg>
                   </div>
                   <input
-                    type="email"
+                    type="text"
                     id="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="Enter your email"
+                    placeholder="Enter your email or username"
                     className="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                     required
                   />
@@ -97,9 +104,9 @@ const LoginPage = () => {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password
                   </label>
-                  <a href="#" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors">
+                  <Link to="/forgot-password" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors">
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

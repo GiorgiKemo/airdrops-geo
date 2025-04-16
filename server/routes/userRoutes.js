@@ -6,6 +6,10 @@ const {
   getUserProfile,
   verifyToken,
 } = require('../controllers/userController');
+const {
+  requestPasswordReset,
+  resetPassword,
+} = require('../controllers/passwordResetController');
 const { protect } = require('../middleware/authMiddleware');
 const { authLimiter } = require('../middleware/rateLimitMiddleware');
 const {
@@ -27,6 +31,13 @@ router.route('/verify-token')
 // Alias for backward compatibility
 router.route('/verify')
   .get(protect, verifyToken);
+
+// Password reset routes
+router.route('/forgot-password')
+  .post(authLimiter, requestPasswordReset);
+
+router.route('/reset-password')
+  .post(authLimiter, resetPassword);
 
 // Protected routes
 router.route('/profile')

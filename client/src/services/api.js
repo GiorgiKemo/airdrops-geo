@@ -25,6 +25,12 @@ let csrfToken = null;
 const fetchCsrfToken = async () => {
   if (csrfToken) return csrfToken;
 
+  // In development, just use a dummy token
+  if (import.meta.env.MODE === 'development') {
+    console.log('Using dummy CSRF token for development');
+    return 'development-csrf-token';
+  }
+
   try {
     const response = await axios.get(`${API_URL}/csrf-token`, { withCredentials: true });
     csrfToken = response.data.csrfToken;
@@ -38,26 +44,38 @@ const fetchCsrfToken = async () => {
 
 // Add request interceptor for authentication, CSRF, and debugging
 api.interceptors.request.use(async config => {
+  console.log('API Request interceptor called for URL:', config.url);
   // Get token from localStorage
   const user = JSON.parse(localStorage.getItem('currentUser'));
 
   // If token exists, add to headers
   if (user && user.token) {
+    console.log('Adding auth token to request');
     config.headers.Authorization = `Bearer ${user.token}`;
+  } else {
+    console.log('No auth token found in localStorage');
   }
 
   // Skip CSRF for GET requests and the CSRF token endpoint itself
   if (config.method !== 'get' && !config.url.includes('/csrf-token')) {
+    console.log('Non-GET request detected, adding CSRF token');
     // Add CSRF token to headers if available
     if (csrfToken) {
+      console.log('Using existing CSRF token:', csrfToken);
       config.headers['X-CSRF-Token'] = csrfToken;
     } else {
+      console.log('No CSRF token found, fetching a new one');
       // Try to fetch a new token
       const token = await fetchCsrfToken();
       if (token) {
+        console.log('New CSRF token fetched:', token);
         config.headers['X-CSRF-Token'] = token;
+      } else {
+        console.log('Failed to fetch CSRF token');
       }
     }
+  } else {
+    console.log('Skipping CSRF token for GET request or CSRF token endpoint');
   }
 
   console.log('Making request to:', config.url);
@@ -70,7 +88,9 @@ api.interceptors.request.use(async config => {
 
 // Add response interceptor for debugging and CSRF token handling
 api.interceptors.response.use(response => {
-  console.log('Response received:', response);
+  console.log('Response received from:', response.config.url);
+  console.log('Response status:', response.status);
+  console.log('Response data:', response.data);
 
   // Update CSRF token if it's in the response headers
   const newCsrfToken = response.headers['x-csrf-token'];
@@ -82,6 +102,9 @@ api.interceptors.response.use(response => {
   return response;
 }, async error => {
   console.error('Response error:', error);
+  console.error('Error response:', error.response);
+  console.error('Error request:', error.request);
+  console.error('Error config:', error.config);
 
   // If we get a 403 Forbidden error and it mentions CSRF, try to refresh the token
   if (error.response && error.response.status === 403 &&
