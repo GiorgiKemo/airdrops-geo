@@ -103,6 +103,10 @@ console.log('CORS configuration:', {
   environment: process.env.NODE_ENV
 });
 
+// Log debug information
+const config = require('./config');
+console.log('Debug environment variables:', config.debug);
+
 // Request logging middleware
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();

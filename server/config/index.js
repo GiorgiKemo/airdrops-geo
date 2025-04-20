@@ -65,6 +65,25 @@ const config = {
     environment: process.env.NODE_ENV || 'development',
   },
 
+  // Email configuration
+  email: {
+    sendgridApiKey: process.env.SENDGRID_API_KEY || '',
+    fromEmail: process.env.EMAIL_FROM || 'noreply@airdrops-geo.com',
+    enabled: Boolean(process.env.SENDGRID_API_KEY),
+  },
+
+  // Debug environment variables
+  debug: {
+    sendgridApiKeyExists: Boolean(process.env.SENDGRID_API_KEY),
+    sendgridApiKeyLength: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.length : 0,
+    envVars: Object.keys(process.env).filter(key => !key.includes('SECRET') && !key.includes('KEY')),
+  },
+
+  // Client configuration
+  client: {
+    url: process.env.CLIENT_URL || 'http://localhost:5173',
+  },
+
   // Telegram configuration
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN || '',
