@@ -99,7 +99,9 @@ app.use(express.urlencoded({ extended: false }));
 
 // Log CORS configuration
 console.log('CORS configuration:', {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production'
+    ? 'https://airdrops-geo.onrender.com'
+    : 'http://localhost:5173'),
   environment: process.env.NODE_ENV
 });
 
