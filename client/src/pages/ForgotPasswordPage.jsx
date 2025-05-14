@@ -11,7 +11,7 @@ const ForgotPasswordPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     // Basic validation
     if (!email) {
       setError('Please enter your email address');
@@ -20,11 +20,17 @@ const ForgotPasswordPage = () => {
 
     try {
       setIsLoading(true);
-      await api.post('/users/forgot-password', { email });
+      console.log('Sending password reset request for email:', email);
+      const response = await api.post('/users/forgot-password', { email });
+      console.log('Password reset response:', response.data);
       setIsSubmitted(true);
     } catch (err) {
       console.error('Error requesting password reset:', err);
-      setError('An error occurred. Please try again later.');
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('An error occurred. Please try again later.');
+      }
     } finally {
       setIsLoading(false);
     }
