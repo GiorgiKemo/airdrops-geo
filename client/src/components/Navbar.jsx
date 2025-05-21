@@ -95,7 +95,7 @@ const Navbar = () => {
                     {user.username}
                   </span>
                   <button
-                    onClick={logout}
+                    onClick={() => logout(true)}
                     className="macos-button text-sm bg-[var(--macos-danger)]"
                   >
                     Logout

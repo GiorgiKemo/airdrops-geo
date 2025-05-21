@@ -1,12 +1,22 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const ForgotPasswordPage = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Ensure we don't redirect to home when on forgot password page
+  useEffect(() => {
+    // This will prevent the automatic redirect to home
+    // by calling logout with redirectToHome=false
+    logout(false);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
