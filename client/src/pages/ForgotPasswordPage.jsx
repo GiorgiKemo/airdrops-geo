@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -13,36 +14,79 @@ const ForgotPasswordPage = () => {
 
   // Ensure we don't redirect to home when on forgot password page
   useEffect(() => {
+    console.log('ForgotPasswordPage mounted');
     // This will prevent the automatic redirect to home
     // by calling logout with redirectToHome=false
     logout(false);
-  }, []);
+    console.log('Called logout(false) to prevent redirection');
+  }, [logout]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Form submitted');
     setError('');
 
     // Basic validation
     if (!email) {
       setError('Please enter your email address');
+      console.log('Email validation failed');
       return;
     }
 
     try {
       setIsLoading(true);
       console.log('Sending password reset request for email:', email);
-      const response = await api.post('/users/forgot-password', { email });
-      console.log('Password reset response:', response.data);
+
+      // Make the API call with detailed logging
+      console.log('API URL being used:', api.defaults.baseURL);
+      console.log('Full request URL:', `${api.defaults.baseURL}/users/forgot-password`);
+      console.log('Request payload:', { email });
+
+      let response;
+
+      // Try with our API service first
+      try {
+        console.log('Attempting with api service...');
+        response = await api.post('/users/forgot-password', { email });
+        console.log('API service call successful');
+      } catch (apiError) {
+        console.error('API service call failed:', apiError);
+
+        // If that fails, try with direct axios call
+        console.log('Attempting with direct axios call...');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        response = await axios.post(`${apiUrl}/api/users/forgot-password`, { email });
+        console.log('Direct axios call successful');
+      }
+
+      console.log('Password reset API call successful');
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
+
       setIsSubmitted(true);
+      console.log('Form marked as submitted');
     } catch (err) {
       console.error('Error requesting password reset:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response ? {
+          status: err.response.status,
+          data: err.response.data,
+          headers: err.response.headers
+        } : 'No response',
+        request: err.request ? 'Request exists' : 'No request'
+      });
+
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
+        console.log('Setting error from response:', err.response.data.message);
       } else {
         setError('An error occurred. Please try again later.');
+        console.log('Setting generic error message');
       }
     } finally {
       setIsLoading(false);
+      console.log('Loading state reset to false');
     }
   };
 

@@ -133,21 +133,34 @@ export const AuthProvider = ({ children }) => {
 
   // Logout user
   const logout = (redirectToHome = true) => {
+    console.log('AuthContext: logout called with redirectToHome =', redirectToHome);
+
+    // Check if user is already logged out
+    const currentUser = localStorage.getItem('currentUser');
+    console.log('AuthContext: currentUser in localStorage =', currentUser ? 'exists' : 'null');
+
     // Clear user data from localStorage first
     localStorage.removeItem('currentUser');
+    console.log('AuthContext: removed currentUser from localStorage');
 
     // Remove auth header
     delete axios.defaults.headers.common['Authorization'];
+    console.log('AuthContext: removed Authorization header');
 
     // Set user state to null
     setUser(null);
+    console.log('AuthContext: set user state to null');
 
     // Navigate to home page after logout only if redirectToHome is true
     if (redirectToHome) {
+      console.log('AuthContext: redirectToHome is true, will redirect to home page');
       // Use a small timeout to ensure state updates have been processed
       setTimeout(() => {
+        console.log('AuthContext: redirecting to home page now');
         window.location.href = '/';
       }, 100);
+    } else {
+      console.log('AuthContext: redirectToHome is false, staying on current page');
     }
   };
 
