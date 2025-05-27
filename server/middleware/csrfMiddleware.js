@@ -32,6 +32,20 @@ const csrfProtection = (req, res, next) => {
     return next();
   }
 
+  // Skip CSRF check for specific public endpoints that don't require authentication
+  // These endpoints are safe to access without CSRF protection
+  const publicEndpoints = [
+    '/api/users/forgot-password',
+    '/api/users/reset-password',
+    '/api/users/register',
+    '/api/users/login'
+  ];
+
+  if (publicEndpoints.includes(req.path)) {
+    logger.info(`Skipping CSRF check for public endpoint: ${req.method} ${req.path}`);
+    return next();
+  }
+
   // Skip CSRF check for all routes during development
   // This is a temporary solution to allow testing without CSRF tokens
   if (process.env.NODE_ENV !== 'production') {
