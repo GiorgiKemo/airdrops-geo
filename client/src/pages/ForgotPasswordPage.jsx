@@ -12,14 +12,13 @@ const ForgotPasswordPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Ensure we don't redirect to home when on forgot password page
+  // We don't need to call logout here as it might cause issues
   useEffect(() => {
     console.log('ForgotPasswordPage mounted');
-    // This will prevent the automatic redirect to home
-    // by calling logout with redirectToHome=false
-    logout(false);
-    console.log('Called logout(false) to prevent redirection');
-  }, [logout]);
+    // Just log that we're on the forgot password page
+    // No need to call logout as it might interfere with other functionality
+    console.log('On forgot password page - no redirection should occur');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,24 +43,10 @@ const ForgotPasswordPage = () => {
 
       let response;
 
-      // Skip the API service entirely and use a direct axios call
-      // This bypasses any CSRF token requirements
-      console.log('Using direct axios call to bypass CSRF token requirements...');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      console.log('API URL for direct call:', apiUrl);
-
-      // Create a custom axios instance for this request only
-      const directAxios = axios.create({
-        baseURL: apiUrl,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000
-      });
-
-      // Make the request
-      response = await directAxios.post('/api/users/forgot-password', { email });
-      console.log('Direct axios call successful');
+      // Use the regular API service
+      console.log('Using regular API service for forgot password request');
+      response = await api.post('/users/forgot-password', { email });
+      console.log('API call successful');
 
       console.log('Password reset API call successful');
       console.log('Response status:', response.status);
