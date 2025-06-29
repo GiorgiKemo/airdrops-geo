@@ -31,6 +31,9 @@ const Airdrop = require('./models/airdropModel');
 // Initialize Express app
 const app = express();
 
+// Trust proxy - needed for rate limiting behind a proxy (like Render)
+app.set('trust proxy', 1);
+
 // Set up middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

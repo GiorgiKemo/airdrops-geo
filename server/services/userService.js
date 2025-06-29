@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const config = require('../config');
 const emailService = require('./emailService');
+const logger = require('../utils/logger');
 
 /**
  * Service for handling user-related operations
