@@ -207,6 +207,17 @@ class UserService {
       throw new Error('Invalid or expired reset token');
     }
 
+    // Check if token is expired (MongoDB should auto-delete expired tokens, but double-check)
+    const tokenCreatedAt = new Date(resetToken.createdAt);
+    const now = new Date();
+    const tokenAgeInSeconds = Math.floor((now - tokenCreatedAt) / 1000);
+
+    if (tokenAgeInSeconds > 3600) { // 1 hour in seconds
+      // Delete the expired token
+      await PasswordResetToken.deleteOne({ _id: resetToken._id });
+      throw new Error('Invalid or expired reset token');
+    }
+
     // Find the user
     const user = await User.findById(resetToken.userId);
 

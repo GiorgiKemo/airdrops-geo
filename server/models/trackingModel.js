@@ -17,6 +17,10 @@ const trackingSchema = mongoose.Schema(
   }
 );
 
+// Add index for userId (already has implicit index due to 'unique: true')
+// Add index for airdropIds to improve performance when checking if an airdrop is tracked
+trackingSchema.index({ 'airdropIds': 1 });
+
 const Tracking = mongoose.model('Tracking', trackingSchema);
 
 module.exports = Tracking;

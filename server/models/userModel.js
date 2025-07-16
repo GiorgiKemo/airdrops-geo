@@ -47,6 +47,14 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// Add indexes for frequently queried fields
+// Username and email already have implicit indexes due to 'unique: true'
+// Add index for role to optimize queries that filter by role
+userSchema.index({ role: 1 });
+
+// Add compound index for username and role (for admin user searches)
+userSchema.index({ username: 1, role: 1 });
+
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

@@ -14,6 +14,9 @@ const { v4: uuidv4 } = require('uuid');
 const config = require('./config');
 const logger = require('./utils/logger');
 
+// Import services
+const cacheService = require('./services/cacheService');
+
 // Import middleware
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 const { apiLimiter } = require('./middleware/rateLimitMiddleware');
@@ -229,6 +232,15 @@ const startServer = async () => {
     // Connect to MongoDB
     await mongoose.connect(config.db.uri, config.db.options);
     logger.info('Connected to MongoDB');
+
+    // Log Redis configuration
+    logger.info(`Redis caching: ${config.redis.enabled ? 'enabled' : 'disabled'}`);
+    if (config.redis.enabled) {
+      logger.info(`Redis URL: ${config.redis.url.replace(/:[^:]*@/, ':****@')}`);
+      logger.info(`Redis default TTL: ${config.redis.defaultTTL} seconds`);
+    } else {
+      logger.info('Using in-memory cache fallback');
+    }
 
     // Create initial admin user
     await createInitialAdminUser();
