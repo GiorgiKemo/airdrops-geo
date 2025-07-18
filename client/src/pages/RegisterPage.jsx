@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { validateField, getPasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from '../utils/validation';
 
 const RegisterPage = () => {
@@ -21,6 +22,7 @@ const RegisterPage = () => {
 
   const { register, loading, error } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
 
   // Update password strength when password changes
   useEffect(() => {
@@ -98,10 +100,18 @@ const RegisterPage = () => {
 
     try {
       await register(formData.username, formData.email, formData.password);
-      navigate('/'); // Redirect to homepage after registration
+
+      // Show success toast notification
+      toast.success('Registration successful! Welcome to Airdrops.geo.');
+
+      // Redirect to homepage after registration
+      navigate('/');
     } catch (err) {
       const message = err.message || 'Registration failed';
       setFormError(message);
+
+      // Show error toast notification
+      toast.error(message);
 
       // Check for specific error types and update field errors
       if (message.includes('Email already in use')) {

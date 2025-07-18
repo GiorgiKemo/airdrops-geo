@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { useToast } from '../context/ToastContext';
 
 const ForgotPasswordStandalone = () => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const toast = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,15 +39,24 @@ const ForgotPasswordStandalone = () => {
       console.log('Password reset API call successful');
       console.log('Response:', response.data);
 
+      // Show success toast notification
+      toast.success('Password reset link sent. Please check your email.');
+
       setIsSubmitted(true);
     } catch (err) {
       console.error('Error requesting password reset:', err);
 
+      let errorMessage = 'An error occurred. Please try again later.';
+
       if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
-      } else {
-        setError('An error occurred. Please try again later.');
+        errorMessage = err.response.data.message;
       }
+
+      // Set error state for form display
+      setError(errorMessage);
+
+      // Show error toast notification
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
