@@ -9,10 +9,12 @@ const compression = require('compression');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
+const swaggerUi = require('swagger-ui-express');
 
 // Import configuration
 const config = require('./config');
 const logger = require('./utils/logger');
+const swaggerSpec = require('./config/swagger');
 
 // Import services
 const cacheService = require('./services/cacheService');
@@ -26,6 +28,7 @@ const { csrfProtection, setCsrfToken } = require('./middleware/csrfMiddleware');
 const airdropRoutes = require('./routes/airdropRoutes');
 const userRoutes = require('./routes/userRoutes');
 const trackingRoutes = require('./routes/trackingRoutes');
+const healthRoutes = require('./routes/healthRoutes');
 
 // Import models
 const User = require('./models/userModel');
@@ -103,6 +106,18 @@ app.use('/api', apiLimiter); // Apply rate limiting to all API routes
 app.get('/api/csrf-token', setCsrfToken, (req, res) => {
   res.json({ csrfToken: res.locals.csrfToken });
 });
+
+// Health check endpoint - exempt from CSRF protection
+app.use('/api/health', healthRoutes);
+
+// API Documentation - exempt from CSRF protection
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  swaggerOptions: {
+    persistAuthorization: true,
+  },
+}));
 
 // Set CSRF token for all routes
 app.use(setCsrfToken);
