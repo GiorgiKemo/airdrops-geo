@@ -166,6 +166,11 @@ const updateAirdrop = async (req, res) => {
     const sendTelegramNotification = req.body.sendTelegramNotification === true;
     const skipTelegramNotification = req.body.skipTelegramNotification === true || existingAirdrop.skipTelegramNotification === true;
 
+    logger.info(`Updating airdrop ${req.params.id} with sendTelegramNotification=${sendTelegramNotification}, skipTelegramNotification=${skipTelegramNotification}`);
+    logger.info(`Request body: ${JSON.stringify(req.body)}`);
+    logger.info(`Existing airdrop skipTelegramNotification: ${existingAirdrop.skipTelegramNotification}`);
+
+
     // Remove these flags from the update data
     const updateData = { ...req.body };
     delete updateData.sendTelegramNotification;

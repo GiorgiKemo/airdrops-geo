@@ -609,6 +609,23 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
         </div>
       </div>
 
+      <div className="flex items-center mb-4">
+        <input
+          type="checkbox"
+          id="skipTelegramNotification"
+          name="skipTelegramNotification"
+          checked={formData.skipTelegramNotification}
+          onChange={(e) => setFormData({...formData, skipTelegramNotification: e.target.checked})}
+          className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        />
+        <label
+          htmlFor="skipTelegramNotification"
+          className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+        >
+          Skip Telegram Notification
+        </label>
+      </div>
+
       <div>
         <button
           type="submit"

@@ -184,6 +184,20 @@ export const airdropService = {
   // Update existing airdrop
   updateAirdrop: async (id, airdropData, headers = {}) => {
     try {
+      console.log('Updating airdrop with data:', airdropData);
+      console.log('skipTelegramNotification:', airdropData.skipTelegramNotification);
+
+      // Make sure skipTelegramNotification is properly set
+      if (airdropData.skipTelegramNotification === undefined) {
+        airdropData.skipTelegramNotification = false;
+      }
+
+      // Set sendTelegramNotification to the opposite of skipTelegramNotification
+      // unless it's explicitly set
+      if (airdropData.sendTelegramNotification === undefined) {
+        airdropData.sendTelegramNotification = !airdropData.skipTelegramNotification;
+      }
+
       const response = await api.put(`/airdrops/${id}`, airdropData, { headers });
       return response.data;
     } catch (error) {
@@ -214,11 +228,15 @@ export const airdropService = {
       };
 
       // Set sendTelegramNotification based on skipTelegramNotification flag
+      console.log('Adding airdrop update with skipTelegramNotification:', skipTelegramNotification);
+
       const response = await api.post(`/airdrops/${id}/updates`, {
         content: updateContent,
         sendTelegramNotification: !skipTelegramNotification,
         skipTelegramNotification: skipTelegramNotification
       }, { headers });
+
+      console.log('Airdrop update response:', response.data);
       return response.data;
     } catch (error) {
       console.error(`Error adding update to airdrop with ID ${id}:`, error);
