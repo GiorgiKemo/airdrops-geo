@@ -230,10 +230,13 @@ export const airdropService = {
       // Set sendTelegramNotification based on skipTelegramNotification flag
       console.log('Adding airdrop update with skipTelegramNotification:', skipTelegramNotification);
 
+      // Ensure skipTelegramNotification is a boolean
+      const skipTelegram = Boolean(skipTelegramNotification);
+
       const response = await api.post(`/airdrops/${id}/updates`, {
         content: updateContent,
-        sendTelegramNotification: !skipTelegramNotification,
-        skipTelegramNotification: skipTelegramNotification
+        sendTelegramNotification: !skipTelegram,
+        skipTelegramNotification: skipTelegram
       }, { headers });
 
       console.log('Airdrop update response:', response.data);
