@@ -154,19 +154,25 @@ class AirdropService {
       await airdrop.save();
 
       // Check if we should skip Telegram notification
-      // Convert to boolean explicitly to handle string values from form submissions
-      const skipTelegramNotification = options.skipTelegramNotification === true || options.skipTelegramNotification === 'true';
+      // Handle all possible truthy values for skipTelegramNotification
+      const skipTelegramNotification = (
+        options.skipTelegramNotification === true ||
+        options.skipTelegramNotification === 'true' ||
+        options.skipTelegramNotification === 1 ||
+        options.skipTelegramNotification === '1'
+      );
 
-      // If sendTelegramNotification is explicitly set, use it; otherwise, it's the opposite of skipTelegramNotification
-      const sendTelegramNotification = options.sendTelegramNotification !== undefined ?
-        (options.sendTelegramNotification === true || options.sendTelegramNotification === 'true') :
-        !skipTelegramNotification;
+      // Force sendTelegramNotification to be the opposite of skipTelegramNotification
+      // This ensures that if skipTelegramNotification is true, we never send a notification
+      const sendTelegramNotification = !skipTelegramNotification;
 
-      console.log(`Airdrop update options: skipTelegramNotification=${skipTelegramNotification}, sendTelegramNotification=${sendTelegramNotification}`);
-      console.log('Full options:', options);
+      console.log(`FINAL DECISION: skipTelegramNotification=${skipTelegramNotification}, sendTelegramNotification=${sendTelegramNotification}`);
+      console.log('Raw options received:', options);
+      console.log('skipTelegramNotification type:', typeof options.skipTelegramNotification);
+      console.log('skipTelegramNotification value:', options.skipTelegramNotification);
 
-      // Send Telegram notification for the update if not skipped
-      if (!skipTelegramNotification && sendTelegramNotification) {
+      // Send Telegram notification for the update if and only if skipTelegramNotification is false
+      if (sendTelegramNotification) {
         try {
           const telegramService = require('./telegramService');
           const telegramResult = await telegramService.sendAirdropUpdateToTelegram(
