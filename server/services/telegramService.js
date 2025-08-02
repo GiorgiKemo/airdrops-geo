@@ -201,8 +201,14 @@ const sendAirdropToTelegram = async (airdrop) => {
  * @returns {Promise<Object>} - Result object with success status and message ID
  */
 const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
-  const { updateContent, isExplicitUpdate = false } = options;
+  const { updateContent, isExplicitUpdate = false, skipTelegramNotification = false } = options;
   const isSpecificUpdate = !!updateContent;
+
+  // Check if we should skip the Telegram notification
+  if (skipTelegramNotification === true) {
+    console.log('Skipping Telegram notification as requested by skipTelegramNotification flag');
+    return { success: true, messageId: null, skipped: true };
+  }
 
   console.log('Attempting to send airdrop update to Telegram:', {
     botInitialized: !!bot,
@@ -211,7 +217,8 @@ const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
     airdropTitle: airdrop?.title || 'No title',
     originalMessageId: airdrop?.telegram?.messageId || 'None',
     isSpecificUpdate: isSpecificUpdate,
-    isExplicitUpdate: isExplicitUpdate
+    isExplicitUpdate: isExplicitUpdate,
+    skipTelegramNotification: skipTelegramNotification
   });
 
   // Always try to send the notification, even if the bot wasn't initialized
