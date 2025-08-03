@@ -238,7 +238,8 @@ export const airdropService = {
       const sendTelegram = !skipTelegram;
 
       console.log('Final values being sent to server:');
-      console.log('- skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
+      console.log('- Original skipTelegramNotification:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
+      console.log('- Processed skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
       console.log('- sendTelegramNotification:', sendTelegram, 'type:', typeof sendTelegram);
 
       const response = await api.post(`/airdrops/${id}/updates`, {

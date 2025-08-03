@@ -23,7 +23,8 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
       // Call the onSubmit function passed from parent with skipTelegramNotification flag
       // Force to boolean with strict comparison
       const skipTelegram = skipTelegramNotification === true ? true : false;
-      console.log('Submitting update with skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
+      console.log('Submitting update with skipTelegramNotification state:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
+      console.log('Processed skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
       await onSubmit(updateContent, skipTelegram);
 
       // Reset form
@@ -76,6 +77,7 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
               // Force to boolean with double negation
               const isChecked = !!e.target.checked;
               console.log('Checkbox changed to:', isChecked, 'type:', typeof isChecked);
+              console.log('Original e.target.checked:', e.target.checked, 'type:', typeof e.target.checked);
               setSkipTelegramNotification(isChecked);
             }}
             className="h-6 w-6 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
