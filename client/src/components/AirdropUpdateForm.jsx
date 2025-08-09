@@ -20,11 +20,17 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
       setIsSubmitting(true);
       setError('');
 
+      // IMPORTANT: Log the current state of the checkbox before processing
+      console.log('FORM SUBMISSION - Current checkbox state:', skipTelegramNotification);
+      console.log('FORM SUBMISSION - Checkbox state type:', typeof skipTelegramNotification);
+
       // Call the onSubmit function passed from parent with skipTelegramNotification flag
       // Force to boolean with strict comparison
-      const skipTelegram = skipTelegramNotification === true ? true : false;
-      console.log('Submitting update with skipTelegramNotification state:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
-      console.log('Processed skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
+      // IMPORTANT: Use double negation to ensure it's a true boolean
+      const skipTelegram = !!skipTelegramNotification;
+      console.log('FORM SUBMISSION - Processed skipTelegramNotification:', skipTelegram, 'type:', typeof skipTelegram);
+
+      // Make sure we're passing a true boolean value
       await onSubmit(updateContent, skipTelegram);
 
       // Reset form

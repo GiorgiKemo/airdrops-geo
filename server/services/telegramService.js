@@ -204,18 +204,27 @@ const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
   const { updateContent, isExplicitUpdate = false, skipTelegramNotification = false } = options;
   const isSpecificUpdate = !!updateContent;
 
-  // Check if we should skip the Telegram notification
+  // CRITICAL FIX: Check if we should skip the Telegram notification
   // Handle all possible truthy values for skipTelegramNotification
+  console.log('TELEGRAM SERVICE - Received skipTelegramNotification:', skipTelegramNotification);
+  console.log('TELEGRAM SERVICE - skipTelegramNotification type:', typeof skipTelegramNotification);
+
+  // Check for all possible truthy values
   const shouldSkip = (
     skipTelegramNotification === true ||
     skipTelegramNotification === 'true' ||
     skipTelegramNotification === 1 ||
-    skipTelegramNotification === '1'
+    skipTelegramNotification === '1' ||
+    skipTelegramNotification === 'on' || // HTML checkbox can send 'on'
+    skipTelegramNotification === 'yes' ||
+    String(skipTelegramNotification).toLowerCase() === 'true'
   );
 
+  console.log('TELEGRAM SERVICE - Should skip notification?', shouldSkip);
+
   if (shouldSkip) {
-    console.log('Skipping Telegram notification as requested by skipTelegramNotification flag');
-    console.log('skipTelegramNotification value:', skipTelegramNotification, 'type:', typeof skipTelegramNotification);
+    console.log('TELEGRAM SERVICE - Skipping Telegram notification as requested');
+    console.log('TELEGRAM SERVICE - skipTelegramNotification value:', skipTelegramNotification);
     return { success: true, messageId: null, skipped: true };
   }
 
