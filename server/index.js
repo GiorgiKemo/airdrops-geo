@@ -410,17 +410,19 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
       { new: true }
     );
 
-    // For bell updates, explicitly send the notification if sendTelegramNotification is true
+    // For bell updates and edit button updates, explicitly send the notification if sendTelegramNotification is true
     // This ensures we respect the skipTelegramNotification flag
     if (airdropData.sendTelegramNotification === true) {
       try {
-        console.log('Explicitly sending bell update to Telegram');
+        console.log('Explicitly sending update to Telegram');
+        console.log('Update type:', isBellUpdate ? 'Bell Update' : isEditButton ? 'Edit Button Update' : 'Regular Edit');
         console.log('skipTelegramNotification flag:', airdropData.skipTelegramNotification);
         console.log('sendTelegramNotification flag:', airdropData.sendTelegramNotification);
 
         const telegramService = require('./services/telegramService');
         const result = await telegramService.sendAirdropUpdateToTelegram(updatedAirdrop, {
           isExplicitUpdate: true,
+          updateType: isBellUpdate ? 'bell' : isEditButton ? 'edit' : 'regular',
           skipTelegramNotification: false // We already checked this condition above
         });
 
