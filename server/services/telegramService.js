@@ -201,8 +201,17 @@ const sendAirdropToTelegram = async (airdrop) => {
  * @returns {Promise<Object>} - Result object with success status and message ID
  */
 const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
-  const { updateContent, isExplicitUpdate = false, skipTelegramNotification = false } = options;
+  const { updateContent, isExplicitUpdate = false, skipTelegramNotification = false, forceNotification = false, updateType = 'regular' } = options;
   const isSpecificUpdate = !!updateContent;
+
+  // Log all options for debugging
+  console.log('TELEGRAM SERVICE - Options received:', {
+    updateContent: updateContent ? 'provided' : 'not provided',
+    isExplicitUpdate,
+    skipTelegramNotification,
+    forceNotification,
+    updateType
+  });
 
   // CRITICAL FIX: Check if we should skip the Telegram notification
   // Handle all possible truthy values for skipTelegramNotification
@@ -210,7 +219,7 @@ const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
   console.log('TELEGRAM SERVICE - skipTelegramNotification type:', typeof skipTelegramNotification);
 
   // Check for all possible truthy values
-  const shouldSkip = (
+  let shouldSkip = (
     skipTelegramNotification === true ||
     skipTelegramNotification === 'true' ||
     skipTelegramNotification === 1 ||
@@ -220,7 +229,21 @@ const sendAirdropUpdateToTelegram = async (airdrop, options = {}) => {
     String(skipTelegramNotification).toLowerCase() === 'true'
   );
 
+  // CRITICAL FIX: If forceNotification is true, override the shouldSkip flag
+  if (forceNotification) {
+    console.log('TELEGRAM SERVICE - Force notification flag is set, overriding skip flag');
+    shouldSkip = false;
+  }
+
+  // CRITICAL FIX: If this is an edit button update (updateType === 'edit'), ensure notification is sent when skipTelegramNotification is false
+  if (updateType === 'edit' && !shouldSkip) {
+    console.log('TELEGRAM SERVICE - Edit button update without skip flag, ensuring notification is sent');
+    shouldSkip = false;
+  }
+
   console.log('TELEGRAM SERVICE - Should skip notification?', shouldSkip);
+  console.log('TELEGRAM SERVICE - Force notification?', forceNotification);
+  console.log('TELEGRAM SERVICE - Update type:', updateType);
 
   if (shouldSkip) {
     console.log('TELEGRAM SERVICE - Skipping Telegram notification as requested');
