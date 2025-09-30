@@ -39,11 +39,13 @@ export default defineConfig(({ mode }) => ({
     },
     // Enable source map for better debugging in production
     sourcemap: true,
-    // Use the default minifier (esbuild) which is faster
-    minify: 'esbuild',
-    esbuildOptions: {
-      // Drop console logs and debugger statements in production
-      drop: ['console', 'debugger']
+    // Use Terser for minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
     }
   }
 }))
