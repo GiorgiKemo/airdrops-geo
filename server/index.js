@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
+const cookieParser = require('cookie-parser');
 
 // Load environment variables
 dotenv.config();
@@ -99,6 +100,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser()); // Add cookie parser middleware
 
 // Log CORS configuration
 console.log('CORS configuration:', {
