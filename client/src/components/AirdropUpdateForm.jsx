@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 
-const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
+const AirdropUpdateForm = ({ onSubmit, onCancel, loading }) => {
   const [updateContent, setUpdateContent] = useState('');
   const [skipTelegramNotification, setSkipTelegramNotification] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,7 +70,7 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
             placeholder="Enter update details, new tasks, or important information..."
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
             rows={4}
-            disabled={isSubmitting}
+            disabled={isSubmitting || loading}
           />
         </div>
 
@@ -87,7 +87,7 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
               setSkipTelegramNotification(isChecked);
             }}
             className="h-6 w-6 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loading}
           />
           <div className="ml-2">
             <label
@@ -107,16 +107,16 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
             type="button"
             onClick={onCancel}
             className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loading}
           >
             Cancel
           </button>
           <button
             type="submit"
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 dark:bg-indigo-700 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none"
-            disabled={isSubmitting}
+            disabled={isSubmitting || loading}
           >
-            {isSubmitting ? 'Submitting...' : 'Add Update'}
+            {isSubmitting || loading ? 'Submitting...' : 'Add Update'}
           </button>
         </div>
       </form>
@@ -126,7 +126,13 @@ const AirdropUpdateForm = ({ onSubmit, onCancel }) => {
 
 AirdropUpdateForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired
+  onCancel: PropTypes.func,
+  loading: PropTypes.bool
+};
+
+AirdropUpdateForm.defaultProps = {
+  onCancel: () => {},
+  loading: false
 };
 
 export default AirdropUpdateForm;
