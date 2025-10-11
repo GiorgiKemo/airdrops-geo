@@ -182,7 +182,7 @@ export const airdropService = {
   },
 
   // Update existing airdrop
-  updateAirdrop: async (id, airdropData, headers = {}) => {
+  updateAirdrop: async (id, airdropData, headers = {}, useEditButton = false) => {
     try {
       console.log('Updating airdrop with data:', airdropData);
       console.log('skipTelegramNotification:', airdropData.skipTelegramNotification);
@@ -200,7 +200,7 @@ export const airdropService = {
 
       // CRITICAL FIX: Add editButton=true parameter to the URL to indicate this is an edit button update
       // This will ensure the server respects the skipTelegramNotification flag
-      console.log('Sending editButton=true parameter to server');
+      console.log('useEditButton parameter:', useEditButton);
       console.log('skipTelegramNotification:', airdropData.skipTelegramNotification);
       console.log('sendTelegramNotification:', airdropData.sendTelegramNotification);
 
@@ -209,12 +209,19 @@ export const airdropService = {
         airdropData.sendTelegramNotification = true;
       }
 
-      // Add notifyTelegram=true parameter to force the server to send a notification when skipTelegramNotification is false
+      // Add query parameters
       const queryParams = new URLSearchParams();
-      queryParams.append('editButton', 'true');
+
+      // Always add editButton=true if useEditButton is true or for status changes
+      if (useEditButton || airdropData.status) {
+        console.log('Adding editButton=true parameter');
+        queryParams.append('editButton', 'true');
+      }
 
       // If skipTelegramNotification is false, also add notifyTelegram=true to force a notification
-      if (airdropData.skipTelegramNotification === false) {
+      // But only if we're not doing a status change from the detail page
+      if (airdropData.skipTelegramNotification === false && !airdropData.status) {
+        console.log('Adding notifyTelegram=true parameter');
         queryParams.append('notifyTelegram', 'true');
       }
 
