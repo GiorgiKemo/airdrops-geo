@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useDisplay } from '../context/DisplayContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { airdropService } from '../services/api';
-import AirdropCard from '../components/AirdropCard';
+import VirtualizedAirdropList from '../components/VirtualizedAirdropList';
 import AirdropsGridSkeleton from '../components/skeletons/AirdropsGridSkeleton';
 import SEO from '../components/SEO';
 import { FaSearch, FaFilter } from 'react-icons/fa';
@@ -97,75 +97,82 @@ const HomePage = () => {
   }, []);
 
   // Filter airdrops based on status, search term, and cost filter
-  let filteredAirdrops = [];
+  // Use useMemo to optimize filtering and sorting
+  const filteredAirdrops = useMemo(() => {
+    let result = [];
 
-  if (filter === 'all') {
-    // For 'all' filter, get all airdrops but sort active ones with most views first
-    filteredAirdrops = [...airdrops].sort((a, b) => {
-      // First prioritize active status
-      if (a.status === 'active' && b.status !== 'active') return -1;
-      if (b.status === 'active' && a.status !== 'active') return 1;
+    // Step 1: Apply status filter
+    if (filter === 'all') {
+      // For 'all' filter, get all airdrops but sort active ones with most views first
+      result = [...airdrops].sort((a, b) => {
+        // First prioritize active status
+        if (a.status === 'active' && b.status !== 'active') return -1;
+        if (b.status === 'active' && a.status !== 'active') return 1;
 
-      // If both are active or both are not active, sort by views
-      if (a.status === 'active' && b.status === 'active') {
-        return (b.views || 0) - (a.views || 0); // Sort by views (highest first)
-      }
+        // If both are active or both are not active, sort by views
+        if (a.status === 'active' && b.status === 'active') {
+          return (b.views || 0) - (a.views || 0); // Sort by views (highest first)
+        }
 
-      // For non-active airdrops, maintain default order
-      return 0;
-    });
-  } else if (filter === 'claim') {
-    // For 'claim' filter, show airdrops with 'claim' status
-    filteredAirdrops = airdrops.filter(airdrop => airdrop.status === 'claim');
-  } else if (filter === 'popular') {
-    // For 'popular' filter, show all airdrops sorted by views (highest first)
-    filteredAirdrops = [...airdrops].sort((a, b) => (b.views || 0) - (a.views || 0));
-  } else if (filter === 'recent') {
-    // For 'recent' filter, show all airdrops sorted by creation date (newest first)
-    filteredAirdrops = [...airdrops].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  } else {
-    // For other filters (active, upcoming, ended), filter by status
-    filteredAirdrops = airdrops.filter(airdrop => airdrop.status === filter);
-  }
+        // For non-active airdrops, maintain default order
+        return 0;
+      });
+    } else if (filter === 'claim') {
+      // For 'claim' filter, show airdrops with 'claim' status
+      result = airdrops.filter(airdrop => airdrop.status === 'claim');
+    } else if (filter === 'popular') {
+      // For 'popular' filter, show all airdrops sorted by views (highest first)
+      result = [...airdrops].sort((a, b) => (b.views || 0) - (a.views || 0));
+    } else if (filter === 'recent') {
+      // For 'recent' filter, show all airdrops sorted by creation date (newest first)
+      result = [...airdrops].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else {
+      // For other filters (active, upcoming, ended), filter by status
+      result = airdrops.filter(airdrop => airdrop.status === filter);
+    }
 
-  // If we're filtering for upcoming airdrops, sort them by start date (soonest first)
-  if (filter === 'upcoming') {
-    filteredAirdrops = [...filteredAirdrops].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-  }
+    // Step 2: Apply additional sorting for upcoming airdrops
+    if (filter === 'upcoming') {
+      result = [...result].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    }
 
-  // Apply search filter if search term exists
-  if (searchTerm.trim() !== '') {
-    filteredAirdrops = filteredAirdrops.filter(airdrop =>
-      airdrop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      airdrop.token.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      airdrop.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
+    // Step 3: Apply search filter if search term exists
+    if (searchTerm.trim() !== '') {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      result = result.filter(airdrop =>
+        airdrop.title.toLowerCase().includes(lowerSearchTerm) ||
+        airdrop.token.toLowerCase().includes(lowerSearchTerm) ||
+        airdrop.description.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
 
-  // Apply cost filter
-  if (costFilter !== 'all') {
-    filteredAirdrops = filteredAirdrops.filter(airdrop => {
-      // If the airdrop has no costType field (for backward compatibility), assume it's free
-      if (!airdrop.costType && costFilter === 'free') {
-        return true;
-      }
+    // Step 4: Apply cost filter
+    if (costFilter !== 'all') {
+      result = result.filter(airdrop => {
+        // If the airdrop has no costType field (for backward compatibility), assume it's free
+        if (!airdrop.costType && costFilter === 'free') {
+          return true;
+        }
 
-      // Match the exact costType
-      return airdrop.costType === costFilter;
-    });
-  }
+        // Match the exact costType
+        return airdrop.costType === costFilter;
+      });
+    }
 
-  // For all filters except 'ended', rank ended airdrops at the bottom
-  if (filter !== 'ended') {
-    filteredAirdrops = [...filteredAirdrops].sort((a, b) => {
-      // If a is ended and b is not, a should come after b
-      if (a.status === 'ended' && b.status !== 'ended') return 1;
-      // If b is ended and a is not, b should come after a
-      if (b.status === 'ended' && a.status !== 'ended') return -1;
-      // Otherwise maintain the current order
-      return 0;
-    });
-  }
+    // Step 5: For all filters except 'ended', rank ended airdrops at the bottom
+    if (filter !== 'ended') {
+      result = [...result].sort((a, b) => {
+        // If a is ended and b is not, a should come after b
+        if (a.status === 'ended' && b.status !== 'ended') return 1;
+        // If b is ended and a is not, b should come after a
+        if (b.status === 'ended' && a.status !== 'ended') return -1;
+        // Otherwise maintain the current order
+        return 0;
+      });
+    }
+
+    return result;
+  }, [airdrops, filter, searchTerm, costFilter]); // Dependencies for useMemo
 
   return (
     <>
@@ -399,77 +406,14 @@ const HomePage = () => {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col h-auto max-h-[calc(100vh-14rem)]">
-          <div ref={cardContainerRef} className="scrollable-hidden px-0 py-1 overflow-y-auto custom-scrollbar h-full">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
-              {filteredAirdrops.slice(0, displayCount).map((airdrop, index) => (
-                <div key={airdrop._id} className="transform-gpu p-1 h-[12rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem] airdrop-card" ref={index === displayCount - 6 ? newCardsRef : null}>
-                  <AirdropCard airdrop={airdrop} />
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="flex flex-col h-auto" style={{ height: 'calc(100vh - 14rem)' }}>
+          {/* Use the virtualized list component for better performance */}
+          <VirtualizedAirdropList
+            airdrops={filteredAirdrops}
+            className="h-full"
+          />
 
-          <div className="flex justify-center py-4 gap-4 flex-wrap text-center w-full overflow-visible">
-            {displayCount > initialDisplayCount && (
-              <button
-                onClick={() => {
-                  // First scroll the whole page to the top with macOS-like smooth scrolling
-                  window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                  });
-
-                  // Also scroll the card container to the top with macOS-like smooth scrolling
-                  if (cardContainerRef.current) {
-                    cardContainerRef.current.scrollTo({
-                      top: 0,
-                      behavior: 'smooth'
-                    });
-                  }
-
-                  // Then reset the display count after a small delay
-                  // This ensures the scroll happens before the cards disappear
-                  setTimeout(() => {
-                    setDisplayCount(initialDisplayCount);
-                  }, 300);
-                }}
-                className="macos-button bg-[var(--macos-secondary)] text-xs sm:text-sm py-2 px-6 sm:py-2.5 sm:px-8 w-auto min-w-[120px] font-bold whitespace-nowrap overflow-visible"
-              >
-                View Less ↑
-              </button>
-            )}
-            {filteredAirdrops.length > displayCount && (
-              <button
-                onClick={() => {
-                  // First increase the display count
-                  setDisplayCount(displayCount + 6);
-
-                  // Then scroll to show the new cards
-                  setTimeout(() => {
-                    // Find the last card of the previous set
-                    const lastPreviousCard = document.querySelector(`.airdrop-card:nth-child(${displayCount})`);
-
-                    if (lastPreviousCard && cardContainerRef.current) {
-                      // Get the position of the last previous card
-                      const containerRect = cardContainerRef.current.getBoundingClientRect();
-                      const cardRect = lastPreviousCard.getBoundingClientRect();
-                      const scrollTop = cardRect.top - containerRect.top + cardContainerRef.current.scrollTop;
-
-                      // Scroll to position the last previous card at the top
-                      cardContainerRef.current.scrollTo({
-                        top: scrollTop,
-                        behavior: 'smooth'
-                      });
-                    }
-                  }, 50);
-                }}
-                className="macos-button text-xs sm:text-sm py-2 px-6 sm:py-2.5 sm:px-8 w-auto min-w-[120px] font-bold whitespace-nowrap overflow-visible"
-              >
-                View More ↓
-              </button>
-            )}
-          </div>
+          {/* No pagination buttons needed with virtualization */}
         </div>
       )}
 
