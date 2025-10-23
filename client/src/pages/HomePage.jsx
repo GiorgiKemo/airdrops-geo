@@ -39,13 +39,15 @@ const HomePage = () => {
   useEffect(() => {
     const fetchAirdrops = async () => {
       try {
+        console.log('Fetching airdrops...');
         setLoading(true);
         const data = await airdropService.getAirdrops();
+        console.log('Airdrops fetched successfully:', { count: data?.length || 0 });
         setAirdrops(data);
         setError(null);
       } catch (err) {
+        console.error('Error fetching airdrops:', err);
         setError('Failed to fetch airdrops. Please try again later.');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -99,6 +101,13 @@ const HomePage = () => {
   // Filter airdrops based on status, search term, and cost filter
   // Use useMemo to optimize filtering and sorting
   const filteredAirdrops = useMemo(() => {
+    // Safety check for empty or undefined airdrops
+    if (!airdrops || !Array.isArray(airdrops) || airdrops.length === 0) {
+      console.log('No airdrops available for filtering');
+      return [];
+    }
+
+    console.log('Filtering airdrops:', { count: airdrops.length, filter });
     let result = [];
 
     // Step 1: Apply status filter
@@ -407,6 +416,11 @@ const HomePage = () => {
         </div>
       ) : (
         <div className="flex flex-col h-auto" style={{ height: 'calc(100vh - 14rem)' }}>
+          {/* Debug info */}
+          <div className="text-xs text-gray-500 mb-2">
+            Filtered airdrops: {filteredAirdrops.length}
+          </div>
+
           {/* Use the virtualized list component for better performance */}
           <VirtualizedAirdropList
             airdrops={filteredAirdrops}
