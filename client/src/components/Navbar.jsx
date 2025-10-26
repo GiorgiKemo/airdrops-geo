@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import DarkModeToggle from './DarkModeToggle';
 import { useAuth } from '../context/AuthContext';
 import { useDisplay } from '../context/DisplayContext';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
+  const { pathname } = location;
 
   // Debug user role
   console.log('Navbar - Current user:', user);
@@ -36,7 +38,7 @@ const Navbar = () => {
             to="/"
             className="text-xl font-bold text-[var(--macos-text)] tracking-tight"
             onClick={(e) => {
-              if (window.location.pathname === '/') {
+              if (pathname === '/') {
                 e.preventDefault();
                 // Reset display count to initial value
                 resetDisplayCount();
@@ -71,17 +73,38 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/" className="text-[var(--macos-text)] hover:text-[var(--macos-primary)] px-2 py-1 rounded-md hover:bg-[var(--macos-hover)] transition-colors text-sm">
+            <Link
+              to="/"
+              className={`px-2 py-1 rounded-md transition-colors text-sm ${pathname === '/'
+                ? 'bg-[var(--macos-hover)] text-[var(--macos-primary)] font-medium'
+                : 'text-[var(--macos-text)] hover:text-[var(--macos-primary)] hover:bg-[var(--macos-hover)]'}`}
+              onClick={() => {
+                if (pathname === '/') {
+                  // Scroll to top of page when clicking Home on home page
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+            >
               Home
             </Link>
             {user && (
               <>
-                <Link to="/dashboard" className="text-[var(--macos-text)] hover:text-[var(--macos-primary)] px-2 py-1 rounded-md hover:bg-[var(--macos-hover)] transition-colors text-sm">
+                <Link
+                  to="/dashboard"
+                  className={`px-2 py-1 rounded-md transition-colors text-sm ${pathname === '/dashboard'
+                    ? 'bg-[var(--macos-hover)] text-[var(--macos-primary)] font-medium'
+                    : 'text-[var(--macos-text)] hover:text-[var(--macos-primary)] hover:bg-[var(--macos-hover)]'}`}
+                >
                   My Airdrops
                 </Link>
                 {/* Use the isAdmin function for more reliable checking */}
                 {isAdmin() && (
-                  <Link to="/admin" className="text-[var(--macos-text)] hover:text-[var(--macos-primary)] px-2 py-1 rounded-md hover:bg-[var(--macos-hover)] transition-colors text-sm">
+                  <Link
+                    to="/admin"
+                    className={`px-2 py-1 rounded-md transition-colors text-sm ${pathname === '/admin'
+                      ? 'bg-[var(--macos-hover)] text-[var(--macos-primary)] font-medium'
+                      : 'text-[var(--macos-text)] hover:text-[var(--macos-primary)] hover:bg-[var(--macos-hover)]'}`}
+                  >
                     Admin
                   </Link>
                 )}
@@ -128,8 +151,16 @@ const Navbar = () => {
             <div className="flex flex-col space-y-3">
               <Link
                 to="/"
-                className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 py-2"
-                onClick={() => setIsMenuOpen(false)}
+                className={`py-2 ${pathname === '/'
+                  ? 'text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  if (pathname === '/') {
+                    // Scroll to top of page when clicking Home on home page
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
               >
                 Home
               </Link>
@@ -137,7 +168,9 @@ const Navbar = () => {
                 <>
                   <Link
                     to="/dashboard"
-                    className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 py-2"
+                    className={`py-2 ${pathname === '/dashboard'
+                      ? 'text-blue-600 dark:text-blue-400 font-medium'
+                      : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     My Airdrops
@@ -146,7 +179,9 @@ const Navbar = () => {
                   {isAdmin() && (
                     <Link
                       to="/admin"
-                      className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300 py-2"
+                      className={`py-2 ${pathname === '/admin'
+                        ? 'text-blue-600 dark:text-blue-400 font-medium'
+                        : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Admin
