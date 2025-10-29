@@ -7,8 +7,10 @@ import AirdropUpdates from '../components/AirdropUpdates';
 import AirdropDetailSkeleton from '../components/skeletons/AirdropDetailSkeleton';
 import AirdropForm from '../components/AirdropForm';
 import AirdropUpdateForm from '../components/AirdropUpdateForm';
+import PageFAQ from '../components/PageFAQ';
 import SEO from '../components/SEO';
 import { useAuth } from '../context/AuthContext';
+import { faqData } from '../data/faqData';
 import { FaGlobe, FaDiscord, FaTwitter, FaTelegram, FaGithub, FaInstagram, FaEdit, FaPen } from 'react-icons/fa';
 
 const AirdropDetailPage = () => {
@@ -486,6 +488,17 @@ const AirdropDetailPage = () => {
                   onSubmit={handleAddUpdate}
                   onCancel={() => setIsAddingUpdate(false)}
                   loading={loading}
+                />
+              </div>
+            )}
+
+            {/* FAQ Section */}
+            {!isEditing && !isAddingUpdate && (
+              <div className="mt-8 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <PageFAQ
+                  questions={faqData.airdropDetail}
+                  title="Frequently Asked Questions About This Airdrop"
+                  showMoreLink={true}
                 />
               </div>
             )}
