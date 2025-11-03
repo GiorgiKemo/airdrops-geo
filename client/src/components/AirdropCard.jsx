@@ -71,7 +71,7 @@ const AirdropCard = ({ airdrop }) => {
             CLAIM NOW
           </div>
         )}
-      <div className="p-2 flex flex-col flex-grow justify-between text-center sm:text-left overflow-hidden">
+      <div className="p-2 sm:p-3 flex flex-col flex-grow justify-between text-left overflow-hidden">
         <div className="flex justify-between items-start mb-1">
           {/* Logo with track button overlay */}
           <div className="mr-2 sm:mr-3">
@@ -79,11 +79,11 @@ const AirdropCard = ({ airdrop }) => {
           </div>
 
           <div className="flex-1 min-w-0"> {/* min-width: 0 prevents flex child from overflowing */}
-            <div className="flex flex-wrap sm:flex-nowrap justify-center sm:justify-between items-center sm:items-start gap-1">
-              <h3 id={`airdrop-title-${airdrop._id}`} className="text-lg sm:text-xl md:text-2xl font-bold text-[var(--macos-text)] truncate">{airdrop.title}</h3>
+            <div className="flex flex-wrap justify-between items-start gap-1">
+              <h3 id={`airdrop-title-${airdrop._id}`} className="text-base sm:text-lg md:text-xl font-bold text-[var(--macos-text)] truncate w-full sm:w-auto">{airdrop.title}</h3>
               {airdrop.status !== 'claim' && (
                 <span
-                  className={`px-2 py-0.5 sm:py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getStatusClass(
+                  className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${getStatusClass(
                     airdrop.status
                   )}`}
                 >
@@ -93,10 +93,10 @@ const AirdropCard = ({ airdrop }) => {
             </div>
           </div>
         </div>
-        <p className="mb-1 text-xs sm:text-sm truncate">Token: {airdrop.token}</p>
-        <p id={`airdrop-desc-${airdrop._id}`} className="mb-1 line-clamp-1 sm:line-clamp-2 text-xs sm:text-sm break-words overflow-hidden">{airdrop.description}</p>
-        <div className="flex justify-center sm:justify-between items-center mt-auto flex-wrap gap-2">
-          <div className="flex flex-col items-center sm:items-start">
+        <p className="mb-1 text-xs sm:text-sm truncate font-medium">Token: {airdrop.token}</p>
+        <p id={`airdrop-desc-${airdrop._id}`} className="mb-2 line-clamp-2 sm:line-clamp-2 text-xs sm:text-sm break-words overflow-hidden">{airdrop.description}</p>
+        <div className="flex justify-between items-center mt-auto flex-wrap gap-2">
+          <div className="flex flex-col items-start">
             <p className="text-xs sm:text-sm">
               Start: {formatDate(airdrop.startDate)}
             </p>
