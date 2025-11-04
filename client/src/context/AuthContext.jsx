@@ -131,6 +131,67 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update user profile
+  const updateProfile = async (profileData) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('Updating user profile with data:', profileData);
+
+      // Use our API service which includes CSRF token handling
+      const { data } = await api.put('/users/profile', profileData);
+
+      console.log('Profile update response:', data);
+
+      // Update user state with new profile data
+      setUser(prev => ({
+        ...prev,
+        ...data
+      }));
+
+      setLoading(false);
+      return data;
+    } catch (err) {
+      console.error('Profile update error:', err);
+      const message = err.response && err.response.data.message
+        ? err.response.data.message
+        : 'Profile update failed';
+      setError(message);
+      setLoading(false);
+      throw new Error(message);
+    }
+  };
+
+  // Update user password
+  const updatePassword = async (currentPassword, newPassword) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('Updating user password');
+
+      // Use our API service which includes CSRF token handling
+      const { data } = await api.put('/users/password', {
+        currentPassword,
+        newPassword
+      });
+
+      console.log('Password update response:', data);
+
+      setLoading(false);
+      return data;
+    } catch (err) {
+      console.error('Password update error:', err);
+      const message = err.response && err.response.data.message
+        ? err.response.data.message
+        : 'Password update failed';
+      setError(message);
+      setLoading(false);
+      throw new Error(message);
+    }
+  };
+
   // Logout user
   const logout = (redirectToHome = true) => {
     console.log('AuthContext: logout called with redirectToHome =', redirectToHome);
@@ -171,7 +232,9 @@ export const AuthProvider = ({ children }) => {
       error,
       register,
       login,
-      logout
+      logout,
+      updateProfile,
+      updatePassword
     }}>
       {children}
     </AuthContext.Provider>

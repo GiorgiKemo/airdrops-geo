@@ -114,9 +114,16 @@ const Navbar = () => {
             <div className="flex items-center space-x-3 ml-4">
               {user ? (
                 <div className="flex items-center space-x-3">
-                  <span className="text-sm font-medium text-[var(--macos-text)]">
-                    {user.username}
-                  </span>
+                  <Link
+                    to="/profile"
+                    className={`flex items-center space-x-1 px-2 py-1 rounded-md transition-colors ${pathname === '/profile'
+                      ? 'bg-[var(--macos-hover)] text-[var(--macos-primary)] font-medium'
+                      : 'text-[var(--macos-text)] hover:text-[var(--macos-primary)] hover:bg-[var(--macos-hover)]'}`}
+                  >
+                    <span className="text-sm font-medium">
+                      {user.displayName || user.username}
+                    </span>
+                  </Link>
                   <button
                     onClick={() => logout(true)}
                     className="macos-button text-sm bg-[var(--macos-danger)]"
@@ -174,6 +181,15 @@ const Navbar = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     My Airdrops
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className={`py-2 ${pathname === '/profile'
+                      ? 'text-blue-600 dark:text-blue-400 font-medium'
+                      : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Profile
                   </Link>
                   {/* Use the isAdmin function for more reliable checking */}
                   {isAdmin() && (

@@ -234,6 +234,113 @@ class UserService {
 
     return true;
   }
+
+  /**
+   * Update user profile
+   * @param {string} userId - User ID
+   * @param {Object} profileData - Profile data to update
+   * @returns {Promise<Object>} - Updated user
+   */
+  async updateUserProfile(userId, profileData) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('Invalid user ID');
+    }
+
+    // Sanitize input - only allow specific fields to be updated
+    const sanitizedData = {};
+
+    if (profileData.displayName) {
+      sanitizedData.displayName = profileData.displayName.trim();
+    }
+
+    if (profileData.bio) {
+      sanitizedData.bio = profileData.bio.trim();
+    }
+
+    if (profileData.avatar) {
+      sanitizedData.avatar = profileData.avatar.trim();
+    }
+
+    // Handle social accounts
+    if (profileData.socialAccounts) {
+      sanitizedData.socialAccounts = {};
+
+      if (profileData.socialAccounts.twitter) {
+        sanitizedData.socialAccounts.twitter = profileData.socialAccounts.twitter.trim();
+      }
+
+      if (profileData.socialAccounts.discord) {
+        sanitizedData.socialAccounts.discord = profileData.socialAccounts.discord.trim();
+      }
+
+      if (profileData.socialAccounts.telegram) {
+        sanitizedData.socialAccounts.telegram = profileData.socialAccounts.telegram.trim();
+      }
+
+      if (profileData.socialAccounts.github) {
+        sanitizedData.socialAccounts.github = profileData.socialAccounts.github.trim();
+      }
+    }
+
+    // Handle preferences
+    if (profileData.preferences) {
+      sanitizedData.preferences = {};
+
+      if (typeof profileData.preferences.emailNotifications === 'boolean') {
+        sanitizedData.preferences.emailNotifications = profileData.preferences.emailNotifications;
+      }
+
+      if (typeof profileData.preferences.darkMode === 'boolean') {
+        sanitizedData.preferences.darkMode = profileData.preferences.darkMode;
+      }
+    }
+
+    // Update user
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: sanitizedData },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return user;
+  }
+
+  /**
+   * Update user password
+   * @param {string} userId - User ID
+   * @param {string} currentPassword - Current password
+   * @param {string} newPassword - New password
+   * @returns {Promise<boolean>} - Success status
+   */
+  async updatePassword(userId, currentPassword, newPassword) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('Invalid user ID');
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isMatch) {
+      throw new Error('Current password is incorrect');
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    return true;
+  }
 }
 
 module.exports = new UserService();

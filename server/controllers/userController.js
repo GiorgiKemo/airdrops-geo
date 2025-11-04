@@ -108,9 +108,73 @@ const verifyToken = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Update user profile
+ * @route   PUT /api/users/profile
+ * @access  Private
+ */
+const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const {
+      displayName,
+      bio,
+      avatar,
+      socialAccounts,
+      preferences
+    } = req.body;
+
+    // Update user profile
+    const updatedUser = await userService.updateUserProfile(userId, {
+      displayName,
+      bio,
+      avatar,
+      socialAccounts,
+      preferences
+    });
+
+    logger.info(`User profile updated: ${req.user.email}`);
+
+    res.json(updatedUser);
+  } catch (error) {
+    logger.error(`Error updating user profile: ${error.message}`);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * @desc    Update user password
+ * @route   PUT /api/users/password
+ * @access  Private
+ */
+const updatePassword = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { currentPassword, newPassword } = req.body;
+
+    // Update password
+    await userService.updatePassword(userId, currentPassword, newPassword);
+
+    logger.info(`Password updated for user: ${req.user.email}`);
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    logger.error(`Error updating password: ${error.message}`);
+
+    // Handle specific errors
+    if (error.message === 'Current password is incorrect') {
+      return res.status(400).json({ message: error.message });
+    }
+
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getUserProfile,
   verifyToken,
+  updateUserProfile,
+  updatePassword,
 };
