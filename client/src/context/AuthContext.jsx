@@ -86,6 +86,20 @@ export const AuthProvider = ({ children }) => {
 
       // Set user with token
       setUser(data);
+
+      // Immediately verify token to get full profile data
+      try {
+        console.log('Verifying token to get full profile data after registration');
+        const verifyResponse = await api.get('/users/verify-token');
+        console.log('Token verification response after registration:', verifyResponse.data);
+
+        // Update user with complete profile data
+        setUser(verifyResponse.data);
+      } catch (verifyError) {
+        console.error('Error verifying token after registration:', verifyError);
+        // Continue with basic user data if verification fails
+      }
+
       setLoading(false);
       return data;
     } catch (err) {
@@ -117,6 +131,20 @@ export const AuthProvider = ({ children }) => {
 
       // Set user with token
       setUser(data);
+
+      // Immediately verify token to get full profile data
+      try {
+        console.log('Verifying token to get full profile data');
+        const verifyResponse = await api.get('/users/verify-token');
+        console.log('Token verification response:', verifyResponse.data);
+
+        // Update user with complete profile data
+        setUser(verifyResponse.data);
+      } catch (verifyError) {
+        console.error('Error verifying token after login:', verifyError);
+        // Continue with basic user data if verification fails
+      }
+
       setLoading(false);
       return data;
     } catch (err) {
