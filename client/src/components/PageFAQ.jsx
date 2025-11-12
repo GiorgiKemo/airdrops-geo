@@ -34,7 +34,7 @@ const PageFAQ = ({
         {questions.map((item, index) => (
           <div
             key={index}
-            className="macos-card overflow-hidden transition-all duration-200"
+            className="macos-card overflow-hidden transition-all duration-200 faq-item"
           >
             <button
               onClick={() => toggleQuestion(index)}
@@ -51,7 +51,8 @@ const PageFAQ = ({
             {openIndex === index && (
               <div
                 id={`faq-answer-${index}`}
-                className="p-4 pt-0 text-[var(--macos-text-secondary)] faq-answer"
+                className="p-4 pt-0 text-[var(--macos-text-secondary)] faq-answer border-none"
+                style={{ borderTop: 'none', borderColor: 'transparent' }}
               >
                 {typeof item.answer === 'string' ? (
                   <p>{item.answer}</p>
