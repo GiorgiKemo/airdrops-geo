@@ -68,34 +68,85 @@ html {
 
 /* Remove default underline from links */
 a {
-  text-decoration: none;
+  text-decoration: none !important;
 }
 
-/* Add underline on hover if needed */
-a:hover:not(.no-hover-underline) {
-  text-decoration: underline;
+/* Remove underline on hover */
+a:hover:not(.no-hover-underline),
+a:hover {
+  text-decoration: none !important;
 }
 
 /* Style links in FAQ answers */
 .faq-answer a {
   color: var(--macos-primary);
-  text-decoration: none;
+  text-decoration: none !important;
 }
 
 .faq-answer a:hover {
-  text-decoration: underline;
+  text-decoration: none !important;
 }
 
-/* Remove blue line in FAQ items */
-.faq-item .faq-answer {
+/* Remove all borders and underlines from FAQ items */
+.faq-item,
+.faq-item *,
+.macos-card,
+.macos-card * {
+  border: none !important;
   border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-color: transparent !important;
+  text-decoration: none !important;
+}
+
+/* Target the specific blue line in FAQ */
+.faq-item hr,
+.faq-item::before,
+.faq-item::after,
+.faq-answer::before,
+.faq-answer::after,
+.faq-item button::after,
+.faq-item button::before {
+  display: none !important;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  background: transparent !important;
+  height: 0 !important;
 }
 
 /* Override any default borders in FAQ answers */
-.faq-answer {
-  border-top: none !important;
+.faq-answer,
+.faq-answer * {
   border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
   border-color: transparent !important;
+  text-decoration: none !important;
+}
+
+/* Remove all underlines from the entire site */
+* {
+  text-decoration: none !important;
+}
+
+/* Target the specific blue line in FAQ with a more specific selector */
+.faq-item > button + div,
+.faq-item > button + div::before,
+.faq-item > button + div::after {
+  border-top: none !important;
+  border-bottom: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove hover underlines */
+a:hover,
+a:hover *,
+*:hover {
+  text-decoration: none !important;
 }
 
 body {
