@@ -135,11 +135,45 @@ a:hover {
 /* Target the specific blue line in FAQ with a more specific selector */
 .faq-item > button + div,
 .faq-item > button + div::before,
-.faq-item > button + div::after {
+.faq-item > button + div::after,
+.no-blue-line,
+.no-blue-line::before,
+.no-blue-line::after,
+.faq-container *,
+.faq-container *::before,
+.faq-container *::after {
   border-top: none !important;
   border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
   border: none !important;
   box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+/* Specific fix for the blue line in FAQ */
+.faq-item button::after,
+.faq-item button::before,
+.faq-answer::before,
+.faq-answer::after,
+.faq-item::before,
+.faq-item::after,
+.faq-container hr {
+  display: none !important;
+  height: 0 !important;
+  content: none !important;
+  border: none !important;
+}
+
+/* Override any potential pseudo-element that might be creating the line */
+.faq-item button:not([disabled])::after,
+.faq-item button:not([disabled])::before {
+  content: none !important;
+  display: none !important;
+  border: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  background: transparent !important;
 }
 
 /* Remove hover underlines */
@@ -147,6 +181,31 @@ a:hover,
 a:hover *,
 *:hover {
   text-decoration: none !important;
+}
+
+/* Extreme measure to remove the blue line */
+@keyframes removeBlueLine {
+  0% { border-color: transparent; }
+  100% { border-color: transparent; }
+}
+
+.faq-item,
+.faq-item *,
+.faq-answer,
+.faq-container * {
+  animation: removeBlueLine 0.1s forwards !important;
+  border-color: transparent !important;
+  border: none !important;
+}
+
+/* Target the exact blue line with a very specific selector */
+.macos-card.faq-item > button + div {
+  border-top-color: transparent !important;
+  border-top-width: 0 !important;
+  border-top-style: none !important;
+  border-top: none !important;
+  margin-top: 0 !important;
+  padding-top: 16px !important; /* Add some padding instead of relying on the border */
 }
 
 body {
