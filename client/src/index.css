@@ -21,7 +21,7 @@
 
   /* Additional UI elements */
   --macos-sidebar-bg: #ffffff;
-  --macos-toolbar-bg: rgba(255, 255, 255, 0.85);
+  --macos-toolbar-bg: #ffffff;
   --macos-divider: #e2e8f0;
   --macos-selection: rgba(59, 130, 246, 0.1);
   --macos-hover: rgba(59, 130, 246, 0.05);
@@ -66,7 +66,7 @@
 
   /* Additional UI elements - Dark Mode */
   --macos-sidebar-bg: #1e293b;
-  --macos-toolbar-bg: rgba(30, 41, 59, 0.85);
+  --macos-toolbar-bg: #1e293b;
   --macos-divider: #334155;
   --macos-selection: rgba(96, 165, 250, 0.2);
   --macos-hover: rgba(96, 165, 250, 0.1);
@@ -224,7 +224,6 @@ a:hover *,
 
 body {
   margin: 0;
-  padding: 0;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -232,10 +231,7 @@ body {
   color: var(--macos-text);
   line-height: 1.6;
   letter-spacing: -0.01em;
-  overflow-x: hidden;
   overflow-y: auto;
-  width: 100%;
-  min-height: 100vh;
 }
 
 /* Improved focus styles for keyboard navigation */
@@ -498,7 +494,7 @@ p, h1, h2, h3, h4, h5, h6, span, div {
 .macos-toolbar {
   background-color: var(--macos-toolbar-bg);
   border-bottom: 1px solid var(--macos-divider);
-  padding: 0.75rem 1.5rem;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;

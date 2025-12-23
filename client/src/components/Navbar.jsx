@@ -51,7 +51,7 @@ const Navbar = () => {
 
   return (
     <nav className="macos-toolbar fixed top-0 left-0 right-0 w-full z-[1000] shadow-md transition-colors duration-200">
-      <div className="w-full max-w-7xl mx-auto px-4 py-2">
+      <div className="container mx-auto px-4 sm:px-6 py-2">
         <div className="flex justify-between items-center">
           <Link
             to="/"
