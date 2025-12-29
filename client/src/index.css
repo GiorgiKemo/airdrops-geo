@@ -21,7 +21,7 @@
 
   /* Additional UI elements */
   --macos-sidebar-bg: #ffffff;
-  --macos-toolbar-bg: #ffffff;
+  --macos-toolbar-bg: rgba(255, 255, 255, 0.85);
   --macos-divider: #e2e8f0;
   --macos-selection: rgba(59, 130, 246, 0.1);
   --macos-hover: rgba(59, 130, 246, 0.05);
@@ -66,7 +66,7 @@
 
   /* Additional UI elements - Dark Mode */
   --macos-sidebar-bg: #1e293b;
-  --macos-toolbar-bg: #1e293b;
+  --macos-toolbar-bg: rgba(30, 41, 59, 0.85);
   --macos-divider: #334155;
   --macos-selection: rgba(96, 165, 250, 0.2);
   --macos-hover: rgba(96, 165, 250, 0.1);
@@ -500,10 +500,11 @@ p, h1, h2, h3, h4, h5, h6, span, div {
   justify-content: space-between;
   z-index: 1000;
   position: fixed;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   width: 100%;
+  transition: all 0.3s ease;
 }
 
 /* Modern sidebar */

@@ -96,7 +96,7 @@ function App() {
                 Skip to main content
               </a>
               <Navbar />
-              <main id="main-content" className="flex-1 overflow-hidden pt-16">
+              <main id="main-content" className="flex-1 overflow-hidden pt-24">
 
                 <Suspense fallback={<LoadingFallback />}>
                   <Routes>
