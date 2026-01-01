@@ -18,11 +18,15 @@ for (const envPath of envPaths) {
   }
 }
 
-// Define required environment variables
-const requiredEnvVars = [
-  'MONGODB_URI',
-  'JWT_SECRET',
-];
+const useSupabase = process.env.USE_SUPABASE === 'true';
+
+// Define required environment variables based on DB mode
+const requiredEnvVars = ['JWT_SECRET'];
+if (useSupabase) {
+  requiredEnvVars.push('SUPABASE_URL', 'SUPABASE_SERVICE_KEY');
+} else {
+  requiredEnvVars.push('MONGODB_URI');
+}
 
 // Check for missing required environment variables
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
@@ -42,7 +46,7 @@ const config = {
 
   // Database configuration
   db: {
-    uri: process.env.MONGODB_URI,
+    uri: process.env.MONGODB_URI || '',
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -50,6 +54,12 @@ const config = {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     },
+  },
+
+  supabase: {
+    enabled: useSupabase,
+    url: process.env.SUPABASE_URL || '',
+    serviceKey: process.env.SUPABASE_SERVICE_KEY || '',
   },
 
   // Authentication configuration

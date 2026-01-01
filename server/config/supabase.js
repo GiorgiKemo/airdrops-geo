@@ -4,20 +4,29 @@ const logger = require('../utils/logger');
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+const useSupabase = process.env.USE_SUPABASE === 'true';
+const isConfigured = Boolean(supabaseUrl && supabaseKey);
 
-if (!supabaseUrl || !supabaseKey) {
+if (useSupabase && !isConfigured) {
   logger.error('Supabase URL or Service Key not found in environment variables');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+const supabase = isConfigured
+  ? createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  : null;
 
 // Test the connection
 const testConnection = async () => {
+  if (!isConfigured || !supabase) {
+    logger.error('Supabase is not configured');
+    return false;
+  }
+
   try {
     const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
     
@@ -34,4 +43,4 @@ const testConnection = async () => {
   }
 };
 
-module.exports = { supabase, testConnection };
+module.exports = { supabase, testConnection, isConfigured };

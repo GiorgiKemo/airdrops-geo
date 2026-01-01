@@ -31,7 +31,7 @@ const healthRoutes = require('./routes/healthRoutes');
 
 // Import database connections
 const connectDB = require('./config/db');
-const { testConnection: testSupabaseConnection } = require('./config/supabase');
+const { testConnection: testSupabaseConnection, isConfigured: isSupabaseConfigured } = require('./config/supabase');
 
 // Import models
 const { User, Airdrop } = require('./models');
@@ -211,6 +211,10 @@ const startServer = async () => {
     const useSupabase = process.env.USE_SUPABASE === 'true';
     
     if (useSupabase) {
+      if (!isSupabaseConfigured) {
+        throw new Error('USE_SUPABASE=true but SUPABASE_URL or SUPABASE_SERVICE_KEY is missing');
+      }
+
       // Test Supabase connection
       const supabaseConnected = await testSupabaseConnection();
       
