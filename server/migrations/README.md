@@ -126,6 +126,42 @@ MONGODB_URI=<atlas uri>
 
 Then redeploy.
 
+## Offline Import from Supabase Backup Files
+
+If your old Supabase project is paused and you only have a downloaded SQL backup, you can import directly to MongoDB without a live Supabase connection.
+
+1. Place the decompressed SQL dump in:
+
+```
+server/migrations/backup/
+```
+
+2. Ensure `.env` is set for MongoDB:
+
+```
+USE_SUPABASE=false
+MONGODB_URI=<atlas uri>
+JWT_SECRET=<jwt secret>
+```
+
+3. Run direct dump import:
+
+```bash
+cd server
+npm run migrate:pgdump-to-mongodb
+```
+
+4. To replace existing Mongo data intentionally:
+
+```bash
+# macOS/Linux
+cd server
+CLEAR_MONGO=true npm run migrate:pgdump-to-mongodb
+
+# Windows PowerShell
+$env:CLEAR_MONGO='true'; npm run migrate:pgdump-to-mongodb
+```
+
 ## Additional Notes
 
 - The migration script preserves all relationships between data

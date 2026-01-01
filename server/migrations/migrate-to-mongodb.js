@@ -242,8 +242,7 @@ async function migrateTracking(userIdMap, airdropIdMap) {
 
     const mappedAirdropIds = rawAirdropIds
       .map((id) => airdropIdMap.get(String(id)))
-      .filter(Boolean)
-      .map((id) => toObjectId(id));
+      .filter(Boolean);
 
     return {
       _id: new mongoose.Types.ObjectId(),
