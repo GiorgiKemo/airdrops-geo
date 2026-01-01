@@ -198,14 +198,19 @@ app.get('/api/airdrops/:id', async (req, res) => {
       console.log(`ID ${id} is not a valid MongoDB ObjectID`);
     }
 
-    // If not found, try to find by airdropId
+    // If not found, try to find by numeric airdropId
     if (!airdrop) {
-      console.log(`Searching by airdropId: ${id}`);
-      airdrop = await Airdrop.findOne({ airdropId: id });
-      if (airdrop) {
-        console.log(`Found airdrop by airdropId: ${airdrop.title}`);
+      if (/^\d+$/.test(id)) {
+        const numericAirdropId = Number.parseInt(id, 10);
+        console.log(`Searching by numeric airdropId: ${numericAirdropId}`);
+        airdrop = await Airdrop.findOne({ airdropId: numericAirdropId });
+        if (airdrop) {
+          console.log(`Found airdrop by airdropId: ${airdrop.title}`);
+        } else {
+          console.log(`No airdrop found with airdropId: ${numericAirdropId}`);
+        }
       } else {
-        console.log(`No airdrop found with airdropId: ${id}`);
+        console.log(`Skipping airdropId lookup for non-numeric ID: ${id}`);
       }
     }
 
@@ -236,6 +241,9 @@ app.get('/api/airdrops/:id', async (req, res) => {
     res.json(airdrop);
   } catch (error) {
     console.error(`Error fetching airdrop with ID ${req.params.id}:`, error);
+    if (error.name === 'CastError') {
+      return res.status(404).json({ message: 'Airdrop not found' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -736,10 +744,13 @@ app.get('/api/check-airdrop/:id', async (req, res) => {
       if (airdrop) foundBy = 'MongoDB ObjectID';
     }
 
-    // If not found, try to find by airdropId
+    // If not found, try to find by numeric airdropId
     if (!airdrop) {
-      airdrop = await Airdrop.findOne({ airdropId: id });
-      if (airdrop) foundBy = 'airdropId';
+      if (/^\d+$/.test(id)) {
+        const numericAirdropId = Number.parseInt(id, 10);
+        airdrop = await Airdrop.findOne({ airdropId: numericAirdropId });
+        if (airdrop) foundBy = 'airdropId';
+      }
     }
 
     if (airdrop) {

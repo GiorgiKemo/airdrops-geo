@@ -95,7 +95,7 @@ const getAirdropById = async (req, res) => {
   } catch (error) {
     logger.error(`Error getting airdrop by ID: ${error.message}`);
 
-    if (error.message === 'Airdrop not found') {
+    if (error.message === 'Airdrop not found' || error.message === 'Invalid airdrop ID') {
       return res.status(404).json({ message: error.message });
     }
 
