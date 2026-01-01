@@ -327,13 +327,14 @@ app.put('/api/airdrops/:id', upload.single('logo'), async (req, res) => {
       existingAirdrop = await Airdrop.findById(id);
     }
 
-    // If not found, try to find by airdropId (as a number)
+    // If not found, try to find by numeric airdropId
     if (!existingAirdrop) {
       console.log(`Updating airdrop: No airdrop found with _id ${id}, trying airdropId`);
-      // Try to convert to number if possible
-      const numericId = parseInt(id, 10);
-      if (!isNaN(numericId)) {
+      if (/^\d+$/.test(id)) {
+        const numericId = Number.parseInt(id, 10);
         existingAirdrop = await Airdrop.findOne({ airdropId: numericId });
+      } else {
+        console.log(`Updating airdrop: Skipping airdropId lookup for non-numeric ID ${id}`);
       }
     }
 
@@ -500,13 +501,14 @@ app.delete('/api/airdrops/:id', async (req, res) => {
       airdrop = await Airdrop.findById(id);
     }
 
-    // If not found, try to find by airdropId (as a number)
+    // If not found, try to find by numeric airdropId
     if (!airdrop) {
       console.log(`Deleting airdrop: No airdrop found with _id ${id}, trying airdropId`);
-      // Try to convert to number if possible
-      const numericId = parseInt(id, 10);
-      if (!isNaN(numericId)) {
+      if (/^\d+$/.test(id)) {
+        const numericId = Number.parseInt(id, 10);
         airdrop = await Airdrop.findOne({ airdropId: numericId });
+      } else {
+        console.log(`Deleting airdrop: Skipping airdropId lookup for non-numeric ID ${id}`);
       }
     }
 
