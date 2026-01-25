@@ -66,16 +66,21 @@ const getAllowedOrigins = () => {
 };
 
 const allowedOrigins = new Set(getAllowedOrigins());
+const localhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) {
       return callback(null, true);
     }
-    if (allowedOrigins.has('*') || allowedOrigins.has(origin)) {
+    if (
+      allowedOrigins.has('*') ||
+      allowedOrigins.has(origin) ||
+      (config.server.isDevelopment && localhostPattern.test(origin))
+    ) {
       return callback(null, true);
     }
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    return callback(null, false);
   },
   credentials: true,
 };

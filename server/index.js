@@ -109,6 +109,7 @@ const getAllowedOrigins = () => {
 };
 
 const allowedOrigins = new Set(getAllowedOrigins());
+const localhostPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
 
 // CORS configuration
 const corsOptions = {
@@ -116,10 +117,14 @@ const corsOptions = {
     if (!origin) {
       return callback(null, true);
     }
-    if (allowedOrigins.has('*') || allowedOrigins.has(origin)) {
+    if (
+      allowedOrigins.has('*') ||
+      allowedOrigins.has(origin) ||
+      (process.env.NODE_ENV !== 'production' && localhostPattern.test(origin))
+    ) {
       return callback(null, true);
     }
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token', 'x-xsrf-token', 'xsrf-token'],
