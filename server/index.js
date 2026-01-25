@@ -85,11 +85,42 @@ const app = express();
 // Trust proxy - needed for rate limiting behind a proxy (like Render)
 app.set('trust proxy', 1);
 
+const getAllowedOrigins = () => {
+  const envOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+  if (process.env.NODE_ENV === 'production') {
+    return envOrigins.length > 0
+      ? envOrigins
+      : ['https://airdrops-geo.onrender.com'];
+  }
+
+  return [
+    ...envOrigins,
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+  ];
+};
+
+const allowedOrigins = new Set(getAllowedOrigins());
+
 // CORS configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production'
-    ? 'https://airdrops-geo.onrender.com'
-    : 'http://localhost:5173'),
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.has('*') || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token', 'x-xsrf-token', 'xsrf-token'],
   exposedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'x-csrf-token', 'x-xsrf-token', 'xsrf-token'],
@@ -104,9 +135,7 @@ app.use(cookieParser()); // Add cookie parser middleware
 
 // Log CORS configuration
 console.log('CORS configuration:', {
-  origin: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production'
-    ? 'https://airdrops-geo.onrender.com'
-    : 'http://localhost:5173'),
+  origins: Array.from(allowedOrigins),
   environment: process.env.NODE_ENV
 });
 
@@ -1080,8 +1109,26 @@ app.get('*', (req, res) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+const preferredPort = Number.parseInt(process.env.PORT || '5000', 10);
+const maxPortAttempts = 5;
+
+function startListening(port, attemptsRemaining) {
+  const server = app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE' && attemptsRemaining > 0) {
+      const nextPort = port + 1;
+      console.warn(`Port ${port} is in use. Retrying on port ${nextPort}...`);
+      startListening(nextPort, attemptsRemaining - 1);
+      return;
+    }
+
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  });
+}
+
+startListening(preferredPort, maxPortAttempts);
