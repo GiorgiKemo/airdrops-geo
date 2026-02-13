@@ -3,6 +3,7 @@ import axios from 'axios';
 // Remove trailing slash if present
 const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
 const API_URL = `${apiUrl}/api`;
+const API_TIMEOUT_MS = 60000;
 
 // Log the API URL for debugging
 console.log('API URL:', API_URL);
@@ -15,7 +16,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Set to true to allow cookies to be sent (needed for CSRF)
-  timeout: 10000, // 10 seconds timeout
+  timeout: API_TIMEOUT_MS, // Allow enough time for Render free-tier cold starts
 });
 
 // Store CSRF token
@@ -138,21 +139,48 @@ api.interceptors.response.use(response => {
 export const airdropService = {
   // Get all airdrops
   getAirdrops: async () => {
-    try {
-      console.log('Fetching airdrops from:', `${API_URL}/airdrops`);
-      const response = await api.get('/airdrops');
-      console.log('Airdrops response:', response);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching airdrops:', error);
-      console.error('Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data
-      });
-      throw error;
+    const maxAttempts = 2;
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        console.log('Fetching airdrops from:', `${API_URL}/airdrops`, { attempt, maxAttempts });
+        const response = await api.get('/airdrops');
+        console.log('Airdrops response:', response);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        const status = error.response?.status;
+        const code = error.code;
+        const isRetryable =
+          !status ||
+          status >= 500 ||
+          code === 'ECONNABORTED' ||
+          code === 'ETIMEDOUT' ||
+          code === 'ERR_NETWORK';
+
+        console.error('Error fetching airdrops:', error);
+        console.error('Error details:', {
+          attempt,
+          maxAttempts,
+          message: error.message,
+          code,
+          status,
+          statusText: error.response?.statusText,
+          data: error.response?.data
+        });
+
+        if (attempt < maxAttempts && isRetryable) {
+          // Small backoff before one retry to absorb transient cold-start/network failures
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          continue;
+        }
+
+        throw error;
+      }
     }
+
+    throw lastError;
   },
 
   // Get single airdrop by ID
@@ -294,8 +322,5 @@ export const airdropService = {
     }
   },
 };
-
-// Initialize CSRF token when the module is imported
-fetchCsrfToken();
 
 export default api;
