@@ -128,9 +128,9 @@ const RegisterPage = () => {
         {/* Card with subtle shadow and border */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300">
           {/* Header with modern background */}
-          <div className="bg-gray-900 dark:bg-black px-6 py-6">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6">
             <h2 className="text-2xl font-bold text-white">Create Account</h2>
-            <p className="text-gray-400 text-sm mt-1">Join our community today</p>
+            <p className="text-blue-100 text-sm mt-1">Join our community today</p>
           </div>
 
           <div className="p-6">
@@ -218,7 +218,7 @@ const RegisterPage = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="••••••••"
+                    placeholder="********"
                     className={`pl-10 w-full h-12 rounded-lg border ${formErrors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
                     aria-invalid={formErrors.password ? 'true' : 'false'}
                     aria-describedby={formErrors.password ? 'password-error' : 'password-requirements'}
@@ -270,7 +270,7 @@ const RegisterPage = () => {
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    placeholder="••••••••"
+                    placeholder="********"
                     className={`pl-10 w-full h-12 rounded-lg border ${formErrors.confirmPassword ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
                     aria-invalid={formErrors.confirmPassword ? 'true' : 'false'}
                     aria-describedby={formErrors.confirmPassword ? 'confirm-password-error' : undefined}
@@ -286,7 +286,7 @@ const RegisterPage = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 transition-all duration-200"
+                  className="w-full py-4 px-4 border border-transparent rounded-lg shadow-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center">
@@ -305,7 +305,7 @@ const RegisterPage = () => {
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Already have an account?{' '}
-                <Link to="/login" className="font-medium text-gray-900 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors">
+                <Link to="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                   Sign in
                 </Link>
               </p>

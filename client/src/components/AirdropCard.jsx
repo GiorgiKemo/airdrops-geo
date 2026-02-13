@@ -1,10 +1,12 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { memo } from 'react';
 import AirdropLogo from './AirdropLogo';
 import { FaGlobe, FaDiscord, FaTelegram, FaGithub, FaInstagram } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 
 const AirdropCard = ({ airdrop }) => {
+  const navigate = useNavigate();
+
   // Format date
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
@@ -58,12 +60,26 @@ const AirdropCard = ({ airdrop }) => {
     color: '#ffffff' // White text for visibility
   } : {};
 
+  const handleCardClick = () => {
+    navigate(`/airdrops/${airdrop._id}`);
+  };
+
+  const handleCardKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      navigate(`/airdrops/${airdrop._id}`);
+    }
+  };
+
   return (
     <div className="group h-full w-full will-change-transform" role="article" aria-labelledby={`airdrop-title-${airdrop._id}`}>
-      <Link
-        to={`/airdrops/${airdrop._id}`}
+      <div
         className="macos-card relative block overflow-hidden cursor-pointer h-full w-full z-10 flex flex-col backdrop-blur-md transform-gpu"
         style={{...cardStyle, height: '100%', minHeight: '100%', contain: 'content'}}
+        role="link"
+        tabIndex={0}
+        onClick={handleCardClick}
+        onKeyDown={handleCardKeyDown}
         aria-describedby={`airdrop-desc-${airdrop._id}`}
       >
         {airdrop.status === 'claim' && (
@@ -200,7 +216,7 @@ const AirdropCard = ({ airdrop }) => {
           </div>
         )}
       </div>
-      </Link>
+      </div>
     </div>
   );
 };

@@ -81,9 +81,9 @@ const ResetPasswordPage = () => {
         {/* Card with subtle shadow and border */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300">
           {/* Header with modern background */}
-          <div className="bg-gray-900 dark:bg-black px-6 py-6">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6">
             <h2 className="text-2xl font-bold text-white">Set New Password</h2>
-            <p className="text-gray-400 text-sm mt-1">Create a new password for your account</p>
+            <p className="text-blue-100 text-sm mt-1">Create a new password for your account</p>
           </div>
 
           {/* Form content */}
@@ -102,7 +102,7 @@ const ResetPasswordPage = () => {
                 <div className="mt-6">
                   <Link
                     to="/login"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Go to Login
                   </Link>
@@ -135,7 +135,7 @@ const ResetPasswordPage = () => {
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="Enter new password"
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:text-white text-sm"
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
                       />
                     </div>
                   </div>
@@ -158,7 +158,7 @@ const ResetPasswordPage = () => {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         placeholder="Confirm new password"
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:text-white text-sm"
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
                       />
                     </div>
                   </div>
@@ -168,7 +168,7 @@ const ResetPasswordPage = () => {
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (
                         <span className="flex items-center">
@@ -190,7 +190,7 @@ const ResetPasswordPage = () => {
               <div className="mt-8 text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Remember your password?{' '}
-                  <Link to="/login" className="font-medium text-gray-900 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors">
+                  <Link to="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                     Sign in
                   </Link>
                 </p>
