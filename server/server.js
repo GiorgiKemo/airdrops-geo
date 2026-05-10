@@ -42,14 +42,49 @@ const app = express();
 // Trust proxy - needed for rate limiting behind a proxy (like Render)
 app.set('trust proxy', 1);
 
+const getAllowedOrigins = () => {
+  const envOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+  if (config.server.isDevelopment) {
+    return [
+      ...envOrigins,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5000',
+      'http://127.0.0.1:5000',
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+    ];
+  }
+
+  return envOrigins.length > 0
+    ? envOrigins
+    : ['https://airdrops-geo.onrender.com'];
+};
+
+const allowedOrigins = new Set(getAllowedOrigins());
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.has('*') || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+};
+
 // Set up middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors({
-  origin: config.cors.origin,
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 
 // Security middleware
 app.use(helmet({
@@ -67,6 +102,8 @@ if (config.server.isDevelopment) {
     stream: { write: message => logger.info(message.trim()) }
   }));
 }
+
+logger.info(`CORS allowed origins: ${Array.from(allowedOrigins).join(', ')}`);
 
 // Set up file uploads
 const storage = multer.diskStorage({
@@ -293,12 +330,30 @@ const startServer = async () => {
     }
 
     // Start the server
-    const PORT = config.server.port;
-    app.listen(PORT, () => {
-      logger.info(`Server running on port ${PORT}`);
-      logger.info(`Environment: ${config.server.nodeEnv}`);
-      logger.info(`Database: ${useSupabase ? 'Supabase' : 'MongoDB'}`);
-    });
+    const preferredPort = Number.parseInt(config.server.port, 10);
+    const maxPortAttempts = 5;
+
+    const startListening = (port, attemptsRemaining) => {
+      const server = app.listen(port, () => {
+        logger.info(`Server running on port ${port}`);
+        logger.info(`Environment: ${config.server.nodeEnv}`);
+        logger.info(`Database: ${useSupabase ? 'Supabase' : 'MongoDB'}`);
+      });
+
+      server.on('error', (error) => {
+        if (error.code === 'EADDRINUSE' && attemptsRemaining > 0) {
+          const nextPort = port + 1;
+          logger.warn(`Port ${port} is in use. Retrying on port ${nextPort}...`);
+          startListening(nextPort, attemptsRemaining - 1);
+          return;
+        }
+
+        logger.error(`Failed to start server: ${error.message}`);
+        process.exit(1);
+      });
+    };
+
+    startListening(preferredPort, maxPortAttempts);
   } catch (error) {
     logger.error(`Error starting server: ${error.message}`);
     process.exit(1);

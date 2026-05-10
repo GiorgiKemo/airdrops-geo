@@ -71,7 +71,11 @@ const config = {
 
   // CORS configuration
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: process.env.CORS_ORIGIN || (
+      process.env.NODE_ENV === 'production'
+        ? 'https://airdrops-geo.onrender.com'
+        : 'http://localhost:5173'
+    ),
     environment: process.env.NODE_ENV || 'development',
   },
 

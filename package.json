@@ -4,10 +4,10 @@
   "description": "Cryptocurrency airdrops platform",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/server.js",
-    "build": "./render-build.sh",
-    "dev": "nodemon server/server.js",
-    "postinstall": "./render-build.sh",
+    "start": "npm --prefix server start",
+    "build": "node scripts/run-render-build.js",
+    "dev": "npm --prefix server run dev",
+    "postinstall": "node scripts/postinstall.js",
     "test": "jest --watchAll --verbose"
   },
   "engines": {
