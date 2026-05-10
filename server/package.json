@@ -9,7 +9,7 @@
     "dev": "nodemon index.js",
     "seed": "node scripts/seedDatabase.js",
     "build": "npm ci",
-    "migrate:to-mongodb": "node migrations/migrate-to-mongodb.js",
+    "migrate:to-mongodb": "node migrations/migrate-to-mongodb-runner.js",
     "migrate:pgdump-to-mongodb": "node migrations/import-pg-dump-to-mongodb.js"
   },
   "keywords": [],

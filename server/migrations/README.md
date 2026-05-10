@@ -94,9 +94,14 @@ If you want to move off Supabase free-project limits, use MongoDB Atlas M0 (free
 ```
 USE_SUPABASE=false
 MONGODB_URI=your_atlas_connection_string
+JWT_SECRET=your_jwt_secret
+```
+
+If you still have a live Supabase project, also set:
+
+```
 SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_KEY=your_supabase_service_key
-JWT_SECRET=your_jwt_secret
 ```
 
 3. Run the reverse migration:
@@ -105,6 +110,10 @@ JWT_SECRET=your_jwt_secret
 cd server
 npm run migrate:to-mongodb
 ```
+
+`migrate:to-mongodb` now auto-selects:
+- Supabase API migration when `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` are present
+- SQL dump import when Supabase credentials are missing but `server/migrations/backup/*.sql` exists
 
 4. If Mongo already has data and you intentionally want to replace it:
 
