@@ -182,10 +182,19 @@ app.use(errorHandler);
 // Create initial admin user
 const createInitialAdminUser = async () => {
   try {
-    // Check if admin user already exists
-    const adminExists = await User.findOne({ email: process.env.ADMIN_EMAIL || 'admin@example.com' });
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
 
-    if (adminExists) {
+    // Check if admin user already exists
+    const adminByEmail = await User.findOne({ email: adminEmail });
+    let adminByUsername = null;
+
+    if (typeof User.findByUsername === 'function') {
+      adminByUsername = await User.findByUsername('admin');
+    } else {
+      adminByUsername = await User.findOne({ username: 'admin' });
+    }
+
+    if (adminByEmail || adminByUsername) {
       logger.info('Admin user already exists. Skipping creation.');
       return;
     }
@@ -193,7 +202,7 @@ const createInitialAdminUser = async () => {
     // Create admin user
     const adminUser = await User.create({
       username: 'admin',
-      email: process.env.ADMIN_EMAIL || 'admin@example.com',
+      email: adminEmail,
       password: process.env.ADMIN_PASSWORD || 'Admin123!',
       role: 'admin',
     });

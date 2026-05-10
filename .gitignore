@@ -34,3 +34,4 @@ logs/
 
 # data files
 /server/airdrops.json
+/server/migrations/backup/
