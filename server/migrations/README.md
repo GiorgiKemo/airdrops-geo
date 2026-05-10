@@ -84,6 +84,48 @@ If you need to revert to MongoDB:
 
 The application will switch back to using MongoDB.
 
+## Supabase to MongoDB (Free Atlas) Migration
+
+If you want to move off Supabase free-project limits, use MongoDB Atlas M0 (free) and migrate data back:
+
+1. Create a free MongoDB Atlas cluster and get your connection string.
+2. Update your `.env`:
+
+```
+USE_SUPABASE=false
+MONGODB_URI=your_atlas_connection_string
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_KEY=your_supabase_service_key
+JWT_SECRET=your_jwt_secret
+```
+
+3. Run the reverse migration:
+
+```bash
+cd server
+npm run migrate:to-mongodb
+```
+
+4. If Mongo already has data and you intentionally want to replace it:
+
+```bash
+# macOS/Linux
+cd server
+CLEAR_MONGO=true npm run migrate:to-mongodb
+
+# Windows PowerShell
+$env:CLEAR_MONGO='true'; npm run migrate:to-mongodb
+```
+
+5. In your host (Render), set:
+
+```
+USE_SUPABASE=false
+MONGODB_URI=<atlas uri>
+```
+
+Then redeploy.
+
 ## Additional Notes
 
 - The migration script preserves all relationships between data
