@@ -1,40 +1,39 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { Link } from 'react-router-dom';
+import api from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { isValidEmail } from '../utils/validation';
 
 const ForgotPasswordStandalone = () => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [submittedEmail, setSubmittedEmail] = useState('');
   const toast = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('Form submitted');
     setError('');
+    const trimmedEmail = email.trim();
 
     // Basic validation
-    if (!email) {
+    if (!trimmedEmail) {
       setError('Please enter your email address');
+      return;
+    }
+
+    if (!isValidEmail(trimmedEmail)) {
+      setError('Please enter a valid email address');
       return;
     }
 
     try {
       setIsLoading(true);
-      console.log('Sending password reset request for email:', email);
+      console.log('Sending password reset request for email:', trimmedEmail);
 
-      // Get the API URL from environment variables
-      const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
-      const fullUrl = `${apiUrl}/api/users/forgot-password`;
-      console.log('Full request URL:', fullUrl);
-
-      // Make a direct axios call
-      const response = await axios.post(fullUrl, { email }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.post('/users/forgot-password', { email: trimmedEmail });
 
       console.log('Password reset API call successful');
       console.log('Response:', response.data);
@@ -42,6 +41,7 @@ const ForgotPasswordStandalone = () => {
       // Show success toast notification
       toast.success('Password reset link sent. Please check your email.');
 
+      setSubmittedEmail(trimmedEmail);
       setIsSubmitted(true);
     } catch (err) {
       console.error('Error requesting password reset:', err);
@@ -87,6 +87,7 @@ const ForgotPasswordStandalone = () => {
                   className="w-full h-12 px-4 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                   placeholder="your@email.com"
                   required
+                  aria-invalid={error ? 'true' : 'false'}
                 />
               </div>
 
@@ -112,12 +113,12 @@ const ForgotPasswordStandalone = () => {
               </button>
 
               <div className="text-center mt-4">
-                <a
-                  href="/login"
+                <Link
+                  to="/login"
                   className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors"
                 >
                   Back to Login
-                </a>
+                </Link>
               </div>
             </form>
           ) : (
@@ -128,14 +129,14 @@ const ForgotPasswordStandalone = () => {
                 </svg>
               </div>
               <p className="text-gray-700 dark:text-gray-300 mb-6">
-                If an account exists with the email <span className="font-semibold">{email}</span>, you will receive password reset instructions.
+                If an account exists with the email <span className="font-semibold">{submittedEmail}</span>, you will receive password reset instructions.
               </p>
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
               >
                 Back to Login
-              </a>
+              </Link>
             </div>
           )}
         </div>

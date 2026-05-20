@@ -12,16 +12,26 @@ const DashboardPage = () => {
   const { trackedAirdrops, loading, error, refreshTracking } = useTracking();
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Redirect if not logged in
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
+  const refreshedUserIdRef = useRef(null);
+  const userId = user?._id;
 
   // Refresh tracking data when component mounts
   useEffect(() => {
+    if (!userId) {
+      refreshedUserIdRef.current = null;
+      return;
+    }
+
+    if (refreshedUserIdRef.current === userId) return;
+
+    refreshedUserIdRef.current = userId;
     refreshTracking();
-  }, []);
+  }, [userId, refreshTracking]);
+
+  // Redirect if not logged in
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
   // Filter airdrops based on status and search term
   let filteredAirdrops = filter === 'all'

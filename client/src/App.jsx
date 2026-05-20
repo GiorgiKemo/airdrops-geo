@@ -22,6 +22,7 @@ const ForgotPasswordStandalone = lazy(() => import('./pages/ForgotPasswordStanda
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AllAirdropsPage = lazy(() => import('./pages/AllAirdropsPage'));
+const ClaimPage = lazy(() => import('./pages/ClaimPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const CookiePage = lazy(() => import('./pages/CookiePage'));
@@ -50,11 +51,6 @@ const ProtectedRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
   const { user } = useAuth();
 
-  console.log('AdminRoute - Current user:', user);
-  console.log('AdminRoute - User role:', user?.role);
-  console.log('AdminRoute - User role type:', user?.role ? typeof user.role : 'undefined');
-  console.log('AdminRoute - Is admin?', user?.role === 'admin');
-
   // Function to check if user is admin
   const isAdmin = () => {
     if (!user) return false;
@@ -62,19 +58,14 @@ const AdminRoute = ({ children }) => {
     return user.role === 'admin';
   };
 
-  console.log('AdminRoute - isAdmin() result:', isAdmin());
-
   if (!user) {
-    console.log('AdminRoute - No user, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   if (!isAdmin()) {
-    console.log('AdminRoute - Not admin, redirecting to home');
     return <Navigate to="/" replace />;
   }
 
-  console.log('AdminRoute - Admin access granted');
   return children;
 };
 
@@ -96,7 +87,7 @@ function App() {
                 Skip to main content
               </a>
               <Navbar />
-              <main id="main-content" className="flex-1 overflow-hidden pt-24">
+              <main id="main-content" className="flex-1 overflow-visible pt-24">
 
                 <Suspense fallback={<LoadingFallback />}>
                   <Routes>
@@ -106,8 +97,10 @@ function App() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordStandalone />} />
+                    <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/claim" element={<ClaimPage />} />
                     <Route path="/profile" element={
                       <ProtectedRoute>
                         <ProfilePage />

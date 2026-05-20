@@ -1,12 +1,19 @@
 import PropTypes from 'prop-types';
 
 const AirdropUpdates = ({ updates }) => {
-  if (!updates || updates.length === 0) {
+  const safeUpdates = Array.isArray(updates) ? updates : [];
+
+  if (safeUpdates.length === 0) {
     return null;
   }
 
   // Format date
   const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    if (!dateString || Number.isNaN(date.getTime())) {
+      return 'Date unavailable';
+    }
+
     const options = {
       year: 'numeric',
       month: 'short',
@@ -14,11 +21,16 @@ const AirdropUpdates = ({ updates }) => {
       hour: '2-digit',
       minute: '2-digit'
     };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    return date.toLocaleDateString(undefined, options);
   };
 
   // Sort updates by date (newest first)
-  const sortedUpdates = [...updates].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortedUpdates = [...safeUpdates].sort((a, b) => {
+    const bTime = new Date(b.date).getTime();
+    const aTime = new Date(a.date).getTime();
+
+    return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0);
+  });
 
   return (
     <div className="mt-6">
@@ -37,7 +49,9 @@ const AirdropUpdates = ({ updates }) => {
               </span>
             </div>
             <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-              {update.content}
+              {typeof update.content === 'string' && update.content.trim()
+                ? update.content
+                : 'No update details available.'}
             </p>
           </div>
         ))}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 
@@ -11,7 +11,9 @@ const ResetPasswordPage = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { token } = useParams();
+  const { token: routeToken } = useParams();
+  const [searchParams] = useSearchParams();
+  const token = routeToken || searchParams.get('token') || '';
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -53,7 +55,7 @@ const ResetPasswordPage = () => {
     try {
       setIsLoading(true);
       await api.post('/users/reset-password', {
-        token,
+        token: token.trim(),
         password: formData.password
       });
 
@@ -135,6 +137,10 @@ const ResetPasswordPage = () => {
                         value={formData.password}
                         onChange={handleChange}
                         placeholder="Enter new password"
+                        required
+                        minLength="6"
+                        autoComplete="new-password"
+                        aria-invalid={error ? 'true' : 'false'}
                         className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
                       />
                     </div>
@@ -158,6 +164,10 @@ const ResetPasswordPage = () => {
                         value={formData.confirmPassword}
                         onChange={handleChange}
                         placeholder="Confirm new password"
+                        required
+                        minLength="6"
+                        autoComplete="new-password"
+                        aria-invalid={error ? 'true' : 'false'}
                         className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
                       />
                     </div>

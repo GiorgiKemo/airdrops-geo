@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { trackingService } from '../services/trackingService';
 
@@ -10,22 +10,8 @@ export const TrackingProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const { user } = useAuth();
 
-  // Fetch tracked airdrops when user changes
-  useEffect(() => {
-    if (user) {
-      // Small delay to ensure auth token is properly set up
-      const timer = setTimeout(() => {
-        fetchTrackedAirdrops();
-      }, 300);
-
-      return () => clearTimeout(timer);
-    } else {
-      setTrackedAirdrops([]);
-    }
-  }, [user]);
-
   // Fetch tracked airdrops
-  const fetchTrackedAirdrops = async () => {
+  const fetchTrackedAirdrops = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -39,10 +25,24 @@ export const TrackingProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Fetch tracked airdrops when user changes
+  useEffect(() => {
+    if (user) {
+      // Small delay to ensure auth token is properly set up
+      const timer = setTimeout(() => {
+        fetchTrackedAirdrops();
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+
+    setTrackedAirdrops([]);
+  }, [user, fetchTrackedAirdrops]);
 
   // Track an airdrop
-  const trackAirdrop = async (airdropId) => {
+  const trackAirdrop = useCallback(async (airdropId) => {
     if (!user) return;
 
     setLoading(true);
@@ -56,10 +56,10 @@ export const TrackingProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, fetchTrackedAirdrops]);
 
   // Untrack an airdrop
-  const untrackAirdrop = async (airdropId) => {
+  const untrackAirdrop = useCallback(async (airdropId) => {
     if (!user) return;
 
     setLoading(true);
@@ -73,12 +73,12 @@ export const TrackingProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, fetchTrackedAirdrops]);
 
   // Check if an airdrop is being tracked
-  const isTracked = (airdropId) => {
+  const isTracked = useCallback((airdropId) => {
     return trackedAirdrops.some(airdrop => airdrop._id === airdropId);
-  };
+  }, [trackedAirdrops]);
 
   return (
     <TrackingContext.Provider

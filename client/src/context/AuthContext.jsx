@@ -3,10 +3,12 @@ import axios from 'axios';
 import api from '../services/api';
 
 const AuthContext = createContext();
-
-// API URL from environment variable
-const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
-const API_URL = `${apiUrl}/api/users`;
+const isAuthDebugEnabled = import.meta.env.VITE_DEBUG_AUTH === 'true';
+const debugLog = (...args) => {
+  if (isAuthDebugEnabled) {
+    console.debug(...args);
+  }
+};
 
 export const AuthProvider = ({ children }) => {
   // Check if user is already logged in from localStorage
@@ -31,8 +33,8 @@ export const AuthProvider = ({ children }) => {
         try {
           // Verify the token with the server using our API service
           const { data } = await api.get('/users/verify-token');
-          console.log('Token verification response:', data);
-          console.log('User role from server:', data.role);
+          debugLog('Token verification response:', data);
+          debugLog('User role from server:', data.role);
 
           // IMPORTANT: Always use the server's response to set the user state
           // This ensures that if someone tampers with localStorage, their role will be corrected
@@ -72,7 +74,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      console.log('Register - Sending request with data:', { username, email });
+      debugLog('Register - Sending request with data:', { username, email });
 
       // Use our API service which includes CSRF token handling
       const { data } = await api.post('/users/register', {
@@ -81,21 +83,21 @@ export const AuthProvider = ({ children }) => {
         password
       });
 
-      console.log('Register - Response data:', data);
-      console.log('Register - User role from response:', data.role);
+      debugLog('Register - Response data:', data);
+      debugLog('Register - User role from response:', data.role);
 
       // Set user with token
       setUser(data);
 
       // Immediately verify token to get full profile data
       try {
-        console.log('Verifying token to get full profile data after registration');
+        debugLog('Verifying token to get full profile data after registration');
 
         // Set auth header for the verification request
         api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
 
         const verifyResponse = await api.get('/users/verify-token');
-        console.log('Token verification response after registration:', verifyResponse.data);
+        debugLog('Token verification response after registration:', verifyResponse.data);
 
         // Update user with complete profile data
         setUser(verifyResponse.data);
@@ -121,33 +123,33 @@ export const AuthProvider = ({ children }) => {
 
   // Login user
   const login = async (email, password) => {
-    console.log('AuthContext login function called with email:', email);
+    debugLog('AuthContext login function called with email:', email);
     setLoading(true);
     setError(null);
 
     try {
-      console.log('Making API request to /users/login');
+      debugLog('Making API request to /users/login');
       // Use our API service which includes CSRF token handling
       const { data } = await api.post(`/users/login`, {
         email,
         password
       });
 
-      console.log('Login response:', data);
-      console.log('User role from login:', data.role);
+      debugLog('Login response:', data);
+      debugLog('User role from login:', data.role);
 
       // Set user with token
       setUser(data);
 
       // Immediately verify token to get full profile data
       try {
-        console.log('Verifying token to get full profile data');
+        debugLog('Verifying token to get full profile data');
 
         // Set auth header for the verification request
         api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
 
         const verifyResponse = await api.get('/users/verify-token');
-        console.log('Token verification response:', verifyResponse.data);
+        debugLog('Token verification response:', verifyResponse.data);
 
         // Update user with complete profile data
         setUser(verifyResponse.data);
@@ -179,12 +181,12 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      console.log('Updating user profile with data:', profileData);
+      debugLog('Updating user profile with data:', profileData);
 
       // Use our API service which includes CSRF token handling
       const { data } = await api.put('/users/profile', profileData);
 
-      console.log('Profile update response:', data);
+      debugLog('Profile update response:', data);
 
       // Update user state with new profile data
       setUser(prev => ({
@@ -211,7 +213,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      console.log('Updating user password');
+      debugLog('Updating user password');
 
       // Use our API service which includes CSRF token handling
       const { data } = await api.put('/users/password', {
@@ -219,7 +221,7 @@ export const AuthProvider = ({ children }) => {
         newPassword
       });
 
-      console.log('Password update response:', data);
+      debugLog('Password update response:', data);
 
       setLoading(false);
       return data;
@@ -236,34 +238,34 @@ export const AuthProvider = ({ children }) => {
 
   // Logout user
   const logout = (redirectToHome = true) => {
-    console.log('AuthContext: logout called with redirectToHome =', redirectToHome);
+    debugLog('AuthContext: logout called with redirectToHome =', redirectToHome);
 
     // Check if user is already logged out
     const currentUser = localStorage.getItem('currentUser');
-    console.log('AuthContext: currentUser in localStorage =', currentUser ? 'exists' : 'null');
+    debugLog('AuthContext: currentUser in localStorage =', currentUser ? 'exists' : 'null');
 
     // Clear user data from localStorage first
     localStorage.removeItem('currentUser');
-    console.log('AuthContext: removed currentUser from localStorage');
+    debugLog('AuthContext: removed currentUser from localStorage');
 
     // Remove auth header
     delete axios.defaults.headers.common['Authorization'];
-    console.log('AuthContext: removed Authorization header');
+    debugLog('AuthContext: removed Authorization header');
 
     // Set user state to null
     setUser(null);
-    console.log('AuthContext: set user state to null');
+    debugLog('AuthContext: set user state to null');
 
     // Navigate to home page after logout only if redirectToHome is true
     if (redirectToHome) {
-      console.log('AuthContext: redirectToHome is true, will redirect to home page');
+      debugLog('AuthContext: redirectToHome is true, will redirect to home page');
       // Use a small timeout to ensure state updates have been processed
       setTimeout(() => {
-        console.log('AuthContext: redirecting to home page now');
+        debugLog('AuthContext: redirecting to home page now');
         window.location.href = '/';
       }, 100);
     } else {
-      console.log('AuthContext: redirectToHome is false, staying on current page');
+      debugLog('AuthContext: redirectToHome is false, staying on current page');
     }
   };
 

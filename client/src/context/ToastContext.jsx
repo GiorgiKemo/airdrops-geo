@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 // Create the context
@@ -15,7 +15,7 @@ export const TOAST_TYPES = {
 // Toast component
 const Toast = ({ id, message, type, onClose }) => {
   // Auto-close after 5 seconds
-  useState(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       onClose(id);
     }, 5000);

@@ -1,13 +1,59 @@
 import axios from 'axios';
 
-// Remove trailing slash if present
-const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
-const API_URL = `${apiUrl}/api`;
-const API_TIMEOUT_MS = 60000;
+const trimTrailingSlashes = (value) => value.replace(/\/+$/, '');
+const createApiBaseUrl = (rawUrl = import.meta.env.VITE_API_URL) => {
+  const configuredUrl = typeof rawUrl === 'string' ? trimTrailingSlashes(rawUrl.trim()) : '';
 
-// Log the API URL for debugging
-console.log('API URL:', API_URL);
-console.log('Environment:', import.meta.env.MODE);
+  if (!configuredUrl) {
+    return '/api';
+  }
+
+  return configuredUrl.endsWith('/api') ? configuredUrl : `${configuredUrl}/api`;
+};
+
+const API_URL = createApiBaseUrl();
+const API_TIMEOUT_MS = 60000;
+const isApiDebugEnabled = import.meta.env.VITE_DEBUG_API === 'true';
+const debugLog = (...args) => {
+  if (isApiDebugEnabled) {
+    console.debug(...args);
+  }
+};
+
+const getStoredUser = () => {
+  const storedUser = localStorage.getItem('currentUser');
+
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(storedUser);
+  } catch (error) {
+    console.error('Invalid stored user data; clearing session.', error);
+    localStorage.removeItem('currentUser');
+    return null;
+  }
+};
+
+const getApiErrorDetails = (error, extra = {}) => ({
+  ...extra,
+  message: error.message,
+  code: error.code,
+  status: error.response?.status,
+  statusText: error.response?.statusText,
+  method: error.config?.method?.toUpperCase(),
+  url: error.config?.url,
+  baseURL: error.config?.baseURL,
+  data: error.response?.data,
+});
+
+const logApiError = (message, error, extra) => {
+  console.error(message, getApiErrorDetails(error, extra));
+};
+
+debugLog('API URL:', API_URL);
+debugLog('Environment:', import.meta.env.MODE);
 
 // Create axios instance
 const api = axios.create({
@@ -28,95 +74,97 @@ const fetchCsrfToken = async () => {
 
   // In development, just use a dummy token
   if (import.meta.env.MODE === 'development') {
-    console.log('Using dummy CSRF token for development');
+    debugLog('Using dummy CSRF token for development');
     return 'development-csrf-token';
   }
 
   try {
-    const response = await axios.get(`${API_URL}/csrf-token`, { withCredentials: true });
+    const response = await axios.get(`${API_URL}/csrf-token`, {
+      withCredentials: true,
+      timeout: API_TIMEOUT_MS,
+    });
     csrfToken = response.data.csrfToken;
-    console.log('CSRF token fetched:', csrfToken);
+    debugLog('CSRF token fetched');
     return csrfToken;
   } catch (error) {
-    console.error('Error fetching CSRF token:', error);
+    logApiError('Error fetching CSRF token:', error);
     return null;
   }
 };
 
 // Add request interceptor for authentication, CSRF, and debugging
 api.interceptors.request.use(async config => {
-  console.log('API Request interceptor called for URL:', config.url);
+  const requestUrl = config.url || '';
+  const method = (config.method || 'get').toLowerCase();
+
+  debugLog('API request:', method.toUpperCase(), requestUrl);
+  config.headers = config.headers || {};
+
   // Get token from localStorage
-  const user = JSON.parse(localStorage.getItem('currentUser'));
+  const user = getStoredUser();
 
   // If token exists, add to headers
   if (user && user.token) {
-    console.log('Adding auth token to request');
+    debugLog('Adding auth token to request');
     config.headers.Authorization = `Bearer ${user.token}`;
   } else {
-    console.log('No auth token found in localStorage');
+    debugLog('No auth token found in localStorage');
   }
 
   // Skip CSRF for GET requests and the CSRF token endpoint itself
-  if (config.method !== 'get' && !config.url.includes('/csrf-token')) {
+  if (method !== 'get' && !requestUrl.includes('/csrf-token')) {
     // Skip CSRF for forgot password and reset password endpoints
-    if (config.url.includes('/forgot-password') || config.url.includes('/reset-password')) {
-      console.log('Skipping CSRF token for password reset functionality');
+    if (requestUrl.includes('/forgot-password') || requestUrl.includes('/reset-password')) {
+      debugLog('Skipping CSRF token for password reset functionality');
     } else {
-      console.log('Non-GET request detected, adding CSRF token');
+      debugLog('Non-GET request detected, adding CSRF token');
       // Add CSRF token to headers if available
       if (csrfToken) {
-        console.log('Using existing CSRF token:', csrfToken);
+        debugLog('Using existing CSRF token');
         config.headers['X-CSRF-Token'] = csrfToken;
       } else {
-        console.log('No CSRF token found, fetching a new one');
+        debugLog('No CSRF token found, fetching a new one');
         // Try to fetch a new token
         const token = await fetchCsrfToken();
         if (token) {
-          console.log('New CSRF token fetched:', token);
+          debugLog('New CSRF token fetched');
           config.headers['X-CSRF-Token'] = token;
         } else {
-          console.log('Failed to fetch CSRF token');
+          debugLog('Failed to fetch CSRF token');
         }
       }
     }
   } else {
-    console.log('Skipping CSRF token for GET request or CSRF token endpoint');
+    debugLog('Skipping CSRF token for GET request or CSRF token endpoint');
   }
 
-  console.log('Making request to:', config.url);
-  console.log('Request config:', config);
+  debugLog('Making request to:', requestUrl);
   return config;
 }, error => {
-  console.error('Request error:', error);
+  logApiError('API request setup error:', error);
   return Promise.reject(error);
 });
 
 // Add response interceptor for debugging and CSRF token handling
 api.interceptors.response.use(response => {
-  console.log('Response received from:', response.config.url);
-  console.log('Response status:', response.status);
-  console.log('Response data:', response.data);
+  debugLog('API response:', response.status, response.config.url);
 
   // Update CSRF token if it's in the response headers
   const newCsrfToken = response.headers['x-csrf-token'];
   if (newCsrfToken) {
     csrfToken = newCsrfToken;
-    console.log('CSRF token updated from response headers');
+    debugLog('CSRF token updated from response headers');
   }
 
   return response;
 }, async error => {
-  console.error('Response error:', error);
-  console.error('Error response:', error.response);
-  console.error('Error request:', error.request);
-  console.error('Error config:', error.config);
+  debugLog('API response error:', getApiErrorDetails(error));
 
   // If we get a 403 Forbidden error and it mentions CSRF, try to refresh the token
   if (error.response && error.response.status === 403 &&
       error.response.data && error.response.data.message &&
       error.response.data.message.includes('CSRF')) {
-    console.log('CSRF validation failed, refreshing token...');
+    debugLog('CSRF validation failed, refreshing token...');
 
     // Clear the current token
     csrfToken = null;
@@ -125,10 +173,12 @@ api.interceptors.response.use(response => {
     await fetchCsrfToken();
 
     // If we have a new token and the original request config is available, retry the request
-    if (csrfToken && error.config) {
-      console.log('Retrying request with new CSRF token');
+    if (csrfToken && error.config && !error.config._csrfRetry) {
+      debugLog('Retrying request with new CSRF token');
+      error.config._csrfRetry = true;
+      error.config.headers = error.config.headers || {};
       error.config.headers['X-CSRF-Token'] = csrfToken;
-      return axios(error.config);
+      return api(error.config);
     }
   }
 
@@ -144,9 +194,9 @@ export const airdropService = {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
-        console.log('Fetching airdrops from:', `${API_URL}/airdrops`, { attempt, maxAttempts });
+        debugLog('Fetching airdrops from:', `${API_URL}/airdrops`, { attempt, maxAttempts });
         const response = await api.get('/airdrops');
-        console.log('Airdrops response:', response);
+        debugLog('Airdrops response:', response);
         return response.data;
       } catch (error) {
         lastError = error;
@@ -159,23 +209,13 @@ export const airdropService = {
           code === 'ETIMEDOUT' ||
           code === 'ERR_NETWORK';
 
-        console.error('Error fetching airdrops:', error);
-        console.error('Error details:', {
-          attempt,
-          maxAttempts,
-          message: error.message,
-          code,
-          status,
-          statusText: error.response?.statusText,
-          data: error.response?.data
-        });
-
         if (attempt < maxAttempts && isRetryable) {
           // Small backoff before one retry to absorb transient cold-start/network failures
           await new Promise(resolve => setTimeout(resolve, 1500));
           continue;
         }
 
+        logApiError('Error fetching airdrops:', error, { attempt, maxAttempts });
         throw error;
       }
     }
@@ -189,7 +229,7 @@ export const airdropService = {
       const response = await api.get(`/airdrops/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Error fetching airdrop with ID ${id}:`, error);
+      logApiError(`Error fetching airdrop with ID ${id}:`, error);
       throw error;
     }
   },
@@ -204,7 +244,7 @@ export const airdropService = {
       const response = await api.post('/airdrops', airdropData);
       return response.data;
     } catch (error) {
-      console.error('Error creating airdrop:', error);
+      logApiError('Error creating airdrop:', error);
       throw error;
     }
   },
@@ -212,8 +252,8 @@ export const airdropService = {
   // Update existing airdrop
   updateAirdrop: async (id, airdropData, headers = {}, useEditButton = false) => {
     try {
-      console.log('Updating airdrop with data:', airdropData);
-      console.log('skipTelegramNotification:', airdropData.skipTelegramNotification);
+      debugLog('Updating airdrop with data:', airdropData);
+      debugLog('skipTelegramNotification:', airdropData.skipTelegramNotification);
 
       // Make sure skipTelegramNotification is properly set
       if (airdropData.skipTelegramNotification === undefined) {
@@ -228,9 +268,9 @@ export const airdropService = {
 
       // CRITICAL FIX: Add editButton=true parameter to the URL to indicate this is an edit button update
       // This will ensure the server respects the skipTelegramNotification flag
-      console.log('useEditButton parameter:', useEditButton);
-      console.log('skipTelegramNotification:', airdropData.skipTelegramNotification);
-      console.log('sendTelegramNotification:', airdropData.sendTelegramNotification);
+      debugLog('useEditButton parameter:', useEditButton);
+      debugLog('skipTelegramNotification:', airdropData.skipTelegramNotification);
+      debugLog('sendTelegramNotification:', airdropData.sendTelegramNotification);
 
       // Make sure we're sending the correct notification flags
       if (airdropData.skipTelegramNotification === false) {
@@ -242,21 +282,21 @@ export const airdropService = {
 
       // Always add editButton=true if useEditButton is true or for status changes
       if (useEditButton || airdropData.status) {
-        console.log('Adding editButton=true parameter');
+        debugLog('Adding editButton=true parameter');
         queryParams.append('editButton', 'true');
       }
 
       // If skipTelegramNotification is false, also add notifyTelegram=true to force a notification
       // But only if we're not doing a status change from the detail page
       if (airdropData.skipTelegramNotification === false && !airdropData.status) {
-        console.log('Adding notifyTelegram=true parameter');
+        debugLog('Adding notifyTelegram=true parameter');
         queryParams.append('notifyTelegram', 'true');
       }
 
       const response = await api.put(`/airdrops/${id}?${queryParams.toString()}`, airdropData, { headers });
       return response.data;
     } catch (error) {
-      console.error(`Error updating airdrop with ID ${id}:`, error);
+      logApiError(`Error updating airdrop with ID ${id}:`, error);
       throw error;
     }
   },
@@ -283,8 +323,8 @@ export const airdropService = {
       };
 
       // Set sendTelegramNotification based on skipTelegramNotification flag
-      console.log('API Service - Adding airdrop update with skipTelegramNotification:', skipTelegramNotification);
-      console.log('API Service - skipTelegramNotification type:', typeof skipTelegramNotification);
+      debugLog('API Service - Adding airdrop update with skipTelegramNotification:', skipTelegramNotification);
+      debugLog('API Service - skipTelegramNotification type:', typeof skipTelegramNotification);
 
       // IMPORTANT: Use double negation to ensure it's a true boolean
       // This is more reliable than strict comparison for boolean conversion
@@ -293,9 +333,9 @@ export const airdropService = {
       // Always set sendTelegramNotification to the opposite of skipTelegramNotification
       const sendTelegram = !skipTelegram;
 
-      console.log('API Service - Final values being sent to server:');
-      console.log('API Service - skipTelegramNotification (processed):', skipTelegram, 'type:', typeof skipTelegram);
-      console.log('API Service - sendTelegramNotification:', sendTelegram, 'type:', typeof sendTelegram);
+      debugLog('API Service - Final values being sent to server:');
+      debugLog('API Service - skipTelegramNotification (processed):', skipTelegram, 'type:', typeof skipTelegram);
+      debugLog('API Service - sendTelegramNotification:', sendTelegram, 'type:', typeof sendTelegram);
 
       const response = await api.post(`/airdrops/${id}/updates`, {
         content: updateContent,
@@ -303,10 +343,10 @@ export const airdropService = {
         skipTelegramNotification: skipTelegram
       }, { headers });
 
-      console.log('Airdrop update response:', response.data);
+      debugLog('Airdrop update response:', response.data);
       return response.data;
     } catch (error) {
-      console.error(`Error adding update to airdrop with ID ${id}:`, error);
+      logApiError(`Error adding update to airdrop with ID ${id}:`, error);
       throw error;
     }
   },
@@ -317,7 +357,7 @@ export const airdropService = {
       const response = await api.delete(`/airdrops/${id}`);
       return response.data;
     } catch (error) {
-      console.error(`Error deleting airdrop with ID ${id}:`, error);
+      logApiError(`Error deleting airdrop with ID ${id}:`, error);
       throw error;
     }
   },

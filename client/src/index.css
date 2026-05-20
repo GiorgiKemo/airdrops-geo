@@ -6,7 +6,7 @@
   /* Modern design system - Light Mode */
   --macos-bg: #f8fafc;
   --macos-card-bg: #ffffff;
-  --macos-card-border: transparent;
+  --macos-card-border: #e2e8f0;
   --macos-primary: #3b82f6;
   --macos-primary-hover: #2563eb;
   --macos-secondary: #64748b;
@@ -31,6 +31,7 @@
   --macos-control-radius: 8px;
   --macos-glyph-blue: #3b82f6;
   --macos-glyph-gray: #64748b;
+  --shell-header-offset: 5rem;
 
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -51,7 +52,7 @@
   /* Modern design system - Dark Mode */
   --macos-bg: #0f172a;
   --macos-card-bg: #1e293b;
-  --macos-card-border: transparent;
+  --macos-card-border: #334155;
   --macos-primary: #60a5fa;
   --macos-primary-hover: #93c5fd;
   --macos-secondary: #94a3b8;
@@ -78,148 +79,67 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: var(--shell-header-offset);
+  overflow-x: hidden;
 }
 
-/* Remove default underline from links */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+img,
+picture,
+video,
+canvas {
+  display: block;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 a {
-  text-decoration: none !important;
+  color: inherit;
+  text-decoration: none;
 }
 
-/* Remove underline on hover */
-a:hover:not(.no-hover-underline),
-a:hover {
-  text-decoration: none !important;
+a:hover:not(.no-hover-underline) {
+  text-decoration: none;
 }
 
-/* Style links in FAQ answers */
-.faq-answer a {
+.faq-answer a,
+main a:not([class]) {
   color: var(--macos-primary);
-  text-decoration: none !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.faq-answer a:hover {
-  text-decoration: none !important;
+.faq-answer a:hover,
+main a:not([class]):hover {
+  color: var(--macos-primary-hover);
 }
 
-/* Remove all borders and underlines from FAQ items */
-.faq-item,
-.faq-item *,
-.macos-card,
-.macos-card * {
-  border: none !important;
-  border-top: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  border-color: transparent !important;
-  text-decoration: none !important;
+.faq-container .faq-item {
+  border: 1px solid var(--macos-divider);
+  box-shadow: 0 1px 2px var(--macos-shadow);
 }
 
-/* Target the specific blue line in FAQ */
-.faq-item hr,
-.faq-item::before,
-.faq-item::after,
-.faq-answer::before,
-.faq-answer::after,
-.faq-item button::after,
-.faq-item button::before {
-  display: none !important;
-  border: none !important;
-  border-top: none !important;
-  border-bottom: none !important;
-  background: transparent !important;
-  height: 0 !important;
-}
-
-/* Override any default borders in FAQ answers */
-.faq-answer,
-.faq-answer * {
-  border: none !important;
-  border-top: none !important;
-  border-bottom: none !important;
-  border-color: transparent !important;
-  text-decoration: none !important;
-}
-
-/* Remove all underlines from the entire site */
-* {
-  text-decoration: none !important;
-}
-
-/* Target the specific blue line in FAQ with a more specific selector */
-.faq-item > button + div,
-.faq-item > button + div::before,
-.faq-item > button + div::after,
-.no-blue-line,
-.no-blue-line::before,
-.no-blue-line::after,
-.faq-container *,
-.faq-container *::before,
-.faq-container *::after {
-  border-top: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  text-decoration: none !important;
-}
-
-/* Specific fix for the blue line in FAQ */
-.faq-item button::after,
-.faq-item button::before,
-.faq-answer::before,
-.faq-answer::after,
-.faq-item::before,
-.faq-item::after,
-.faq-container hr {
-  display: none !important;
-  height: 0 !important;
-  content: none !important;
-  border: none !important;
-}
-
-/* Override any potential pseudo-element that might be creating the line */
-.faq-item button:not([disabled])::after,
-.faq-item button:not([disabled])::before {
-  content: none !important;
-  display: none !important;
-  border: none !important;
-  height: 0 !important;
-  width: 0 !important;
-  background: transparent !important;
-}
-
-/* Remove hover underlines */
-a:hover,
-a:hover *,
-*:hover {
-  text-decoration: none !important;
-}
-
-/* Extreme measure to remove the blue line */
-@keyframes removeBlueLine {
-  0% { border-color: transparent; }
-  100% { border-color: transparent; }
-}
-
-.faq-item,
-.faq-item *,
-.faq-answer,
-.faq-container * {
-  animation: removeBlueLine 0.1s forwards !important;
-  border-color: transparent !important;
-  border: none !important;
-}
-
-/* Target the exact blue line with a very specific selector */
-.macos-card.faq-item > button + div {
-  border-top-color: transparent !important;
-  border-top-width: 0 !important;
-  border-top-style: none !important;
-  border-top: none !important;
-  margin-top: 0 !important;
-  padding-top: 16px !important; /* Add some padding instead of relying on the border */
+.faq-container .faq-answer {
+  border-top: 1px solid var(--macos-divider);
+  padding-top: 1rem;
 }
 
 body {
@@ -230,8 +150,10 @@ body {
   background-color: var(--macos-bg);
   color: var(--macos-text);
   line-height: 1.6;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 320px;
 }
 
 /* Improved focus styles for keyboard navigation */
@@ -254,13 +176,18 @@ body {
   border-width: 0;
 }
 
-.sr-only.focus:not-sr-only {
+.sr-only:focus,
+.sr-only:focus-visible {
   position: fixed;
   width: auto;
   height: auto;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
   overflow: visible;
   clip: auto;
   white-space: normal;
+  top: 1rem;
+  left: 1rem;
   z-index: 9999;
 }
 
@@ -268,7 +195,7 @@ body {
 h1 {
   font-size: 2.5rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   margin-bottom: 1.5rem;
   line-height: 1.2;
 }
@@ -276,7 +203,7 @@ h1 {
 h2 {
   font-size: 2rem;
   font-weight: 700;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
   margin-bottom: 1.25rem;
   line-height: 1.25;
 }
@@ -284,7 +211,7 @@ h2 {
 h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   margin-bottom: 1rem;
   line-height: 1.3;
 }
@@ -292,7 +219,7 @@ h3 {
 h4 {
   font-size: 1.25rem;
   font-weight: 600;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
   margin-bottom: 0.75rem;
   line-height: 1.4;
 }
@@ -328,7 +255,7 @@ p {
 /* Modern card */
 .macos-card {
   background-color: var(--macos-card-bg);
-  border: none;
+  border: 1px solid var(--macos-card-border);
   border-radius: var(--macos-window-radius);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
   transition: all 0.2s ease;
@@ -482,12 +409,10 @@ p {
   transform: none;
 }
 
-/* Ensure text wraps properly throughout the application */
-p, h1, h2, h3, h4, h5, h6, span, div {
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-  hyphens: auto;
+/* Ensure long content wraps without breaking every layout primitive. */
+:where(p, h1, h2, h3, h4, h5, h6, li, figcaption, blockquote) {
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 /* Modern toolbar */
@@ -504,7 +429,15 @@ p, h1, h2, h3, h4, h5, h6, span, div {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   width: 100%;
+  max-width: 100vw;
+  min-height: var(--shell-header-offset);
   transition: all 0.3s ease;
+}
+
+#main-content {
+  min-width: 0;
+  overflow: visible;
+  scroll-margin-top: var(--shell-header-offset);
 }
 
 /* Modern sidebar */
@@ -705,6 +638,11 @@ p, h1, h2, h3, h4, h5, h6, span, div {
   overflow: hidden;
 }
 
+.optimized-image {
+  background-color: var(--macos-hover);
+  object-fit: cover;
+}
+
 /* Custom Scrollbar - macOS style */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
@@ -777,4 +715,10 @@ p, h1, h2, h3, h4, h5, h6, span, div {
 .is-scrolling .airdrop-card-item {
   content-visibility: auto; /* Optimize rendering of off-screen content */
   contain-intrinsic-size: auto 240px; /* Provide size hint for content-visibility */
+}
+
+@media (max-width: 640px) {
+  :root {
+    --shell-header-offset: 4.25rem;
+  }
 }

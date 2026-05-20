@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTracking } from '../context/TrackingContext';
 import AirdropClaimCard from '../components/AirdropClaimCard';
 import { airdropService } from '../services/api';
+
+const isClaimableAirdrop = (airdrop) => airdrop?.status === 'claim' || airdrop?.status === 'ended';
 
 const ClaimPage = () => {
   const { user } = useAuth();
@@ -12,23 +14,33 @@ const ClaimPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('tracked'); // 'tracked' or 'all'
+  const refreshTrackingRef = useRef(refreshTracking);
 
-  // Redirect if not logged in
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
+  useEffect(() => {
+    refreshTrackingRef.current = refreshTracking;
+  }, [refreshTracking]);
 
-  // Fetch all ended airdrops
+  // Fetch all claimable airdrops
   useEffect(() => {
     const fetchEndedAirdrops = async () => {
+      if (!user) {
+        setAllEndedAirdrops([]);
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const airdrops = await airdropService.getAirdrops();
-        const endedAirdrops = airdrops.filter(airdrop => airdrop.status === 'ended');
+        if (!Array.isArray(airdrops)) {
+          throw new Error('Unexpected airdrops response');
+        }
+
+        const endedAirdrops = airdrops.filter(isClaimableAirdrop);
         setAllEndedAirdrops(endedAirdrops);
         setError(null);
       } catch (err) {
-        setError('Failed to fetch ended airdrops');
+        setError('Failed to fetch claimable airdrops');
         console.error(err);
       } finally {
         setLoading(false);
@@ -36,24 +48,32 @@ const ClaimPage = () => {
     };
 
     fetchEndedAirdrops();
-  }, []);
+  }, [user]);
 
   // Refresh tracking data when component mounts
   useEffect(() => {
-    refreshTracking();
-  }, [refreshTracking]);
+    if (user) {
+      refreshTrackingRef.current();
+    }
+  }, [user]);
 
   // Get airdrops based on filter
-  const getFilteredAirdrops = () => {
+  const filteredAirdrops = useMemo(() => {
     if (filter === 'tracked') {
-      return trackedAirdrops.filter(airdrop => airdrop.status === 'ended');
-    } else {
-      return allEndedAirdrops;
+      return Array.isArray(trackedAirdrops)
+        ? trackedAirdrops.filter(isClaimableAirdrop)
+        : [];
     }
-  };
 
-  const filteredAirdrops = getFilteredAirdrops();
+    return allEndedAirdrops;
+  }, [allEndedAirdrops, filter, trackedAirdrops]);
+
   const isLoading = loading || trackingLoading;
+
+  // Redirect if not logged in
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -62,7 +82,7 @@ const ClaimPage = () => {
           Claim Your Rewards
         </h1>
         <p className="text-gray-600 dark:text-gray-400 max-w-3xl">
-          These airdrops have ended and may be ready for claiming rewards. Check the official websites for claim instructions.
+          These airdrops are ended or marked ready to claim. Check the official websites for reward instructions.
         </p>
       </div>
 
@@ -87,7 +107,7 @@ const ClaimPage = () => {
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
             }`}
           >
-            All Ended Airdrops
+            All Claimable Airdrops
           </button>
         </div>
       </div>
@@ -105,8 +125,8 @@ const ClaimPage = () => {
         <div className="text-center py-10">
           <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
             {filter === 'tracked'
-              ? "You don't have any tracked airdrops that have ended."
-              : "There are no ended airdrops at the moment."}
+              ? "You don't have any tracked airdrops ready to claim."
+              : "There are no claimable airdrops at the moment."}
           </p>
           <Link
             to="/"

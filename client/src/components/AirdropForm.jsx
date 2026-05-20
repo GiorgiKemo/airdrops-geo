@@ -2,35 +2,49 @@ import { useState, useEffect, useRef } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import EmojiPicker from 'emoji-picker-react';
 import { FaSmile } from 'react-icons/fa';
+import { isValidUrl, normalizeUrl } from '../utils/validation';
+
+const createDefaultFormData = () => ({
+  title: '',
+  description: '',
+  token: '',
+  criteria: '',
+  startDate: '',
+  deadline: '',
+  status: 'upcoming',
+  costType: 'free',
+  link: '',
+  claimUrl: '',
+  logoUrl: '',
+  cardColor: '',
+  predefinedColor: 'default',
+  skipTelegramNotification: false,
+  socialLinks: {
+    website: '',
+    discord: '',
+    twitter: '',
+    telegram: '',
+    github: '',
+    instagram: '',
+  },
+});
+
+const formatDateForInput = (dateValue) => {
+  if (!dateValue) return '';
+
+  const parsedDate = new Date(dateValue);
+  if (Number.isNaN(parsedDate.getTime())) return '';
+
+  return parsedDate.toISOString().split('T')[0];
+};
 
 const AirdropForm = ({ onSubmit, initialData = null }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    token: '',
-    criteria: '',
-    startDate: '',
-    status: 'upcoming',
-    costType: 'free', // 'free' or 'paid'
-    link: '',
-    claimUrl: '', // URL for claiming rewards
-    logoUrl: '',
-    cardColor: '', // Custom hex color code
-    predefinedColor: 'default', // Selected from predefined colors
-    skipTelegramNotification: false, // Skip Telegram notification
-    socialLinks: {
-      website: '',
-      discord: '',
-      twitter: '',
-      telegram: '',
-      github: '',
-      instagram: '',
-    },
-  });
+  const [formData, setFormData] = useState(createDefaultFormData);
 
   // State for emoji pickers
   const [showDescriptionEmojiPicker, setShowDescriptionEmojiPicker] = useState(false);
   const [showCriteriaEmojiPicker, setShowCriteriaEmojiPicker] = useState(false);
+  const [formError, setFormError] = useState('');
 
   // Refs for emoji pickers
   const descriptionEmojiPickerRef = useRef(null);
@@ -68,62 +82,52 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
 
   // If initialData is provided, use it to populate the form (for editing)
   useEffect(() => {
-    if (initialData) {
-      // Format the dates to YYYY-MM-DD for the input fields
-      const formattedDeadline = initialData.deadline
-        ? new Date(initialData.deadline).toISOString().split('T')[0]
-        : '';
+    setFormError('');
 
-      const formattedStartDate = initialData.startDate
-        ? new Date(initialData.startDate).toISOString().split('T')[0]
-        : '';
-
-      // Ensure socialLinks is properly structured
-      const socialLinks = {
-        website: initialData.socialLinks?.website || '',
-        discord: initialData.socialLinks?.discord || '',
-        twitter: initialData.socialLinks?.twitter || '',
-        telegram: initialData.socialLinks?.telegram || '',
-        github: initialData.socialLinks?.github || '',
-        instagram: initialData.socialLinks?.instagram || '',
-      };
-
-      console.log('Initializing form with social links:', socialLinks);
-
-      setFormData({
-        ...initialData,
-        deadline: formattedDeadline,
-        startDate: formattedStartDate,
-        socialLinks: socialLinks,
-      });
+    if (!initialData) {
+      setFormData(createDefaultFormData());
+      return;
     }
+
+    // Format the dates to YYYY-MM-DD for the input fields
+    const formattedDeadline = formatDateForInput(initialData.deadline);
+    const formattedStartDate = formatDateForInput(initialData.startDate);
+
+    // Ensure socialLinks is properly structured
+    const socialLinks = {
+      website: initialData.socialLinks?.website || '',
+      discord: initialData.socialLinks?.discord || '',
+      twitter: initialData.socialLinks?.twitter || '',
+      telegram: initialData.socialLinks?.telegram || '',
+      github: initialData.socialLinks?.github || '',
+      instagram: initialData.socialLinks?.instagram || '',
+    };
+
+    setFormData({
+      ...createDefaultFormData(),
+      ...initialData,
+      deadline: formattedDeadline,
+      startDate: formattedStartDate,
+      skipTelegramNotification: Boolean(initialData.skipTelegramNotification),
+      socialLinks,
+    });
   }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (formError) setFormError('');
 
     // Handle social links (they have names like 'social-discord', 'social-twitter', etc.)
     if (name.startsWith('social-')) {
       const socialPlatform = name.split('-')[1];
-      console.log(`Setting social link ${socialPlatform} to:`, value);
 
-      // Create a new socialLinks object with all properties explicitly defined
-      const updatedSocialLinks = {
-        ...formData.socialLinks, // Keep existing values
-        [socialPlatform]: value  // Update the specific platform
-      };
-
-      console.log('Updated social links:', JSON.stringify(updatedSocialLinks));
-
-      // Update the form data with the new social links object
-      setFormData(prevState => {
-        const newState = {
-          ...prevState,
-          socialLinks: updatedSocialLinks
-        };
-        console.log('New form state socialLinks:', JSON.stringify(newState.socialLinks));
-        return newState;
-      });
+      setFormData(prevState => ({
+        ...prevState,
+        socialLinks: {
+          ...prevState.socialLinks,
+          [socialPlatform]: value
+        }
+      }));
 
       return; // Exit early to avoid the other conditions
     }
@@ -169,52 +173,102 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
     setShowCriteriaEmojiPicker(false);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const normalizeOptionalUrl = (url, options = {}) => {
+    const value = String(url || '').trim();
+    if (!value) return '';
+    if (options.allowDataImage && /^data:image\//i.test(value)) return value;
+    return normalizeUrl(value);
+  };
 
-    // Ensure social links are properly structured
+  const buildSubmissionData = () => {
     const cleanedSocialLinks = {
-      website: formData.socialLinks?.website || '',
-      discord: formData.socialLinks?.discord || '',
-      twitter: formData.socialLinks?.twitter || '',
-      telegram: formData.socialLinks?.telegram || '',
-      github: formData.socialLinks?.github || '',
-      instagram: formData.socialLinks?.instagram || ''
+      website: normalizeOptionalUrl(formData.socialLinks?.website),
+      discord: normalizeOptionalUrl(formData.socialLinks?.discord),
+      twitter: normalizeOptionalUrl(formData.socialLinks?.twitter),
+      telegram: normalizeOptionalUrl(formData.socialLinks?.telegram),
+      github: normalizeOptionalUrl(formData.socialLinks?.github),
+      instagram: normalizeOptionalUrl(formData.socialLinks?.instagram)
     };
+    const skipTelegramNotification = Boolean(formData.skipTelegramNotification);
 
-    // Create a clean submission object with all required fields
-    const submissionData = {
-      ...formData,
+    return {
+      title: String(formData.title || '').trim(),
+      description: String(formData.description || '').trim(),
+      token: String(formData.token || '').trim(),
+      criteria: String(formData.criteria || '').trim(),
+      startDate: formData.startDate,
+      deadline: formData.deadline,
+      status: formData.status,
+      costType: formData.costType,
+      link: normalizeOptionalUrl(formData.link),
+      claimUrl: normalizeOptionalUrl(formData.claimUrl),
+      logoUrl: normalizeOptionalUrl(formData.logoUrl, { allowDataImage: true }),
+      cardColor: String(formData.cardColor || '').trim(),
+      predefinedColor: formData.predefinedColor,
+      skipTelegramNotification,
+      sendTelegramNotification: !skipTelegramNotification,
       socialLinks: cleanedSocialLinks
     };
+  };
 
-    console.log('Submitting form data:', submissionData);
-    console.log('Card color:', submissionData.cardColor);
-    console.log('Predefined color:', submissionData.predefinedColor);
-    console.log('Social Links:', JSON.stringify(submissionData.socialLinks));
-    console.log('Claim URL:', submissionData.claimUrl);
+  const validateSubmissionData = (submissionData) => {
+    if (!submissionData.title) return 'Title is required';
+    if (submissionData.title.length > 100) return 'Title must be 100 characters or less';
+    if (!submissionData.token) return 'Token is required';
+    if (submissionData.token.length > 20) return 'Token must be 20 characters or less';
+    if (submissionData.description.length < 3) return 'Description must be at least 3 characters';
+    if (submissionData.criteria.length < 3) return 'Criteria must be at least 3 characters';
+    if (!submissionData.startDate) return 'Start date is required';
+    if (!submissionData.deadline) return 'Deadline is required';
+    if (Number.isNaN(new Date(submissionData.startDate).getTime())) return 'Start date must be valid';
+    if (Number.isNaN(new Date(submissionData.deadline).getTime())) return 'Deadline must be valid';
+    if (new Date(submissionData.deadline) < new Date(submissionData.startDate)) {
+      return 'Deadline cannot be before the start date';
+    }
+    if (!isValidUrl(submissionData.link, { required: true })) return 'Project Link must be a valid URL';
+    if (submissionData.status === 'claim' && !isValidUrl(submissionData.claimUrl, { required: true })) {
+      return 'A valid Claim URL is required when status is set to "Claim"';
+    }
+    if (submissionData.claimUrl && !isValidUrl(submissionData.claimUrl)) return 'Claim URL must be a valid URL';
+    if (submissionData.logoUrl && !isValidUrl(submissionData.logoUrl, { allowDataImage: true })) {
+      return 'Logo URL must be a valid URL';
+    }
+    if (submissionData.cardColor && !/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(submissionData.cardColor)) {
+      return 'Custom card color must be a valid hex color';
+    }
 
-    // Check if any social links are non-empty
-    const hasSocialLinks = Object.values(cleanedSocialLinks).some(link => link && link.trim() !== '');
-    console.log('Has social links:', hasSocialLinks);
+    const invalidSocialLink = Object.entries(submissionData.socialLinks)
+      .find(([, url]) => url && !isValidUrl(url));
 
-    // Log each social link for debugging
-    Object.entries(cleanedSocialLinks).forEach(([platform, url]) => {
-      console.log(`Social link ${platform}:`, url);
-    });
+    if (invalidSocialLink) {
+      return `${invalidSocialLink[0]} link must be a valid URL`;
+    }
 
-    // Validate claim URL if status is 'claim'
-    if (formData.status === 'claim' && (!formData.claimUrl || formData.claimUrl.trim() === '')) {
-      alert('Claim URL is required when status is set to "Claim"');
+    return '';
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setFormError('');
+
+    const submissionData = buildSubmissionData();
+    const validationError = validateSubmissionData(submissionData);
+
+    if (validationError) {
+      setFormError(validationError);
       return;
     }
 
-    // Submit the cleaned data
     onSubmit(submissionData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {formError && (
+        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300">
+          {formError}
+        </div>
+      )}
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Title
@@ -263,6 +317,7 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
             type="button"
             className="absolute right-2 bottom-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             onClick={() => setShowDescriptionEmojiPicker(!showDescriptionEmojiPicker)}
+            aria-label="Add emoji to description"
           >
             <FaSmile size={20} />
           </button>
@@ -307,6 +362,7 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
             type="button"
             className="absolute right-2 bottom-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             onClick={() => setShowCriteriaEmojiPicker(!showCriteriaEmojiPicker)}
+            aria-label="Add emoji to criteria"
           >
             <FaSmile size={20} />
           </button>
@@ -349,6 +405,21 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
       </div>
 
       <div>
+        <label htmlFor="deadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Deadline
+        </label>
+        <input
+          type="date"
+          id="deadline"
+          name="deadline"
+          value={formData.deadline}
+          onChange={handleChange}
+          required
+          className="mt-1 block w-full rounded-md border-2 border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 text-base"
+        />
+      </div>
+
+      <div>
         <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Status
         </label>
@@ -368,20 +439,6 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
         {formData.status === 'claim' && (
           <p className="mt-1 text-xs text-red-500">Note: "Claim" status requires a valid Claim URL below</p>
         )}
-      </div>
-
-      <div className="flex items-center mt-4">
-        <input
-          type="checkbox"
-          id="skipTelegramNotification"
-          name="skipTelegramNotification"
-          checked={formData.skipTelegramNotification}
-          onChange={(e) => setFormData({ ...formData, skipTelegramNotification: e.target.checked })}
-          className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-        />
-        <label htmlFor="skipTelegramNotification" className="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Skip Telegram Notification
-        </label>
       </div>
 
       <div>
@@ -569,12 +626,17 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
           </select>
           <div className="mt-2 flex flex-wrap gap-2">
             {colorOptions.map(option => (
-              <div
+              <button
+                type="button"
                 key={option.value}
                 className={`w-8 h-8 rounded-full cursor-pointer border-2 ${formData.predefinedColor === option.value ? 'border-blue-500 dark:border-blue-400' : 'border-gray-300 dark:border-gray-600'}`}
                 style={{ backgroundColor: option.color }}
-                onClick={() => setFormData({...formData, predefinedColor: option.value})}
+                onClick={() => {
+                  if (formError) setFormError('');
+                  setFormData({...formData, predefinedColor: option.value});
+                }}
                 title={option.label}
+                aria-label={`Use ${option.label} card color`}
               />
             ))}
           </div>
@@ -615,7 +677,10 @@ const AirdropForm = ({ onSubmit, initialData = null }) => {
           id="skipTelegramNotification"
           name="skipTelegramNotification"
           checked={formData.skipTelegramNotification}
-          onChange={(e) => setFormData({...formData, skipTelegramNotification: e.target.checked})}
+          onChange={(e) => {
+            if (formError) setFormError('');
+            setFormData({...formData, skipTelegramNotification: e.target.checked});
+          }}
           className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
         <label

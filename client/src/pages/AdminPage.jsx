@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { Fragment, useState, useEffect, useRef } from 'react';
 import { airdropService } from '../services/api';
 import AirdropForm from '../components/AirdropForm';
 import AirdropUpdateForm from '../components/AirdropUpdateForm';
@@ -172,6 +172,19 @@ const AdminPage = () => {
     }
   };
 
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const visibleAirdrops = airdrops
+    .filter((airdrop) => {
+      if (!normalizedSearchTerm) return true;
+
+      return [
+        airdrop.title,
+        airdrop.token,
+        airdrop.description
+      ].some(value => String(value || '').toLowerCase().includes(normalizedSearchTerm));
+    })
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center sm:text-left">Admin Dashboard</h1>
@@ -290,18 +303,9 @@ const AdminPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {airdrops
-                  .filter(airdrop =>
-                    searchTerm === '' ||
-                    airdrop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    airdrop.token.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    airdrop.description?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  // Sort by createdAt date (newest first)
-                  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                  .map((airdrop) => (
-                    <>
-                      <tr key={airdrop._id}>
+                {visibleAirdrops.map((airdrop) => (
+                    <Fragment key={airdrop._id}>
+                      <tr>
                         <td className="px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {airdrop.title}
@@ -409,7 +413,7 @@ const AdminPage = () => {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   ))}
               </tbody>
             </table>

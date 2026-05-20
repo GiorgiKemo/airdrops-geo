@@ -5,18 +5,22 @@ const DarkModeToggle = () => {
 
   return (
     <button
+      type="button"
       onClick={toggleDarkMode}
-      className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--macos-text)] hover:bg-[var(--macos-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--macos-primary)] transition-colors"
       aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-pressed={darkMode}
+      title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {darkMode ? (
-        // Sun icon for light mode
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-5 w-5 text-yellow-300"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          aria-hidden="true"
+          focusable="false"
         >
           <path
             strokeLinecap="round"
@@ -26,13 +30,14 @@ const DarkModeToggle = () => {
           />
         </svg>
       ) : (
-        // Moon icon for dark mode
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 text-gray-700"
+          className="h-5 w-5 text-slate-700"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          aria-hidden="true"
+          focusable="false"
         >
           <path
             strokeLinecap="round"

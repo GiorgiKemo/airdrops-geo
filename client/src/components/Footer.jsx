@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import ScrollLink from './ScrollLink';
 import { FaTwitter, FaDiscord, FaTelegram, FaGithub } from 'react-icons/fa';
 
@@ -6,8 +5,8 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="macos-card mt-8 py-6 sm:py-8 border-t border-[var(--macos-card-border)]">
-      <div className="container mx-auto px-4">
+    <footer className="mt-10 border-t border-[var(--macos-divider)] bg-[var(--macos-card-bg)] py-8 sm:py-10">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About Section */}
           <div>
@@ -90,16 +89,21 @@ const Footer = () => {
             </div>
             <div>
               <p className="text-sm text-[var(--macos-text-secondary)] mb-2">Subscribe to our newsletter</p>
-              <div className="flex flex-row w-full max-w-xs">
+              <form className="flex w-full max-w-xs flex-col gap-2 sm:flex-row" onSubmit={(event) => event.preventDefault()}>
+                <label htmlFor="footer-newsletter-email" className="sr-only">
+                  Email address
+                </label>
                 <input
+                  id="footer-newsletter-email"
                   type="email"
                   placeholder="Your email"
-                  className="macos-input text-sm py-1 px-2 flex-grow min-w-0"
+                  autoComplete="email"
+                  className="macos-input min-w-0 flex-1 text-sm"
                 />
-                <button className="macos-button text-xs py-1 px-3 ml-2 whitespace-nowrap">
+                <button type="submit" className="macos-button min-w-0 text-xs whitespace-nowrap">
                   Subscribe
                 </button>
-              </div>
+              </form>
             </div>
           </div>
         </div>
@@ -107,9 +111,9 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="mt-8 pt-4 border-t border-[var(--macos-card-border)] flex flex-col sm:flex-row justify-between items-center">
           <p className="text-xs text-[var(--macos-text-secondary)] mb-2 sm:mb-0">
-            © {currentYear} Airdrops.geo. All rights reserved.
+            &copy; {currentYear} Airdrops.geo. All rights reserved.
           </p>
-          <div className="flex space-x-4">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
             <ScrollLink to="/terms" className="text-xs text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)]">
               Terms
             </ScrollLink>

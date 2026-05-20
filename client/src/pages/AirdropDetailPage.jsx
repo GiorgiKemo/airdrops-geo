@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { airdropService } from '../services/api';
 import AirdropLogo from '../components/AirdropLogo';
@@ -13,6 +13,49 @@ import { useAuth } from '../context/AuthContext';
 import { faqData } from '../data/faqData';
 import { FaGlobe, FaDiscord, FaTwitter, FaTelegram, FaGithub, FaInstagram, FaEdit, FaPen } from 'react-icons/fa';
 
+const getText = (value, fallback = 'Not available') => (
+  typeof value === 'string' && value.trim() ? value.trim() : fallback
+);
+
+const truncateText = (value, maxLength, fallback = '') => {
+  const text = getText(value, fallback);
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  if (!dateString || Number.isNaN(date.getTime())) {
+    return 'TBA';
+  }
+
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return date.toLocaleDateString(undefined, options);
+};
+
+const safeExternalUrl = (value) => {
+  const rawUrl = getText(value, '');
+
+  if (!rawUrl) {
+    return '';
+  }
+
+  try {
+    const candidateUrl = /^[a-z][a-z\d+.-]*:/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
+    const parsedUrl = new URL(candidateUrl);
+
+    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
+      ? parsedUrl.href
+      : '';
+  } catch {
+    return '';
+  }
+};
+
+const getStatusLabel = (status) => {
+  const safeStatus = getText(status, 'unknown').toLowerCase();
+  return safeStatus.charAt(0).toUpperCase() + safeStatus.slice(1);
+};
+
 const AirdropDetailPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -25,10 +68,14 @@ const AirdropDetailPage = () => {
   const formRef = useRef(null);
 
   // Function to fetch airdrop details
-  const fetchAirdrop = async () => {
+  const fetchAirdrop = useCallback(async () => {
     try {
       setLoading(true);
       const data = await airdropService.getAirdropById(id);
+      if (!data || typeof data !== 'object') {
+        throw new Error('Unexpected airdrop response');
+      }
+
       setAirdrop(data);
       setError(null);
     } catch (err) {
@@ -37,13 +84,13 @@ const AirdropDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   // Function to update airdrop status
   const updateAirdropStatus = async (newStatus) => {
     try {
       // Special handling for 'claim' status
-      if (newStatus === 'claim' && !airdrop.claimUrl) {
+      if (newStatus === 'claim' && !safeExternalUrl(airdrop?.claimUrl)) {
         setError('Cannot set status to "Claim" without a claim URL. Please edit the airdrop to add a claim URL first.');
         return;
       }
@@ -122,13 +169,7 @@ const AirdropDetailPage = () => {
 
   useEffect(() => {
     fetchAirdrop();
-  }, [id]);
-
-  // Format date
-  const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
+  }, [fetchAirdrop]);
 
   // Get status class for styling
   const getStatusClass = (status) => {
@@ -146,41 +187,63 @@ const AirdropDetailPage = () => {
     }
   };
 
+  const title = getText(airdrop?.title, 'Untitled airdrop');
+  const token = getText(airdrop?.token, 'TBA');
+  const description = getText(airdrop?.description, 'No description available.');
+  const criteria = getText(airdrop?.criteria, 'No criteria listed yet.');
+  const status = getText(airdrop?.status, 'unknown').toLowerCase();
+  const views = Number.isFinite(Number(airdrop?.views)) ? Number(airdrop.views) : 0;
+  const claimUrl = safeExternalUrl(airdrop?.claimUrl);
+  const officialUrl = safeExternalUrl(airdrop?.link);
+  const fallbackClaimUrl = claimUrl || officialUrl;
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const socialLinks = airdrop?.socialLinks && typeof airdrop.socialLinks === 'object'
+    ? {
+        website: safeExternalUrl(airdrop.socialLinks.website),
+        discord: safeExternalUrl(airdrop.socialLinks.discord),
+        twitter: safeExternalUrl(airdrop.socialLinks.twitter),
+        telegram: safeExternalUrl(airdrop.socialLinks.telegram),
+        github: safeExternalUrl(airdrop.socialLinks.github),
+        instagram: safeExternalUrl(airdrop.socialLinks.instagram)
+      }
+    : {};
+  const hasSocialLinks = Object.values(socialLinks).some(Boolean);
+
   return (
     <>
       {airdrop && (
         <SEO
-          title={`${airdrop.title} (${airdrop.token}) Airdrop | Claim Free ${airdrop.token} Tokens`}
-          description={`Learn about the ${airdrop.title} crypto airdrop and how to claim free ${airdrop.token} tokens. ${airdrop.description.substring(0, 120)}...`}
+          title={`${title} (${token}) Airdrop | Claim Free ${token} Tokens`}
+          description={`Learn about the ${title} crypto airdrop and how to claim free ${token} tokens. ${truncateText(description, 120)}`}
           canonicalUrl={`/airdrops/${id}`}
           type="article"
-          keywords={`${airdrop.token} airdrop, ${airdrop.title} crypto, claim ${airdrop.token}, free ${airdrop.token} tokens, cryptocurrency airdrop, ${airdrop.token.toLowerCase()} blockchain, crypto airdrops`}
+          keywords={`${token} airdrop, ${title} crypto, claim ${token}, free ${token} tokens, cryptocurrency airdrop, ${token.toLowerCase()} blockchain, crypto airdrops`}
         >
           <script type="application/ld+json">
             {JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Article",
-              "headline": `${airdrop.title} (${airdrop.token}) Airdrop | Claim Free Tokens`,
-              "description": `${airdrop.description.substring(0, 150)}...`,
-              "image": airdrop.logoUrl || `${window.location.origin}/og-image.jpg`,
+              "headline": `${title} (${token}) Airdrop | Claim Free Tokens`,
+              "description": truncateText(description, 150),
+              "image": safeExternalUrl(airdrop.logoUrl) || `${origin}/og-image.jpg`,
               "author": {
                 "@type": "Organization",
                 "name": "Airdrops.geo",
-                "url": window.location.origin
+                "url": origin
               },
               "publisher": {
                 "@type": "Organization",
                 "name": "Airdrops.geo",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": `${window.location.origin}/logo.png`
+                  "url": `${origin}/logo.png`
                 }
               },
               "datePublished": airdrop.createdAt || new Date().toISOString(),
               "dateModified": airdrop.updatedAt || new Date().toISOString(),
               "mainEntityOfPage": {
                 "@type": "WebPage",
-                "@id": window.location.href
+                "@id": typeof window !== 'undefined' ? window.location.href : `/airdrops/${id}`
               }
             })}
           </script>
@@ -210,18 +273,18 @@ const AirdropDetailPage = () => {
 
               <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
                 <div className="flex flex-col sm:flex-row justify-center sm:justify-between items-center sm:items-start gap-2 sm:gap-0">
-                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--macos-text)]">{airdrop.title}</h1>
-                  {airdrop.status === 'claim' ? (
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--macos-text)]">{title}</h1>
+                  {status === 'claim' ? (
                     <div className="bg-[var(--macos-danger)] text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md">
                       CLAIM NOW
                     </div>
                   ) : (
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusClass(
-                        airdrop.status
+                        status
                       )}`}
                     >
-                      {airdrop.status.charAt(0).toUpperCase() + airdrop.status.slice(1)}
+                      {getStatusLabel(status)}
                     </span>
                   )}
                 </div>
@@ -229,28 +292,28 @@ const AirdropDetailPage = () => {
             </div>
 
             <div className="mb-4 sm:mb-6">
-              <p className="text-base sm:text-lg font-semibold text-[var(--macos-text)]">Token: {airdrop.token}</p>
+              <p className="text-base sm:text-lg font-semibold text-[var(--macos-text)]">Token: {token}</p>
               <p className="text-sm sm:text-base text-[var(--macos-text-secondary)] mt-2">Start: {formatDate(airdrop.startDate)}</p>
             </div>
 
             <div className="mb-4 sm:mb-6">
               <h2 className="text-lg sm:text-xl font-semibold text-[var(--macos-text)] mb-2">Description</h2>
-              <p className="text-sm sm:text-base text-[var(--macos-text-secondary)] whitespace-pre-line break-words">{airdrop.description}</p>
+              <p className="text-sm sm:text-base text-[var(--macos-text-secondary)] whitespace-pre-line break-words">{description}</p>
             </div>
 
             <div className="mb-4 sm:mb-6">
               <h2 className="text-lg sm:text-xl font-semibold text-[var(--macos-text)] mb-2">Criteria</h2>
-              <p className="text-sm sm:text-base text-[var(--macos-text-secondary)] whitespace-pre-line break-words">{airdrop.criteria}</p>
+              <p className="text-sm sm:text-base text-[var(--macos-text-secondary)] whitespace-pre-line break-words">{criteria}</p>
             </div>
 
             {/* Social Media Links */}
-            {airdrop.socialLinks && Object.values(airdrop.socialLinks).some(link => link) && (
+            {hasSocialLinks && (
               <div className="mb-4 sm:mb-6">
                 <h2 className="text-lg sm:text-xl font-semibold text-[var(--macos-text)] mb-2">Connect</h2>
                 <div className="flex flex-wrap gap-4">
-                  {airdrop.socialLinks.website && (
+                  {socialLinks.website && (
                     <a
-                      href={airdrop.socialLinks.website}
+                      href={socialLinks.website}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)] transition-colors flex items-center gap-2"
@@ -260,9 +323,9 @@ const AirdropDetailPage = () => {
                       <span>Website</span>
                     </a>
                   )}
-                  {airdrop.socialLinks.discord && (
+                  {socialLinks.discord && (
                     <a
-                      href={airdrop.socialLinks.discord}
+                      href={socialLinks.discord}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[var(--macos-text-secondary)] hover:text-[#5865F2] transition-colors flex items-center gap-2"
@@ -272,9 +335,9 @@ const AirdropDetailPage = () => {
                       <span>Discord</span>
                     </a>
                   )}
-                  {airdrop.socialLinks.twitter && (
+                  {socialLinks.twitter && (
                     <a
-                      href={airdrop.socialLinks.twitter}
+                      href={socialLinks.twitter}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[var(--macos-text-secondary)] hover:text-[#1DA1F2] transition-colors flex items-center gap-2"
@@ -284,9 +347,9 @@ const AirdropDetailPage = () => {
                       <span>Twitter</span>
                     </a>
                   )}
-                  {airdrop.socialLinks.telegram && (
+                  {socialLinks.telegram && (
                     <a
-                      href={airdrop.socialLinks.telegram}
+                      href={socialLinks.telegram}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[var(--macos-text-secondary)] hover:text-[#0088cc] transition-colors flex items-center gap-2"
@@ -296,9 +359,9 @@ const AirdropDetailPage = () => {
                       <span>Telegram</span>
                     </a>
                   )}
-                  {airdrop.socialLinks.github && (
+                  {socialLinks.github && (
                     <a
-                      href={airdrop.socialLinks.github}
+                      href={socialLinks.github}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[var(--macos-text-secondary)] hover:text-[#333] dark:hover:text-white transition-colors flex items-center gap-2"
@@ -308,9 +371,9 @@ const AirdropDetailPage = () => {
                       <span>GitHub</span>
                     </a>
                   )}
-                  {airdrop.socialLinks.instagram && (
+                  {socialLinks.instagram && (
                     <a
-                      href={airdrop.socialLinks.instagram}
+                      href={socialLinks.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[var(--macos-text-secondary)] hover:text-[#E1306C] transition-colors flex items-center gap-2"
@@ -326,27 +389,39 @@ const AirdropDetailPage = () => {
 
             <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="flex flex-wrap justify-center sm:justify-start gap-3 w-full sm:w-auto">
-                {airdrop.status === 'claim' ? (
+                {status === 'claim' ? (
+                  fallbackClaimUrl ? (
+                    <a
+                      href={fallbackClaimUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="macos-button bg-[var(--macos-danger)] hover:bg-opacity-90 text-white font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 transform hover:-translate-y-1"
+                    >
+                      Claim Rewards Now
+                    </a>
+                  ) : (
+                    <span className="rounded-md bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6">
+                      Claim link unavailable
+                    </span>
+                  )
+                ) : null}
+                {officialUrl ? (
                   <a
-                    href={airdrop.claimUrl || airdrop.link}
+                    href={officialUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="macos-button bg-[var(--macos-danger)] hover:bg-opacity-90 text-white font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6 transform hover:-translate-y-1"
+                    className={`macos-button ${status === 'claim' ? 'bg-[var(--macos-secondary)] hover:bg-opacity-90' : ''} text-white font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6`}
                   >
-                    Claim Rewards Now
+                    Visit Official Airdrop Page
                   </a>
-                ) : null}
-                <a
-                  href={airdrop.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`macos-button ${airdrop.status === 'claim' ? 'bg-[var(--macos-secondary)] hover:bg-opacity-90' : ''} text-white font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6`}
-                >
-                  Visit Official Airdrop Page
-                </a>
+                ) : (
+                  <span className="rounded-md bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-sm sm:text-base py-2 sm:py-3 px-4 sm:px-6">
+                    Official link unavailable
+                  </span>
+                )}
               </div>
               <span className="text-[var(--macos-primary)] font-medium text-sm sm:text-base">
-                {airdrop.views || 0} views
+                {views} views
               </span>
             </div>
 
@@ -404,7 +479,7 @@ const AirdropDetailPage = () => {
                     <button
                       onClick={() => updateAirdropStatus('upcoming')}
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
-                        airdrop.status === 'upcoming'
+                        status === 'upcoming'
                           ? 'bg-blue-600 text-white'
                           : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-blue-100'
                       }`}
@@ -414,7 +489,7 @@ const AirdropDetailPage = () => {
                     <button
                       onClick={() => updateAirdropStatus('active')}
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
-                        airdrop.status === 'active'
+                        status === 'active'
                           ? 'bg-green-600 text-white'
                           : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-green-100'
                       }`}
@@ -424,7 +499,7 @@ const AirdropDetailPage = () => {
                     <button
                       onClick={() => updateAirdropStatus('ended')}
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
-                        airdrop.status === 'ended'
+                        status === 'ended'
                           ? 'bg-gray-600 text-white'
                           : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300'
                       }`}
@@ -433,17 +508,17 @@ const AirdropDetailPage = () => {
                     </button>
                     <button
                       onClick={() => updateAirdropStatus('claim')}
-                      disabled={!airdrop.claimUrl}
-                      title={airdrop.claimUrl ? 'Set status to Claim' : 'Requires a Claim URL - Edit the airdrop first'}
+                      disabled={!claimUrl}
+                      title={claimUrl ? 'Set status to Claim' : 'Requires a valid Claim URL - Edit the airdrop first'}
                       className={`px-3 py-2 rounded-md text-sm font-medium ${
-                        airdrop.status === 'claim'
+                        status === 'claim'
                           ? 'bg-red-600 text-white'
-                          : !airdrop.claimUrl
+                          : !claimUrl
                           ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                           : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-red-100'
                       }`}
                     >
-                      Claim {!airdrop.claimUrl && '(Needs URL)'}
+                      Claim {!claimUrl && '(Needs URL)'}
                     </button>
                   </div>
                 </div>

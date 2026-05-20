@@ -1,8 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { airdropService } from '../services/api';
 import AirdropCard from '../components/AirdropCard';
 import AirdropsGridSkeleton from '../components/skeletons/AirdropsGridSkeleton';
+
+const VALID_FILTERS = new Set(['all', 'active', 'popular', 'recent', 'upcoming', 'ended', 'claim']);
+
+const getTimestamp = (value, fallback = 0) => {
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : fallback;
+};
 
 const AllAirdropsPage = () => {
   const navigate = useNavigate();
@@ -13,13 +20,15 @@ const AllAirdropsPage = () => {
 
   // Get filter from URL or default to 'all'
   const queryParams = new URLSearchParams(location.search);
-  const [filter, setFilter] = useState(queryParams.get('filter') || 'all');
+  const urlFilter = queryParams.get('filter') || 'all';
+  const [filter, setFilter] = useState(VALID_FILTERS.has(urlFilter) ? urlFilter : 'all');
 
   // Helper function to update filter and URL
   const updateFilter = (newFilter) => {
-    setFilter(newFilter);
+    const nextFilter = VALID_FILTERS.has(newFilter) ? newFilter : 'all';
+    setFilter(nextFilter);
     const params = new URLSearchParams(location.search);
-    params.set('filter', newFilter);
+    params.set('filter', nextFilter);
     navigate(`/all?${params.toString()}`, { replace: true });
   };
 
@@ -28,6 +37,10 @@ const AllAirdropsPage = () => {
       try {
         setLoading(true);
         const data = await airdropService.getAirdrops();
+        if (!Array.isArray(data)) {
+          throw new Error('Unexpected airdrops response');
+        }
+
         setAirdrops(data);
         setError(null);
       } catch (err) {
@@ -42,41 +55,49 @@ const AllAirdropsPage = () => {
   }, []); // Only fetch on component mount
 
   // Filter airdrops based on status
-  let filteredAirdrops = [];
+  const filteredAirdrops = useMemo(() => {
+    let result = [];
 
-  if (filter === 'all') {
-    // For 'all' filter, get all airdrops but we'll sort them later
-    filteredAirdrops = [...airdrops];
-  } else if (filter === 'claim') {
-    // For 'claim' filter, show airdrops with 'claim' status
-    filteredAirdrops = airdrops.filter(airdrop => airdrop.status === 'claim');
-  } else if (filter === 'popular') {
-    // For 'popular' filter, show all airdrops sorted by views (highest first)
-    filteredAirdrops = [...airdrops].sort((a, b) => (b.views || 0) - (a.views || 0));
-  } else if (filter === 'recent') {
-    // For 'recent' filter, show all airdrops sorted by creation date (newest first)
-    filteredAirdrops = [...airdrops].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  } else {
-    // For other filters (active, upcoming, ended), filter by status
-    filteredAirdrops = airdrops.filter(airdrop => airdrop.status === filter);
-  }
+    if (!Array.isArray(airdrops) || airdrops.length === 0) {
+      return result;
+    }
 
-  // If we're filtering for upcoming airdrops, sort them by start date (soonest first)
-  if (filter === 'upcoming') {
-    filteredAirdrops = [...filteredAirdrops].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-  }
+    if (filter === 'all') {
+      // For 'all' filter, get all airdrops but we'll sort them later
+      result = [...airdrops];
+    } else if (filter === 'claim') {
+      // For 'claim' filter, show airdrops with 'claim' status
+      result = airdrops.filter(airdrop => airdrop.status === 'claim');
+    } else if (filter === 'popular') {
+      // For 'popular' filter, show all airdrops sorted by views (highest first)
+      result = [...airdrops].sort((a, b) => (Number(b.views) || 0) - (Number(a.views) || 0));
+    } else if (filter === 'recent') {
+      // For 'recent' filter, show all airdrops sorted by creation date (newest first)
+      result = [...airdrops].sort((a, b) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
+    } else {
+      // For other filters (active, upcoming, ended), filter by status
+      result = airdrops.filter(airdrop => airdrop.status === filter);
+    }
 
-  // For all filters except 'ended', rank ended airdrops at the bottom
-  if (filter !== 'ended') {
-    filteredAirdrops = [...filteredAirdrops].sort((a, b) => {
-      // If a is ended and b is not, a should come after b
-      if (a.status === 'ended' && b.status !== 'ended') return 1;
-      // If b is ended and a is not, b should come after a
-      if (b.status === 'ended' && a.status !== 'ended') return -1;
-      // Otherwise maintain the current order
-      return 0;
-    });
-  }
+    // If we're filtering for upcoming airdrops, sort them by start date (soonest first)
+    if (filter === 'upcoming') {
+      result = [...result].sort((a, b) => getTimestamp(a.startDate, Number.MAX_SAFE_INTEGER) - getTimestamp(b.startDate, Number.MAX_SAFE_INTEGER));
+    }
+
+    // For all filters except 'ended', rank ended airdrops at the bottom
+    if (filter !== 'ended') {
+      result = [...result].sort((a, b) => {
+        // If a is ended and b is not, a should come after b
+        if (a.status === 'ended' && b.status !== 'ended') return 1;
+        // If b is ended and a is not, b should come after a
+        if (b.status === 'ended' && a.status !== 'ended') return -1;
+        // Otherwise maintain the current order
+        return 0;
+      });
+    }
+
+    return result;
+  }, [airdrops, filter]);
 
   return (
     <div className="container mx-auto px-4 py-4 sm:py-8">
@@ -178,13 +199,13 @@ const AllAirdropsPage = () => {
       ) : filteredAirdrops.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-gray-500 dark:text-gray-400 text-lg">
-            No airdrops found.
+            No airdrops found for this filter.
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4 pb-4">
-          {filteredAirdrops.map((airdrop) => (
-            <div key={airdrop._id} className="transform-gpu p-1 h-[12rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem]">
+          {filteredAirdrops.map((airdrop, index) => (
+            <div key={airdrop._id || `airdrop-${index}`} className="transform-gpu p-1 h-[12rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem]">
               <AirdropCard airdrop={airdrop} />
             </div>
           ))}

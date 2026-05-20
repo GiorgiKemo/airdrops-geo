@@ -28,19 +28,20 @@ const LoginPage = () => {
     e.preventDefault();
     setFormError('');
     console.log('Login form submitted');
+    const identifier = formData.email.trim();
 
     // Basic validation
-    if (!formData.email || !formData.password) {
+    if (!identifier || !formData.password) {
       setFormError('Please fill in all fields');
       return;
     }
 
-    console.log('Attempting to login with:', { email: formData.email });
+    console.log('Attempting to login with:', { email: identifier });
 
     try {
       // Call the login function directly
       console.log('Calling login function...');
-      await login(formData.email, formData.password);
+      await login(identifier, formData.password);
       console.log('Login successful');
 
       // Refresh tracked airdrops
@@ -128,12 +129,12 @@ const LoginPage = () => {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Password
                   </label>
-                  <a
-                    href="/forgot-password"
+                  <Link
+                    to="/forgot-password"
                     className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors"
                   >
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

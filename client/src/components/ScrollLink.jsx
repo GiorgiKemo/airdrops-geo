@@ -1,26 +1,32 @@
 import { Link, useLocation } from 'react-router-dom';
 
 // Custom link component that scrolls to top on click
-const ScrollLink = ({ to, children, className, ...props }) => {
+const ScrollLink = ({ to, children, className, onClick, ...props }) => {
   const location = useLocation();
   
   const handleClick = (e) => {
-    // If we're already on this page, prevent default navigation
-    // and just scroll to top
+    onClick?.(e);
+
+    if (e.defaultPrevented) {
+      return;
+    }
+
     if (location.pathname === to) {
       e.preventDefault();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion ? 'auto' : 'smooth'
+      });
     }
-    // Otherwise, let the Link component handle navigation
-    // (ScrollToTop component will handle the scrolling)
   };
 
   return (
     <Link 
       to={to} 
       className={className} 
-      onClick={handleClick}
       {...props}
+      onClick={handleClick}
     >
       {children}
     </Link>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
+import { isValidEmail } from '../utils/validation';
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -14,30 +15,25 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     console.log('Form submitted');
     setError('');
+    const trimmedEmail = email.trim();
 
     // Basic validation
-    if (!email) {
+    if (!trimmedEmail) {
       setError('Please enter your email address');
       console.log('Email validation failed');
       return;
     }
 
+    if (!isValidEmail(trimmedEmail)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     try {
       setIsLoading(true);
-      console.log('Sending password reset request for email:', email);
+      console.log('Sending password reset request for email:', trimmedEmail);
 
-      // Get the API URL from environment variables
-      const apiUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : 'http://localhost:5000';
-      const fullUrl = `${apiUrl}/api/users/forgot-password`;
-      console.log('Full request URL:', fullUrl);
-      console.log('Request payload:', { email });
-
-      // Make a direct axios call without using the API service
-      const response = await axios.post(fullUrl, { email }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.post('/users/forgot-password', { email: trimmedEmail });
 
       console.log('Password reset API call successful');
       console.log('Response status:', response.status);
@@ -131,6 +127,8 @@ const ForgotPasswordPage = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Enter your email"
+                        required
+                        aria-invalid={error ? 'true' : 'false'}
                         className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
                       />
                     </div>

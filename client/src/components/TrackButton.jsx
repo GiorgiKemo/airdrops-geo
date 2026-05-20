@@ -10,11 +10,16 @@ const TrackButton = ({ airdropId, onClick }) => {
   const [isHovering, setIsHovering] = useState(false);
   const navigate = useNavigate();
 
-  const tracked = isTracked(airdropId);
+  const safeAirdropId = typeof airdropId === 'string' && airdropId.trim() ? airdropId.trim() : '';
+  const tracked = safeAirdropId ? isTracked(safeAirdropId) : false;
 
   const handleClick = async (e) => {
     e.preventDefault(); // Prevent navigation when clicking the button
     e.stopPropagation(); // Prevent event bubbling
+
+    if (!safeAirdropId) {
+      return;
+    }
 
     if (!user) {
       navigate('/login');
@@ -22,9 +27,9 @@ const TrackButton = ({ airdropId, onClick }) => {
     }
 
     if (tracked) {
-      await untrackAirdrop(airdropId);
+      await untrackAirdrop(safeAirdropId);
     } else {
-      await trackAirdrop(airdropId);
+      await trackAirdrop(safeAirdropId);
     }
 
     // Call the parent's onClick handler if provided
@@ -38,13 +43,14 @@ const TrackButton = ({ airdropId, onClick }) => {
       onClick={handleClick}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
-      disabled={loading}
+      disabled={loading || !safeAirdropId}
       className={`flex items-center justify-center p-1 rounded-full transition-colors duration-200 shadow-sm ${
         tracked
           ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-red-100 dark:hover:bg-red-900 hover:text-red-600 dark:hover:text-red-400'
           : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-green-100 dark:hover:bg-green-900 hover:text-green-600 dark:hover:text-green-400'
       }`}
       aria-label={tracked ? 'Untrack airdrop' : 'Track airdrop'}
+      title={!safeAirdropId ? 'Tracking is unavailable for this airdrop' : undefined}
     >
       {loading ? (
         <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

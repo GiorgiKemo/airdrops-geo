@@ -189,6 +189,7 @@ app.post('/api/test-login', (req, res) => {
 if (config.server.isProduction) {
   // Check for client build directory
   const possibleBuildDirs = [
+    path.join(__dirname, 'public'),
     path.join(__dirname, '..', 'client', 'dist'),
     path.join(__dirname, '..', 'client', 'build'),
     path.join(__dirname, 'client', 'dist'),
@@ -209,7 +210,15 @@ if (config.server.isProduction) {
     app.use(express.static(clientBuildDir));
 
     // Serve index.html for all routes not handled by the API
-    app.get('*', (req, res) => {
+    app.get('*', (req, res, next) => {
+      if (
+        req.path.startsWith('/api') ||
+        req.path.startsWith('/api-docs') ||
+        req.path.startsWith('/uploads')
+      ) {
+        return next();
+      }
+
       res.sendFile(path.join(clientBuildDir, 'index.html'));
     });
   } else {

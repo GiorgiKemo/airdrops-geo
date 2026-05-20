@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useDarkMode } from '../context/DarkModeContext';
@@ -7,8 +7,7 @@ import { FaTwitter, FaDiscord, FaTelegram, FaGithub, FaUser, FaLock, FaCog, FaCa
 import SEO from '../components/SEO';
 
 const ProfilePage = () => {
-  const { user, loading, error, updateProfile, updatePassword } = useAuth();
-  const navigate = useNavigate();
+  const { user, updateProfile, updatePassword } = useAuth();
   const toast = useToast();
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [activeTab, setActiveTab] = useState('profile');
@@ -187,7 +186,7 @@ const ProfilePage = () => {
 
   // Redirect if not logged in
   if (!user) {
-    return navigate('/login');
+    return <Navigate to="/login" replace />;
   }
 
   return (

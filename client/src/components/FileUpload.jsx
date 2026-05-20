@@ -8,6 +8,30 @@ const FileUpload = ({ onFileSelect, accept = "image/*", maxSizeMB = 5, className
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
+  const isAcceptedFile = (file) => {
+    const acceptedTypes = accept
+      .split(',')
+      .map(type => type.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (acceptedTypes.length === 0) return true;
+
+    const fileType = file.type.toLowerCase();
+    const fileName = file.name.toLowerCase();
+
+    return acceptedTypes.some((acceptedType) => {
+      if (acceptedType.endsWith('/*')) {
+        return fileType.startsWith(acceptedType.slice(0, -1));
+      }
+
+      if (acceptedType.startsWith('.')) {
+        return fileName.endsWith(acceptedType);
+      }
+
+      return fileType === acceptedType;
+    });
+  };
+
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
@@ -30,14 +54,27 @@ const FileUpload = ({ onFileSelect, accept = "image/*", maxSizeMB = 5, className
     if (e.target.files && e.target.files.length > 0) {
       handleFile(e.target.files[0]);
     }
+
+    e.target.value = '';
+  };
+
+  const openFileDialog = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openFileDialog();
+    }
   };
 
   const handleFile = async (file) => {
     setError('');
     
     // Check file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please upload an image file');
+    if (!isAcceptedFile(file)) {
+      setError(`Please upload a supported file type (${accept})`);
       return;
     }
     
@@ -55,7 +92,7 @@ const FileUpload = ({ onFileSelect, accept = "image/*", maxSizeMB = 5, className
       const base64 = await convertToBase64(file);
       
       // Call the callback with the base64 data
-      onFileSelect(base64);
+      onFileSelect(base64, file);
     } catch (err) {
       setError('Error processing file');
       console.error('File upload error:', err);
@@ -84,7 +121,12 @@ const FileUpload = ({ onFileSelect, accept = "image/*", maxSizeMB = 5, className
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current.click()}
+        onClick={openFileDialog}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-busy={isLoading}
+        aria-invalid={error ? 'true' : 'false'}
       >
         <input
           type="file"
@@ -92,6 +134,7 @@ const FileUpload = ({ onFileSelect, accept = "image/*", maxSizeMB = 5, className
           onChange={handleFileInputChange}
           accept={accept}
           className="hidden"
+          aria-label="Upload file"
         />
         
         {isLoading ? (

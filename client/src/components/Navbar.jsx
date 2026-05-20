@@ -9,14 +9,28 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const { pathname } = location;
+  const { resetDisplayCount } = useDisplay();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navRef = useRef(null);
   const dropdownRef = useRef(null);
+  const mobileMenuId = 'mobile-navigation';
+  const userMenuId = 'user-navigation-menu';
+  const isAdmin = user?.role === 'admin';
 
-  // Close dropdown when clicking outside
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setIsDropdownOpen(false);
+  }, [pathname]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+
+      if (isMenuOpen && navRef.current && !navRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
       }
     };
 
@@ -24,63 +38,77 @@ const Navbar = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
-  // Debug user role and profile data
-  console.log('Navbar - Current user:', user);
-  console.log('Navbar - User role:', user?.role);
-  console.log('Navbar - User role type:', user?.role ? typeof user.role : 'undefined');
-  console.log('Navbar - Is admin?', user?.role === 'admin');
-  console.log('Navbar - User avatar:', user?.avatar);
-  console.log('Navbar - User displayName:', user?.displayName);
-
-  // Function to check if user is admin
-  const isAdmin = () => {
-    if (!user) return false;
-    if (typeof user.role !== 'string') return false;
-    return user.role === 'admin';
+  const closeMobileMenu = () => {
+    setIsMenuOpen(false);
   };
 
-  console.log('Navbar - isAdmin() result:', isAdmin());
-  const { resetDisplayCount } = useDisplay();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const getNavLinkClass = (isActive) => (
+    `px-4 py-2 rounded-md transition-colors text-base font-medium ${isActive
+      ? 'bg-[var(--macos-primary)] text-white'
+      : 'text-[var(--macos-text)] hover:text-white hover:bg-[var(--macos-primary-hover)]'}`
+  );
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
+  const getMobileLinkClass = (isActive) => (
+    `block rounded-md px-3 py-3 text-base font-medium transition-colors ${isActive
+      ? 'bg-[var(--macos-selection)] text-[var(--macos-primary)]'
+      : 'text-[var(--macos-text)] hover:bg-[var(--macos-hover)]'}`
+  );
 
   return (
-    <nav className="macos-toolbar fixed top-0 left-0 right-0 w-full z-[1000] shadow-md transition-colors duration-200">
+    <nav
+      ref={navRef}
+      className="macos-toolbar fixed top-0 left-0 right-0 w-full z-[1000] shadow-md transition-colors duration-200"
+      aria-label="Primary navigation"
+    >
       <div className="container mx-auto px-4 sm:px-6 py-4">
         <div className="flex justify-between items-center">
           <Link
             to="/"
-            className="text-2xl md:text-3xl font-bold text-[var(--macos-primary)] tracking-tight"
+            className="text-2xl md:text-3xl font-bold text-[var(--macos-primary)]"
             onClick={(e) => {
               if (pathname === '/') {
                 e.preventDefault();
-                // Reset display count to initial value
                 resetDisplayCount();
-                // Scroll to top of page
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+                closeMobileMenu();
               }
             }}
           >
             Airdrops.geo
           </Link>
 
-          {/* Mobile menu button */}
           <button
-            className="md:hidden flex items-center p-1 rounded-full hover:bg-[var(--macos-hover)] transition-colors"
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
+            type="button"
+            className="md:hidden inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--macos-text)] hover:bg-[var(--macos-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--macos-primary)] transition-colors"
+            onClick={() => setIsMenuOpen((open) => !open)}
+            aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={isMenuOpen}
+            aria-controls={mobileMenuId}
           >
             <svg
-              className="w-6 h-6 text-[var(--macos-text)]"
+              className="w-6 h-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
               xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+              focusable="false"
             >
               {isMenuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -90,16 +118,13 @@ const Navbar = () => {
             </svg>
           </button>
 
-          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
             <Link
               to="/"
-              className={`px-4 py-2 rounded-md transition-colors text-base font-medium ${pathname === '/'
-                ? 'bg-[var(--macos-primary)] text-white'
-                : 'text-[var(--macos-text)] hover:text-white hover:bg-[var(--macos-primary-hover)]'}`}
+              className={getNavLinkClass(pathname === '/')}
+              aria-current={pathname === '/' ? 'page' : undefined}
               onClick={() => {
                 if (pathname === '/') {
-                  // Scroll to top of page when clicking Home on home page
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
@@ -110,19 +135,16 @@ const Navbar = () => {
               <>
                 <Link
                   to="/dashboard"
-                  className={`px-4 py-2 rounded-md transition-colors text-base font-medium ${pathname === '/dashboard'
-                    ? 'bg-[var(--macos-primary)] text-white'
-                    : 'text-[var(--macos-text)] hover:text-white hover:bg-[var(--macos-primary-hover)]'}`}
+                  className={getNavLinkClass(pathname === '/dashboard')}
+                  aria-current={pathname === '/dashboard' ? 'page' : undefined}
                 >
                   My Airdrops
                 </Link>
-                {/* Use the isAdmin function for more reliable checking */}
-                {isAdmin() && (
+                {isAdmin && (
                   <Link
                     to="/admin"
-                    className={`px-4 py-2 rounded-md transition-colors text-base font-medium ${pathname === '/admin'
-                      ? 'bg-[var(--macos-primary)] text-white'
-                      : 'text-[var(--macos-text)] hover:text-white hover:bg-[var(--macos-primary-hover)]'}`}
+                    className={getNavLinkClass(pathname === '/admin')}
+                    aria-current={pathname === '/admin' ? 'page' : undefined}
                   >
                     Admin
                   </Link>
@@ -134,10 +156,13 @@ const Navbar = () => {
               {user ? (
                 <div className="flex items-center space-x-3 relative" ref={dropdownRef}>
                   <button
+                    type="button"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="flex items-center justify-center rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all"
+                    aria-label={isDropdownOpen ? 'Close user menu' : 'Open user menu'}
                     aria-expanded={isDropdownOpen}
                     aria-haspopup="true"
+                    aria-controls={userMenuId}
                   >
                     {user.avatar ? (
                       <img
@@ -156,9 +181,11 @@ const Navbar = () => {
                     )}
                   </button>
 
-                  {/* Dropdown menu */}
                   {isDropdownOpen && (
-                    <div className="absolute right-0 top-10 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
+                    <div
+                      id={userMenuId}
+                      className="absolute right-0 top-10 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700"
+                    >
                       <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                           {user.displayName || user.username}
@@ -187,6 +214,7 @@ const Navbar = () => {
                       </Link>
 
                       <button
+                        type="button"
                         onClick={() => {
                           setIsDropdownOpen(false);
                           logout(true);
@@ -220,19 +248,20 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
-            <div className="flex flex-col space-y-3">
+          <div
+            id={mobileMenuId}
+            className="md:hidden mt-3 border-t border-[var(--macos-divider)] pt-3"
+            aria-label="Mobile navigation"
+          >
+            <div className="flex max-h-[calc(100vh-5rem)] flex-col gap-2 overflow-y-auto pb-1">
               <Link
                 to="/"
-                className={`py-2 ${pathname === '/'
-                  ? 'text-blue-600 dark:text-blue-400 font-medium'
-                  : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
+                className={getMobileLinkClass(pathname === '/')}
+                aria-current={pathname === '/' ? 'page' : undefined}
                 onClick={() => {
-                  setIsMenuOpen(false);
+                  closeMobileMenu();
                   if (pathname === '/') {
-                    // Scroll to top of page when clicking Home on home page
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }
                 }}
@@ -243,30 +272,26 @@ const Navbar = () => {
                 <>
                   <Link
                     to="/dashboard"
-                    className={`py-2 ${pathname === '/dashboard'
-                      ? 'text-blue-600 dark:text-blue-400 font-medium'
-                      : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
-                    onClick={() => setIsMenuOpen(false)}
+                    className={getMobileLinkClass(pathname === '/dashboard')}
+                    aria-current={pathname === '/dashboard' ? 'page' : undefined}
+                    onClick={closeMobileMenu}
                   >
                     My Airdrops
                   </Link>
                   <Link
                     to="/profile"
-                    className={`py-2 ${pathname === '/profile'
-                      ? 'text-blue-600 dark:text-blue-400 font-medium'
-                      : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
-                    onClick={() => setIsMenuOpen(false)}
+                    className={getMobileLinkClass(pathname === '/profile')}
+                    aria-current={pathname === '/profile' ? 'page' : undefined}
+                    onClick={closeMobileMenu}
                   >
                     My Profile
                   </Link>
-                  {/* Use the isAdmin function for more reliable checking */}
-                  {isAdmin() && (
+                  {isAdmin && (
                     <Link
                       to="/admin"
-                      className={`py-2 ${pathname === '/admin'
-                        ? 'text-blue-600 dark:text-blue-400 font-medium'
-                        : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
-                      onClick={() => setIsMenuOpen(false)}
+                      className={getMobileLinkClass(pathname === '/admin')}
+                      aria-current={pathname === '/admin' ? 'page' : undefined}
+                      onClick={closeMobileMenu}
                     >
                       Admin
                     </Link>
@@ -274,10 +299,10 @@ const Navbar = () => {
                 </>
               )}
 
-              <div className="flex items-center justify-between py-2">
+              <div className="flex flex-col gap-3 py-2">
                 {user ? (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
+                  <div className="flex min-w-0 items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
                       {user.avatar ? (
                         <img
                           src={user.avatar}
@@ -293,39 +318,43 @@ const Navbar = () => {
                           <FaUserCircle size={20} />
                         </div>
                       )}
-                      <span className="text-sm font-medium text-black dark:text-white">
+                      <span className="min-w-0 truncate text-sm font-medium text-[var(--macos-text)]">
                         {user.displayName || user.username}
                       </span>
                     </div>
                     <button
+                      type="button"
                       onClick={() => {
                         logout(true);
-                        setIsMenuOpen(false);
+                        closeMobileMenu();
                       }}
-                      className="macos-button text-sm bg-[var(--macos-danger)]"
+                      className="macos-button shrink-0 text-sm bg-[var(--macos-danger)]"
                     >
                       Logout
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center space-x-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <Link
                       to="/login"
-                      className="macos-button text-sm"
-                      onClick={() => setIsMenuOpen(false)}
+                      className="macos-button w-full min-w-0 text-center text-sm"
+                      onClick={closeMobileMenu}
                     >
                       Login
                     </Link>
                     <Link
                       to="/register"
-                      className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-md transition-colors shadow-md"
-                      onClick={() => setIsMenuOpen(false)}
+                      className="macos-button w-full min-w-0 bg-[var(--macos-success)] text-center text-sm"
+                      onClick={closeMobileMenu}
                     >
                       Register
                     </Link>
                   </div>
                 )}
-                <DarkModeToggle />
+                <div className="flex items-center justify-between rounded-md bg-[var(--macos-hover)] px-3 py-2">
+                  <span className="text-sm font-medium text-[var(--macos-text)]">Theme</span>
+                  <DarkModeToggle />
+                </div>
               </div>
             </div>
           </div>

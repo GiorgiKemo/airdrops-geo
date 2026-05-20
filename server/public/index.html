@@ -3,32 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <base href="/" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Airdrops.geo - Cryptocurrency Airdrops</title>
-    <script>
-      // This script helps with client-side routing when refreshing the page
-      (function() {
-        // Check if this is a direct page load (not a navigation within the app)
-        if (window.location.pathname !== '/' && !window.location.pathname.includes('.')) {
-          console.log('Direct page load detected at:', window.location.pathname);
-          // Store the current URL to restore it after redirect
-          sessionStorage.setItem('redirectPath', window.location.pathname + window.location.search + window.location.hash);
-        }
+    <meta name="description" content="Track and discover cryptocurrency airdrops with Airdrops.geo" />
 
-        // Check if we have a stored path to restore
-        const redirectPath = sessionStorage.getItem('redirectPath');
-        if (redirectPath && window.location.pathname === '/') {
-          console.log('Restoring path:', redirectPath);
-          // Clear the stored path
-          sessionStorage.removeItem('redirectPath');
-          // Use history API to change the URL without reloading
-          window.history.replaceState(null, null, redirectPath);
-        }
-      })();
-    </script>
-    <script type="module" crossorigin src="/assets/index-QBYssEtX.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-SCAcsEF5.css">
+    <!-- Preload critical assets -->
+    <!-- Note: The exact filename will be generated at build time with a hash -->
+    <!-- These preloads will be added automatically by Vite -->
+
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://airdrops-geo-api.onrender.com" />
+
+    <!-- DNS prefetch -->
+    <link rel="dns-prefetch" href="https://airdrops-geo-api.onrender.com" />
+
+    <!-- Add theme-color for browser UI -->
+    <meta name="theme-color" content="#3b82f6" />
+
+    <title>Airdrops.geo - Cryptocurrency Airdrops</title>
+    <script type="module" crossorigin src="/assets/index-dc7EzCSs.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-BP1T2m4m.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-utils-Ctm1i-Td.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-C6h_0sWl.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BIoWlZfh.css">
   </head>
   <body>
     <div id="root"></div>

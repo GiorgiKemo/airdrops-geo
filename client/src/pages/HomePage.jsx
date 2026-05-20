@@ -23,9 +23,7 @@ const HomePage = () => {
   // Get filter from URL or default to 'all'
   const queryParams = new URLSearchParams(location.search);
   const [filter, setFilter] = useState(queryParams.get('filter') || 'all');
-  const { displayCount, setDisplayCount, initialDisplayCount } = useDisplay();
-  const cardContainerRef = useRef(null);
-  const newCardsRef = useRef(null);
+  const { setDisplayCount, initialDisplayCount } = useDisplay();
 
 
   // Helper function to update filter and URL
@@ -44,7 +42,11 @@ const HomePage = () => {
         console.log('Fetching airdrops...');
         setLoading(true);
         const data = await airdropService.getAirdrops();
-        console.log('Airdrops fetched successfully:', { count: data?.length || 0 });
+        if (!Array.isArray(data)) {
+          throw new Error('Unexpected airdrops response');
+        }
+
+        console.log('Airdrops fetched successfully:', { count: data.length });
         setAirdrops(data);
         setError(null);
       } catch (err) {
@@ -72,34 +74,6 @@ const HomePage = () => {
     };
   }, []);
 
-  // Handle responsive layout adjustments
-  useEffect(() => {
-    function handleResize() {
-      // Adjust container height based on viewport height
-      if (cardContainerRef.current) {
-        const viewportHeight = window.innerHeight;
-        const navbarHeight = 64; // Approximate navbar height
-        const filtersHeight = 120; // Approximate filters section height
-        const buttonsHeight = 80; // Approximate buttons section height
-        const padding = 40; // Additional padding
-
-        const containerHeight = viewportHeight - (navbarHeight + filtersHeight + buttonsHeight + padding);
-        cardContainerRef.current.style.height = `${Math.max(300, containerHeight)}px`;
-      }
-    }
-
-    // Initial call
-    handleResize();
-
-    // Add event listener
-    window.addEventListener('resize', handleResize);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
   // Filter airdrops based on status, search term, and cost filter
   // Use useMemo to optimize filtering and sorting
   const filteredAirdrops = useMemo(() => {
@@ -122,7 +96,7 @@ const HomePage = () => {
 
         // If both are active or both are not active, sort by views
         if (a.status === 'active' && b.status === 'active') {
-          return (b.views || 0) - (a.views || 0); // Sort by views (highest first)
+          return (Number(b.views) || 0) - (Number(a.views) || 0); // Sort by views (highest first)
         }
 
         // For non-active airdrops, maintain default order
@@ -133,10 +107,14 @@ const HomePage = () => {
       result = airdrops.filter(airdrop => airdrop.status === 'claim');
     } else if (filter === 'popular') {
       // For 'popular' filter, show all airdrops sorted by views (highest first)
-      result = [...airdrops].sort((a, b) => (b.views || 0) - (a.views || 0));
+      result = [...airdrops].sort((a, b) => (Number(b.views) || 0) - (Number(a.views) || 0));
     } else if (filter === 'recent') {
       // For 'recent' filter, show all airdrops sorted by creation date (newest first)
-      result = [...airdrops].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      result = [...airdrops].sort((a, b) => {
+        const bTime = new Date(b.createdAt).getTime();
+        const aTime = new Date(a.createdAt).getTime();
+        return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0);
+      });
     } else {
       // For other filters (active, upcoming, ended), filter by status
       result = airdrops.filter(airdrop => airdrop.status === filter);
@@ -144,17 +122,29 @@ const HomePage = () => {
 
     // Step 2: Apply additional sorting for upcoming airdrops
     if (filter === 'upcoming') {
-      result = [...result].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+      result = [...result].sort((a, b) => {
+        const aTime = new Date(a.startDate).getTime();
+        const bTime = new Date(b.startDate).getTime();
+        return (Number.isFinite(aTime) ? aTime : Number.MAX_SAFE_INTEGER) -
+          (Number.isFinite(bTime) ? bTime : Number.MAX_SAFE_INTEGER);
+      });
     }
 
     // Step 3: Apply search filter if search term exists
     if (searchTerm.trim() !== '') {
       const lowerSearchTerm = searchTerm.toLowerCase();
-      result = result.filter(airdrop =>
-        airdrop.title.toLowerCase().includes(lowerSearchTerm) ||
-        airdrop.token.toLowerCase().includes(lowerSearchTerm) ||
-        airdrop.description.toLowerCase().includes(lowerSearchTerm)
-      );
+      result = result.filter(airdrop => {
+        const searchableText = [
+          airdrop.title,
+          airdrop.token,
+          airdrop.description
+        ]
+          .filter(value => typeof value === 'string')
+          .join(' ')
+          .toLowerCase();
+
+        return searchableText.includes(lowerSearchTerm);
+      });
     }
 
     // Step 4: Apply cost filter
@@ -413,16 +403,11 @@ const HomePage = () => {
       ) : filteredAirdrops.length === 0 ? (
         <div className="text-center py-10">
           <p className="text-gray-500 dark:text-gray-400 text-lg">
-            No airdrops found.
+            No airdrops found for the selected filters.
           </p>
         </div>
       ) : (
         <div className="flex flex-col h-auto" style={{ height: 'calc(100vh - 14rem)' }}>
-          {/* Debug info */}
-          <div className="text-xs text-gray-500 mb-2">
-            Filtered airdrops: {filteredAirdrops.length}
-          </div>
-
           {/* Use the virtualized list component for better performance */}
           <VirtualizedAirdropList
             airdrops={filteredAirdrops}

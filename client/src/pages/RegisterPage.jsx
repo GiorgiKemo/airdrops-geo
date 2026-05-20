@@ -39,7 +39,10 @@ const RegisterPage = () => {
 
     // Validate each field
     Object.keys(formData).forEach(field => {
-      const error = validateField(field, formData[field]);
+      const value = field === 'username' || field === 'email'
+        ? formData[field].trim()
+        : formData[field];
+      const error = validateField(field, value);
       errors[field] = error;
       if (error) isValid = false;
     });
@@ -51,7 +54,7 @@ const RegisterPage = () => {
     }
 
     setFormErrors(errors);
-    return isValid;
+    return { isValid, errors };
   };
 
   const handleChange = (e) => {
@@ -66,7 +69,8 @@ const RegisterPage = () => {
     if (formError) setFormError('');
 
     // Validate the field that changed
-    const fieldError = validateField(name, value);
+    const valueToValidate = name === 'username' || name === 'email' ? value.trim() : value;
+    const fieldError = validateField(name, valueToValidate);
 
     // Special case for confirm password
     let confirmPasswordError = null;
@@ -89,17 +93,17 @@ const RegisterPage = () => {
     setFormError('');
 
     // Validate all fields
-    const isValid = validateForm();
+    const { isValid, errors } = validateForm();
 
     if (!isValid) {
       // Find the first error to display as the main form error
-      const firstError = Object.values(formErrors).find(error => error !== null);
+      const firstError = Object.values(errors).find(error => error !== null);
       setFormError(firstError || 'Please fix the errors in the form');
       return;
     }
 
     try {
-      await register(formData.username, formData.email, formData.password);
+      await register(formData.username.trim(), formData.email.trim(), formData.password);
 
       // Show success toast notification
       toast.success('Registration successful! Welcome to Airdrops.geo.');

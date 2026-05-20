@@ -1,56 +1,69 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+const DEFAULT_PLACEHOLDER =
+  'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 9"%3E%3Crect width="16" height="9" fill="%23e5e7eb"/%3E%3C/svg%3E';
 
 /**
- * OptimizedImage component for lazy loading and progressive image loading
- * 
- * @param {Object} props
- * @param {string} props.src - Image source URL
- * @param {string} props.alt - Alt text for the image
- * @param {string} props.className - Additional CSS classes
- * @param {string} props.placeholderSrc - Optional placeholder image to show while loading
- * @param {Object} props.imgProps - Additional props to pass to the img element
+ * Lazy image with a stable placeholder and quiet fallback behavior.
  */
-const OptimizedImage = ({ 
-  src, 
-  alt, 
-  className = '', 
-  placeholderSrc = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E',
-  ...imgProps 
+const OptimizedImage = ({
+  src,
+  alt = '',
+  className = '',
+  placeholderSrc = DEFAULT_PLACEHOLDER,
+  fallbackSrc = placeholderSrc,
+  loading = 'lazy',
+  decoding = 'async',
+  onError,
+  ...imgProps
 }) => {
-  const [imgSrc, setImgSrc] = useState(placeholderSrc);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [imgSrc, setImgSrc] = useState(src || fallbackSrc);
+  const [isLoaded, setIsLoaded] = useState(Boolean(src));
 
   useEffect(() => {
-    // Reset state if src changes
+    let isActive = true;
+
+    if (!src) {
+      setImgSrc(fallbackSrc);
+      setIsLoaded(false);
+      return undefined;
+    }
+
     setImgSrc(placeholderSrc);
     setIsLoaded(false);
-    
-    const img = new Image();
-    img.src = src;
-    
-    img.onload = () => {
+
+    const image = new Image();
+
+    image.onload = () => {
+      if (!isActive) return;
       setImgSrc(src);
       setIsLoaded(true);
     };
-    
-    img.onerror = () => {
-      console.error(`Failed to load image: ${src}`);
-      // Keep the placeholder if the image fails to load
+
+    image.onerror = () => {
+      if (!isActive) return;
+      setImgSrc(fallbackSrc);
+      setIsLoaded(false);
     };
-    
+
+    image.src = src;
+
     return () => {
-      // Clean up
-      img.onload = null;
-      img.onerror = null;
+      isActive = false;
+      image.onload = null;
+      image.onerror = null;
     };
-  }, [src, placeholderSrc]);
+  }, [fallbackSrc, placeholderSrc, src]);
 
   return (
     <img
       src={imgSrc}
       alt={alt}
-      className={`transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-40'} ${className}`}
-      loading="lazy"
+      className={`optimized-image transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-60'} ${className}`}
+      loading={loading}
+      decoding={decoding}
+      onError={onError}
+      data-load-state={isLoaded ? 'loaded' : 'fallback'}
       {...imgProps}
     />
   );

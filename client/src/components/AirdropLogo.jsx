@@ -32,7 +32,12 @@ const AirdropLogo = ({ airdrop, size = 'medium' }) => {
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
 
-  const tracked = isTracked(airdrop._id);
+  const airdropId = typeof airdrop?._id === 'string' ? airdrop._id : '';
+  const token = typeof airdrop?.token === 'string' && airdrop.token.trim()
+    ? airdrop.token.trim()
+    : '?';
+  const logoUrl = typeof airdrop?.logoUrl === 'string' ? airdrop.logoUrl.trim() : '';
+  const tracked = airdropId ? isTracked(airdropId) : false;
 
   // Size classes
   const sizeClasses = {
@@ -46,15 +51,19 @@ const AirdropLogo = ({ airdrop, size = 'medium' }) => {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation(); // Prevent event bubbling
 
+    if (!airdropId) {
+      return;
+    }
+
     if (!user) {
       navigate('/login');
       return;
     }
 
     if (tracked) {
-      await untrackAirdrop(airdrop._id);
+      await untrackAirdrop(airdropId);
     } else {
-      await trackAirdrop(airdrop._id);
+      await trackAirdrop(airdropId);
     }
   };
 
@@ -65,7 +74,7 @@ const AirdropLogo = ({ airdrop, size = 'medium' }) => {
         onClick={handleLogoClick}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
-        disabled={loading}
+        disabled={loading || !airdropId}
         className={`${sizeClasses[size]} rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden transition-all duration-200 ${
           tracked ? 'ring-2 ring-green-500 dark:ring-green-400' : ''
         } ${
@@ -73,10 +82,10 @@ const AirdropLogo = ({ airdrop, size = 'medium' }) => {
         } cursor-pointer`}
         aria-label={tracked ? 'Remove from My Airdrops' : 'Add to My Airdrops'}
       >
-        {airdrop.logoUrl ? (
+        {logoUrl ? (
           <img
-            src={formatImageUrl(airdrop.logoUrl)}
-            alt={`${airdrop.token} logo`}
+            src={formatImageUrl(logoUrl)}
+            alt={`${token} logo`}
             className="w-full h-full object-cover"
             onError={(e) => {
               // If image fails to load, show the first letter instead
@@ -91,15 +100,15 @@ const AirdropLogo = ({ airdrop, size = 'medium' }) => {
           className={`font-bold text-gray-600 dark:text-gray-300 ${
             size === 'large' ? 'text-3xl' : 'text-xl'
           }`}
-          style={{ display: airdrop.logoUrl ? 'none' : 'block' }}
+          style={{ display: logoUrl ? 'none' : 'block' }}
         >
-          {airdrop.token.charAt(0)}
+          {token.charAt(0).toUpperCase()}
         </span>
       </button>
 
       {/* Status indicator */}
       <div className="absolute -bottom-1 -right-1">
-        <TrackButton airdropId={airdrop._id} />
+        <TrackButton airdropId={airdropId} />
       </div>
     </div>
   );

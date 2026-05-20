@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { airdropService } from '../services/api';
+import { isValidUrl, normalizeUrl } from '../utils/validation';
 
 const LogoUpdater = ({ airdropId, onUpdate }) => {
   const [logoUrl, setLogoUrl] = useState('');
@@ -12,14 +13,20 @@ const LogoUpdater = ({ airdropId, onUpdate }) => {
     setLoading(true);
     setError('');
     setSuccess('');
+    const normalizedLogoUrl = normalizeUrl(logoUrl);
+
+    if (!isValidUrl(normalizedLogoUrl, { required: true })) {
+      setLoading(false);
+      setError('Please enter a valid logo URL');
+      return;
+    }
 
     try {
-      // Add admin authorization header
-      const headers = {
-        'Authorization': 'admin-user'
-      };
-
-      await airdropService.updateAirdrop(airdropId, { logoUrl }, headers);
+      await airdropService.updateAirdrop(airdropId, {
+        logoUrl: normalizedLogoUrl,
+        skipTelegramNotification: true,
+        sendTelegramNotification: false
+      });
       setSuccess('Logo URL updated successfully!');
       if (onUpdate) onUpdate();
       // Clear the input
@@ -65,6 +72,7 @@ const LogoUpdater = ({ airdropId, onUpdate }) => {
             placeholder="https://example.com/logo.png"
             className="w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
+            aria-invalid={error ? 'true' : 'false'}
           />
         </div>
         <button

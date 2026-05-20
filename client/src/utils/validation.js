@@ -9,7 +9,33 @@
  */
 export const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  return emailRegex.test(String(email || '').trim());
+};
+
+export const normalizeUrl = (url) => {
+  const value = String(url || '').trim();
+
+  if (!value) return '';
+  if (/^(https?:|data:image\/)/i.test(value)) return value;
+
+  return `https://${value}`;
+};
+
+export const isValidUrl = (url, { required = false, allowDataImage = false } = {}) => {
+  const value = String(url || '').trim();
+
+  if (!value) return !required;
+
+  if (allowDataImage && /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(value)) {
+    return true;
+  }
+
+  try {
+    const parsedUrl = new URL(normalizeUrl(value));
+    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+  } catch {
+    return false;
+  }
 };
 
 /**
@@ -133,10 +159,11 @@ export const validateField = (name, value) => {
       if (!isValidUsername(value)) return 'Username must be 3-30 characters and can only contain letters, numbers, and underscores';
       return null;
       
-    case 'password':
+    case 'password': {
       if (!value) return 'Password is required';
       const { isValid, errors } = validatePassword(value);
       return isValid ? null : errors[0];
+    }
       
     case 'confirmPassword':
       if (!value) return 'Please confirm your password';

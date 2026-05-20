@@ -9,12 +9,12 @@ import { useIsomorphicLayoutEffect } from '../hooks/useIsomorphicLayoutEffect';
 const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
   const containerRef = useRef(null);
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
-  const [containerHeight, setContainerHeight] = useState(0);
   const [itemHeight, setItemHeight] = useState(240); // Default height estimate
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollingTimeoutRef = useRef(null);
   const bufferSize = 10; // Increased buffer size for smoother scrolling
   const overscan = 5; // Additional items to render for smoother scrolling
+  const safeAirdrops = useMemo(() => (Array.isArray(airdrops) ? airdrops : []), [airdrops]);
 
   // Responsive number of cards per row based on screen size
   const [cardsPerRow, setCardsPerRow] = useState(getCardsPerRow());
@@ -44,16 +44,16 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
     // Add buffer and overscan for smoother scrolling
     const startRow = Math.max(0, visibleStartRow - bufferSize - (isScrolling ? overscan : 0));
     const endRow = Math.min(
-      Math.ceil(airdrops.length / cardsPerRow) - 1, // Total rows
+      Math.ceil(safeAirdrops.length / cardsPerRow) - 1, // Total rows
       visibleEndRow + bufferSize + (isScrolling ? overscan : 0)
     );
 
     // Convert rows to item indices
     const startIndex = startRow * cardsPerRow;
-    const endIndex = Math.min(airdrops.length - 1, (endRow + 1) * cardsPerRow - 1);
+    const endIndex = Math.min(safeAirdrops.length - 1, (endRow + 1) * cardsPerRow - 1);
 
     setVisibleRange({ start: startIndex, end: endIndex });
-  }, [airdrops.length, itemHeight, bufferSize, overscan, isScrolling, cardsPerRow]);
+  }, [safeAirdrops.length, itemHeight, bufferSize, overscan, isScrolling, cardsPerRow]);
 
   // Handle scroll events with debouncing for better performance
   const handleScroll = useCallback(() => {
@@ -82,11 +82,9 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
 
     const resizeObserver = new ResizeObserver(entries => {
       for (const entry of entries) {
-        setContainerHeight(entry.contentRect.height);
-
         // Try to measure the height of the first item if it exists
         const firstItem = containerRef.current.querySelector('.airdrop-card-item');
-        if (firstItem) {
+        if (entry.contentRect.height > 0 && firstItem) {
           setItemHeight(firstItem.offsetHeight);
         }
       }
@@ -147,13 +145,13 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
   }, [cardsPerRow]);
 
   // Calculate total rows based on cards per row and create placeholder height
-  const totalRows = airdrops && airdrops.length > 0 ? Math.ceil(airdrops.length / cardsPerRow) : 0;
+  const totalRows = safeAirdrops.length > 0 ? Math.ceil(safeAirdrops.length / cardsPerRow) : 0;
   const totalHeight = Math.max(totalRows * itemHeight, 100); // Minimum height of 100px
 
   // Adjust visible range to ensure complete rows (multiples of 3)
   const adjustedVisibleRange = useMemo(() => {
     // Safety check for empty airdrops array
-    if (!airdrops || airdrops.length === 0) {
+    if (safeAirdrops.length === 0) {
       return { start: 0, end: 0 };
     }
 
@@ -163,29 +161,29 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
     const adjustedEnd = Math.ceil((visibleRange.end + 1) / cardsPerRow) * cardsPerRow - 1;
 
     return {
-      start: Math.min(Math.max(0, adjustedStart), airdrops.length - 1),
-      end: Math.min(adjustedEnd, airdrops.length - 1)
+      start: Math.min(Math.max(0, adjustedStart), safeAirdrops.length - 1),
+      end: Math.min(adjustedEnd, safeAirdrops.length - 1)
     };
-  }, [visibleRange.start, visibleRange.end, airdrops.length, cardsPerRow]);
+  }, [visibleRange.start, visibleRange.end, safeAirdrops.length, cardsPerRow]);
 
   // Get the subset of airdrops to render - memoize to prevent unnecessary re-renders
   const visibleAirdrops = useMemo(() => {
     // Safety check for empty airdrops array
-    if (!airdrops || airdrops.length === 0) {
+    if (safeAirdrops.length === 0) {
       return [];
     }
 
     // Ensure valid range
-    const start = Math.min(adjustedVisibleRange.start, airdrops.length - 1);
-    const end = Math.min(adjustedVisibleRange.end, airdrops.length - 1);
+    const start = Math.min(adjustedVisibleRange.start, safeAirdrops.length - 1);
+    const end = Math.min(adjustedVisibleRange.end, safeAirdrops.length - 1);
 
     // Only slice if we have a valid range
     if (start <= end && start >= 0) {
-      return airdrops.slice(start, end + 1);
+      return safeAirdrops.slice(start, end + 1);
     }
 
     return [];
-  }, [airdrops, adjustedVisibleRange.start, adjustedVisibleRange.end]);
+  }, [safeAirdrops, adjustedVisibleRange.start, adjustedVisibleRange.end]);
 
   // Calculate the offset for the visible items based on rows
   const startRow = Math.floor(adjustedVisibleRange.start / cardsPerRow);
@@ -215,11 +213,11 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
   }), [totalHeight]);
 
   // Check if we have any airdrops to display
-  const hasAirdrops = airdrops && airdrops.length > 0;
+  const hasAirdrops = safeAirdrops.length > 0;
 
   // Log for debugging
   console.log('VirtualizedAirdropList rendering:', {
-    airdropsCount: airdrops?.length || 0,
+    airdropsCount: safeAirdrops.length,
     visibleRange,
     adjustedVisibleRange,
     visibleAirdropsCount: visibleAirdrops.length,
@@ -242,9 +240,9 @@ const VirtualizedAirdropList = ({ airdrops, className = '' }) => {
               display: 'grid',
               gridTemplateColumns: `repeat(${cardsPerRow}, 1fr)`
             }}>
-              {visibleAirdrops.map((airdrop) => (
+              {visibleAirdrops.map((airdrop, index) => (
                 <div
-                  key={airdrop._id}
+                  key={airdrop._id || `airdrop-${adjustedVisibleRange.start + index}`}
                   className="transform-gpu p-1 h-[14rem] sm:h-[13rem] md:h-[14rem] lg:h-[15rem] airdrop-card-item will-change-transform"
                   style={{ contain: 'layout paint size' }} // CSS containment for better performance
                 >
