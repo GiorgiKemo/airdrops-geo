@@ -482,12 +482,27 @@ p {
   transform: none;
 }
 
-/* Ensure text wraps properly throughout the application */
-p, h1, h2, h3, h4, h5, h6, span, div {
+/* Ensure text wraps properly and prevents typographic orphans */
+p, h1, h2, h3, h4, h5, h6 {
   overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-  hyphens: auto;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Modern toolbar */
@@ -495,6 +510,7 @@ p, h1, h2, h3, h4, h5, h6, span, div {
   background-color: var(--macos-toolbar-bg);
   border-bottom: 1px solid var(--macos-divider);
   padding: 0;
+  padding-top: max(0px, env(safe-area-inset-top, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;

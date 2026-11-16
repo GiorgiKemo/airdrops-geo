@@ -74,17 +74,17 @@ const Footer = () => {
           {/* Social & Newsletter */}
           <div>
             <h3 className="text-lg font-semibold mb-4 text-[var(--macos-text)]">Connect With Us</h3>
-            <div className="flex space-x-4 mb-4">
-              <a href="https://x.com/GiorgiKem" target="_blank" rel="noopener noreferrer" className="text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)]" aria-label="Twitter">
+            <div className="flex space-x-2 mb-4">
+              <a href="https://x.com/GiorgiKem" target="_blank" rel="noopener noreferrer" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-[var(--macos-hover)] text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)] transition-colors" aria-label="Twitter">
                 <FaTwitter size={20} />
               </a>
-              <a href="https://discord.gg/hb8wamm4Sn" target="_blank" rel="noopener noreferrer" className="text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)]" aria-label="Discord">
+              <a href="https://discord.gg/hb8wamm4Sn" target="_blank" rel="noopener noreferrer" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-[var(--macos-hover)] text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)] transition-colors" aria-label="Discord">
                 <FaDiscord size={20} />
               </a>
-              <a href="https://t.me/+YA6alcZ4s900YjQy" target="_blank" rel="noopener noreferrer" className="text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)]" aria-label="Telegram">
+              <a href="https://t.me/+YA6alcZ4s900YjQy" target="_blank" rel="noopener noreferrer" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-[var(--macos-hover)] text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)] transition-colors" aria-label="Telegram">
                 <FaTelegram size={20} />
               </a>
-              <a href="https://github.com/GiorgiKemo" target="_blank" rel="noopener noreferrer" className="text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)]" aria-label="GitHub">
+              <a href="https://github.com/GiorgiKemo" target="_blank" rel="noopener noreferrer" className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-[var(--macos-hover)] text-[var(--macos-text-secondary)] hover:text-[var(--macos-primary)] transition-colors" aria-label="GitHub">
                 <FaGithub size={20} />
               </a>
             </div>
@@ -94,9 +94,9 @@ const Footer = () => {
                 <input
                   type="email"
                   placeholder="Your email"
-                  className="macos-input text-sm py-1 px-2 flex-grow min-w-0"
+                  className="macos-input text-base sm:text-sm py-2 px-3 flex-grow min-w-0"
                 />
-                <button className="macos-button text-xs py-1 px-3 ml-2 whitespace-nowrap">
+                <button className="macos-button text-sm py-2 px-4 ml-2 whitespace-nowrap min-h-[40px]">
                   Subscribe
                 </button>
               </div>

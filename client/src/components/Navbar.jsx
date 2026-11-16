@@ -45,13 +45,18 @@ const Navbar = () => {
   const { resetDisplayCount } = useDisplay();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   return (
     <nav className="macos-toolbar fixed top-0 left-0 right-0 w-full z-[1000] shadow-md transition-colors duration-200">
-      <div className="container mx-auto px-4 sm:px-6 py-4">
+      <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex justify-between items-center">
           <Link
             to="/"
@@ -71,9 +76,10 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden flex items-center p-1 rounded-full hover:bg-[var(--macos-hover)] transition-colors"
+            className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] p-2.5 rounded-full hover:bg-[var(--macos-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--macos-primary)]"
             onClick={toggleMenu}
             aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
           >
             <svg
               className="w-6 h-6 text-[var(--macos-text)]"
@@ -223,12 +229,12 @@ const Navbar = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-center">
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-2">
               <Link
                 to="/"
-                className={`py-2 ${pathname === '/'
-                  ? 'text-blue-600 dark:text-blue-400 font-medium'
-                  : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
+                className={`min-h-[44px] flex items-center justify-center rounded-lg text-base font-medium transition-colors ${pathname === '/'
+                  ? 'bg-[var(--macos-primary)] text-white'
+                  : 'text-[var(--macos-text)] hover:bg-[var(--macos-hover)]'}`}
                 onClick={() => {
                   setIsMenuOpen(false);
                   if (pathname === '/') {
@@ -239,22 +245,31 @@ const Navbar = () => {
               >
                 Home
               </Link>
+              <Link
+                to="/all"
+                className={`min-h-[44px] flex items-center justify-center rounded-lg text-base font-medium transition-colors ${pathname === '/all'
+                  ? 'bg-[var(--macos-primary)] text-white'
+                  : 'text-[var(--macos-text)] hover:bg-[var(--macos-hover)]'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                All Airdrops
+              </Link>
               {user && (
                 <>
                   <Link
                     to="/dashboard"
-                    className={`py-2 ${pathname === '/dashboard'
-                      ? 'text-blue-600 dark:text-blue-400 font-medium'
-                      : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
+                    className={`min-h-[44px] flex items-center justify-center rounded-lg text-base font-medium transition-colors ${pathname === '/dashboard'
+                      ? 'bg-[var(--macos-primary)] text-white'
+                      : 'text-[var(--macos-text)] hover:bg-[var(--macos-hover)]'}`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     My Airdrops
                   </Link>
                   <Link
                     to="/profile"
-                    className={`py-2 ${pathname === '/profile'
-                      ? 'text-blue-600 dark:text-blue-400 font-medium'
-                      : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
+                    className={`min-h-[44px] flex items-center justify-center rounded-lg text-base font-medium transition-colors ${pathname === '/profile'
+                      ? 'bg-[var(--macos-primary)] text-white'
+                      : 'text-[var(--macos-text)] hover:bg-[var(--macos-hover)]'}`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     My Profile
@@ -263,9 +278,9 @@ const Navbar = () => {
                   {isAdmin() && (
                     <Link
                       to="/admin"
-                      className={`py-2 ${pathname === '/admin'
-                        ? 'text-blue-600 dark:text-blue-400 font-medium'
-                        : 'text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-300'}`}
+                      className={`min-h-[44px] flex items-center justify-center rounded-lg text-base font-medium transition-colors ${pathname === '/admin'
+                        ? 'bg-[var(--macos-primary)] text-white'
+                        : 'text-[var(--macos-text)] hover:bg-[var(--macos-hover)]'}`}
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Admin
@@ -274,7 +289,7 @@ const Navbar = () => {
                 </>
               )}
 
-              <div className="flex items-center justify-between py-2">
+              <div className="flex items-center justify-between pt-2">
                 {user ? (
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2">
@@ -293,7 +308,7 @@ const Navbar = () => {
                           <FaUserCircle size={20} />
                         </div>
                       )}
-                      <span className="text-sm font-medium text-black dark:text-white">
+                      <span className="text-sm font-medium text-[var(--macos-text)]">
                         {user.displayName || user.username}
                       </span>
                     </div>
@@ -302,7 +317,7 @@ const Navbar = () => {
                         logout(true);
                         setIsMenuOpen(false);
                       }}
-                      className="macos-button text-sm bg-[var(--macos-danger)]"
+                      className="macos-button text-sm min-h-[40px] px-3 bg-[var(--macos-danger)]"
                     >
                       Logout
                     </button>
@@ -311,21 +326,23 @@ const Navbar = () => {
                   <div className="flex items-center space-x-2">
                     <Link
                       to="/login"
-                      className="macos-button text-sm"
+                      className="macos-button text-sm min-h-[44px] px-4 flex items-center justify-center"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Login
                     </Link>
                     <Link
                       to="/register"
-                      className="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-md transition-colors shadow-md"
+                      className="min-h-[44px] px-4 flex items-center justify-center text-sm font-medium bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors shadow-md"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Register
                     </Link>
                   </div>
                 )}
-                <DarkModeToggle />
+                <div className="min-w-[44px] min-h-[44px] flex items-center justify-center">
+                  <DarkModeToggle />
+                </div>
               </div>
             </div>
           </div>

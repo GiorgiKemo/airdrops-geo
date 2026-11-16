@@ -77,7 +77,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-4 py-12">
+    <div className="min-h-[calc(100dvh-12rem)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         {/* Card with subtle shadow and border */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300">
@@ -116,7 +116,7 @@ const LoginPage = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Enter your email or username"
-                    className="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                    className="pl-10 w-full h-12 text-base sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                     required
                   />
                 </div>
@@ -148,7 +148,7 @@ const LoginPage = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="********"
-                    className="pl-10 w-full h-12 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
+                    className="pl-10 w-full h-12 text-base sm:text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                     required
                   />
                 </div>

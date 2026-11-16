@@ -242,12 +242,12 @@ const HomePage = () => {
           })}
         </script>
       </SEO>
-      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 min-h-screen flex flex-col">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 flex flex-col flex-1">
       <div className="mb-4">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--macos-text)] mb-2 sm:mb-4 text-center sm:text-left tracking-tight">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--macos-text)] mb-2 sm:mb-4 text-center sm:text-left tracking-tight" style={{ textWrap: 'balance' }}>
           Latest Crypto Airdrops 2025 | Find & Claim Free Tokens
         </h1>
-        <p className="text-[var(--macos-text-secondary)] mb-3 text-xs sm:text-sm md:text-base break-words text-center sm:text-left max-w-3xl">
+        <p className="text-[var(--macos-text-secondary)] mb-3 text-xs sm:text-sm md:text-base break-words text-center sm:text-left max-w-3xl" style={{ textWrap: 'pretty' }}>
           Welcome to Airdrops.geo, your ultimate resource for finding and claiming the best crypto airdrops. We track upcoming, active, and popular cryptocurrency airdrops daily, helping you earn free tokens from top blockchain projects. Start exploring now!
         </p>
 
@@ -256,10 +256,10 @@ const HomePage = () => {
       {/* Filter buttons and search */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-3">
-          <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 w-full sm:w-auto text-xs sm:text-sm overflow-x-auto pb-2 sm:pb-0 scrollable-hidden">
+          <div className="flex flex-wrap justify-center gap-2 w-full sm:w-auto text-xs sm:text-sm overflow-x-auto pb-2 sm:pb-0 scrollable-hidden">
           <button
             onClick={() => updateFilter('all')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg min-h-[40px] flex items-center justify-center whitespace-nowrap transition-colors ${
               filter === 'all'
                 ? 'bg-blue-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -269,7 +269,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('active')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg min-h-[40px] flex items-center justify-center whitespace-nowrap transition-colors ${
               filter === 'active'
                 ? 'bg-green-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -279,7 +279,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('popular')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg min-h-[40px] flex items-center justify-center whitespace-nowrap transition-colors ${
               filter === 'popular'
                 ? 'bg-purple-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -289,7 +289,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('recent')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg min-h-[40px] flex items-center justify-center whitespace-nowrap transition-colors ${
               filter === 'recent'
                 ? 'bg-teal-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -299,7 +299,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('upcoming')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg min-h-[40px] flex items-center justify-center whitespace-nowrap transition-colors ${
               filter === 'upcoming'
                 ? 'bg-blue-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -309,7 +309,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('ended')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg min-h-[40px] flex items-center justify-center whitespace-nowrap transition-colors ${
               filter === 'ended'
                 ? 'bg-gray-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -319,7 +319,7 @@ const HomePage = () => {
           </button>
           <button
             onClick={() => updateFilter('claim')}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-md whitespace-nowrap ${
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-lg min-h-[40px] flex items-center justify-center whitespace-nowrap transition-colors ${
               filter === 'claim'
                 ? 'bg-red-600 text-white font-medium'
                 : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
@@ -332,14 +332,14 @@ const HomePage = () => {
           <div className="flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto">
             {/* Search input */}
             <div className="relative flex-grow max-w-xs">
-              <div className="flex items-center macos-input py-1.5 px-3">
-                <FaSearch className="text-[var(--macos-text-secondary)] mr-2" />
+              <div className="flex items-center macos-input py-2 px-3 min-h-[44px]">
+                <FaSearch className="text-[var(--macos-text-secondary)] mr-2 flex-shrink-0" />
                 <input
                   type="text"
                   placeholder="Search airdrops..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-transparent border-none outline-none text-sm w-full text-[var(--macos-text)]"
+                  className="bg-transparent border-none outline-none text-base sm:text-sm w-full text-[var(--macos-text)] placeholder-gray-400"
                 />
               </div>
             </div>
@@ -348,7 +348,7 @@ const HomePage = () => {
             <div className="relative" ref={costFilterRef}>
               <button
                 onClick={() => setShowCostFilter(!showCostFilter)}
-                className="macos-input flex items-center gap-1 px-3 py-1.5 text-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--macos-primary)]"
+                className="macos-input flex items-center gap-1.5 px-3 py-2 min-h-[44px] text-sm hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--macos-primary)]"
               >
                 <FaFilter className="text-[var(--macos-text-secondary)]" />
                 <span>
@@ -417,7 +417,7 @@ const HomePage = () => {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col h-auto" style={{ height: 'calc(100vh - 14rem)' }}>
+        <div className="flex flex-col h-auto min-h-[380px] sm:min-h-[460px] h-[calc(100dvh-18rem)] sm:h-[calc(100dvh-16rem)]">
           {/* Debug info */}
           <div className="text-xs text-gray-500 mb-2">
             Filtered airdrops: {filteredAirdrops.length}

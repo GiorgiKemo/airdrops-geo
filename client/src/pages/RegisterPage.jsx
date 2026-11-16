@@ -123,7 +123,7 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-4 py-12">
+    <div className="min-h-[calc(100dvh-12rem)] flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         {/* Card with subtle shadow and border */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300">
@@ -161,7 +161,7 @@ const RegisterPage = () => {
                     value={formData.username}
                     onChange={handleChange}
                     placeholder="Choose a username"
-                    className={`pl-10 w-full h-12 rounded-lg border ${formErrors.username ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
+                    className={`pl-10 w-full h-12 text-base sm:text-sm rounded-lg border ${formErrors.username ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
                     aria-invalid={formErrors.username ? 'true' : 'false'}
                     aria-describedby={formErrors.username ? 'username-error' : undefined}
                   />
@@ -191,7 +191,7 @@ const RegisterPage = () => {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="your.email@example.com"
-                    className={`pl-10 w-full h-12 rounded-lg border ${formErrors.email ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
+                    className={`pl-10 w-full h-12 text-base sm:text-sm rounded-lg border ${formErrors.email ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
                     aria-invalid={formErrors.email ? 'true' : 'false'}
                     aria-describedby={formErrors.email ? 'email-error' : undefined}
                   />
@@ -219,7 +219,7 @@ const RegisterPage = () => {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="********"
-                    className={`pl-10 w-full h-12 rounded-lg border ${formErrors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
+                    className={`pl-10 w-full h-12 text-base sm:text-sm rounded-lg border ${formErrors.password ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
                     aria-invalid={formErrors.password ? 'true' : 'false'}
                     aria-describedby={formErrors.password ? 'password-error' : 'password-requirements'}
                   />
@@ -271,7 +271,7 @@ const RegisterPage = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="********"
-                    className={`pl-10 w-full h-12 rounded-lg border ${formErrors.confirmPassword ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
+                    className={`pl-10 w-full h-12 text-base sm:text-sm rounded-lg border ${formErrors.confirmPassword ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200`}
                     aria-invalid={formErrors.confirmPassword ? 'true' : 'false'}
                     aria-describedby={formErrors.confirmPassword ? 'confirm-password-error' : undefined}
                   />

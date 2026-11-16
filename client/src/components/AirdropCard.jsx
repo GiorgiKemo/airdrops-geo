@@ -60,7 +60,11 @@ const AirdropCard = ({ airdrop }) => {
     color: '#ffffff' // White text for visibility
   } : {};
 
-  const handleCardClick = () => {
+  const handleCardClick = (e) => {
+    if (e.metaKey || e.ctrlKey || e.button === 1) {
+      window.open(`/airdrops/${airdrop._id}`, '_blank');
+      return;
+    }
     navigate(`/airdrops/${airdrop._id}`);
   };
 
@@ -110,7 +114,7 @@ const AirdropCard = ({ airdrop }) => {
           </div>
         </div>
         <p className="mb-1 text-xs sm:text-sm truncate font-medium">Token: {airdrop.token}</p>
-        <p id={`airdrop-desc-${airdrop._id}`} className="mb-2 line-clamp-2 sm:line-clamp-2 text-xs sm:text-sm break-words overflow-hidden">{airdrop.description}</p>
+        <p id={`airdrop-desc-${airdrop._id}`} className="mb-2 line-clamp-2 sm:line-clamp-2 text-xs sm:text-sm break-words overflow-hidden" style={{ textWrap: 'pretty' }}>{airdrop.description}</p>
         <div className="flex justify-between items-center mt-auto flex-wrap gap-2">
           <div className="flex flex-col items-start">
             <p className="text-xs sm:text-sm">
@@ -120,13 +124,13 @@ const AirdropCard = ({ airdrop }) => {
           <div className="flex items-center gap-2">
             {/* Social Media Links */}
             {airdrop.socialLinks && typeof airdrop.socialLinks === 'object' && Object.values(airdrop.socialLinks).some(link => link && link.trim() !== '') && (
-              <div className="flex gap-1 sm:gap-2">
+              <div className="flex gap-1">
                 {airdrop.socialLinks.website && typeof airdrop.socialLinks.website === 'string' && airdrop.socialLinks.website.trim() !== '' && (
                   <a
                     href={airdrop.socialLinks.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-[var(--macos-hover)] text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors flex items-center justify-center min-w-[28px] min-h-[28px]"
                     onClick={(e) => e.stopPropagation()}
                     aria-label="Website"
                   >
@@ -138,7 +142,7 @@ const AirdropCard = ({ airdrop }) => {
                     href={airdrop.socialLinks.discord}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-gray-300 hover:text-[#5865F2] dark:hover:text-[#7289DA] transition-colors"
+                    className="p-1.5 rounded-full hover:bg-[var(--macos-hover)] text-gray-600 dark:text-gray-300 hover:text-[#5865F2] dark:hover:text-[#7289DA] transition-colors flex items-center justify-center min-w-[28px] min-h-[28px]"
                     onClick={(e) => e.stopPropagation()}
                     aria-label="Discord"
                   >
@@ -150,7 +154,7 @@ const AirdropCard = ({ airdrop }) => {
                     href={airdrop.socialLinks.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
+                    className="p-1.5 rounded-full hover:bg-[var(--macos-hover)] text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors flex items-center justify-center min-w-[28px] min-h-[28px]"
                     onClick={(e) => e.stopPropagation()}
                     aria-label="X (Twitter)"
                   >
@@ -162,7 +166,7 @@ const AirdropCard = ({ airdrop }) => {
                     href={airdrop.socialLinks.telegram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-gray-300 hover:text-[#0088cc] dark:hover:text-[#29a9eb] transition-colors"
+                    className="p-1.5 rounded-full hover:bg-[var(--macos-hover)] text-gray-600 dark:text-gray-300 hover:text-[#0088cc] dark:hover:text-[#29a9eb] transition-colors flex items-center justify-center min-w-[28px] min-h-[28px]"
                     onClick={(e) => e.stopPropagation()}
                     aria-label="Telegram"
                   >
@@ -174,7 +178,7 @@ const AirdropCard = ({ airdrop }) => {
                     href={airdrop.socialLinks.github}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-gray-300 hover:text-[#333] dark:hover:text-white transition-colors"
+                    className="p-1.5 rounded-full hover:bg-[var(--macos-hover)] text-gray-600 dark:text-gray-300 hover:text-[#333] dark:hover:text-white transition-colors flex items-center justify-center min-w-[28px] min-h-[28px]"
                     onClick={(e) => e.stopPropagation()}
                     aria-label="GitHub"
                   >
@@ -186,7 +190,7 @@ const AirdropCard = ({ airdrop }) => {
                     href={airdrop.socialLinks.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-gray-600 dark:text-gray-300 hover:text-[#E1306C] dark:hover:text-[#F56040] transition-colors"
+                    className="p-1.5 rounded-full hover:bg-[var(--macos-hover)] text-gray-600 dark:text-gray-300 hover:text-[#E1306C] dark:hover:text-[#F56040] transition-colors flex items-center justify-center min-w-[28px] min-h-[28px]"
                     onClick={(e) => e.stopPropagation()}
                     aria-label="Instagram"
                   >
